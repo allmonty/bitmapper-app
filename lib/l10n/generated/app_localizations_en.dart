@@ -381,7 +381,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get formatMp4 => 'MP4 video (with sound)';
 
   @override
-  String get formatGif => 'Animated GIF';
+  String get formatGif => 'Animated GIF (no sound)';
 
   @override
   String get mp4Resolution => 'Resolution';
@@ -408,4 +408,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get statusSampling => 'Sampling frames...';
+
+  @override
+  String get audioUnsupported =>
+      'This video\'s sound uses a format that can\'t be copied into an MP4, so saved videos will be silent. The picture is not affected.';
+
+  @override
+  String get audioUnsupportedShort =>
+      'This video\'s sound can\'t be kept; the MP4 will be silent.';
+
+  @override
+  String statusSavedNoSound(String name) {
+    return 'Saved $name (without sound)';
+  }
 }

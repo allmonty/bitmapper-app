@@ -59,7 +59,13 @@ class VideoExportJob {
 }
 
 class VideoExportResult {
-  const VideoExportResult({this.path, this.gifBytes, required this.frames, this.lossyFrames = 0});
+  const VideoExportResult({
+    this.path,
+    this.gifBytes,
+    required this.frames,
+    this.lossyFrames = 0,
+    this.audioDropped = false,
+  });
 
   /// The MP4 file (format mp4).
   final String? path;
@@ -68,6 +74,10 @@ class VideoExportResult {
   final Uint8List? gifBytes;
   final int frames;
   final int lossyFrames;
+
+  /// The video had sound, but its format can't go into an MP4 unchanged, so
+  /// the MP4 was saved silent.
+  final bool audioDropped;
 }
 
 typedef VideoExporter =
@@ -130,7 +140,11 @@ Future<VideoExportResult> exportVideo(
         await sink.cancel();
         rethrow;
       }
-      return VideoExportResult(path: job.outputPath, frames: index);
+      return VideoExportResult(
+        path: job.outputPath,
+        frames: index,
+        audioDropped: info.hasAudio && !sink.includesAudio,
+      );
     }
 
     final fps = job.gifFrameRate;
@@ -215,6 +229,7 @@ ExportTask<VideoExportResult> exportVideoInIsolate(
         final TransferableTypedData? gif,
         final int frames,
         final int lossy,
+        final bool audioDropped,
       ]:
         if (!completer.isCompleted) {
           completer.complete(
@@ -223,6 +238,7 @@ ExportTask<VideoExportResult> exportVideoInIsolate(
               gifBytes: gif?.materialize().asUint8List(),
               frames: frames,
               lossyFrames: lossy,
+              audioDropped: audioDropped,
             ),
           );
         }
@@ -275,6 +291,7 @@ Future<void> _videoWorker((SendPort, VideoExportJob) args) async {
       result.gifBytes == null ? null : TransferableTypedData.fromList([result.gifBytes!]),
       result.frames,
       result.lossyFrames,
+      result.audioDropped,
     ]);
   } on ExportCancelled {
     port.send(['cancelled']);

@@ -135,7 +135,17 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _openVideo() async {
     final l10n = AppLocalizations.of(context);
     try {
-      await _media.loadVideo();
+      final loaded = await _media.loadVideo();
+      final info = _media.videoInfo;
+      if (loaded && info != null && info.hasAudio && !info.audioCompatible && mounted) {
+        await showWin98MessageBox(
+          context: context,
+          title: l10n.errorTitle,
+          message: l10n.audioUnsupported,
+          icon: Win98MessageIconType.warning,
+          buttons: [l10n.ok],
+        );
+      }
     } catch (e) {
       debugPrint('Video load failed: $e');
       if (!mounted) return;
@@ -346,6 +356,7 @@ class _HomeScreenState extends State<HomeScreen> {
           }
         }
         if (saved == null) return null;
+        if (result.audioDropped) return l10n.statusSavedNoSound(fileName);
         return result.lossyFrames > 0
             ? l10n.statusSavedLossy(fileName)
             : l10n.statusSaved(fileName);

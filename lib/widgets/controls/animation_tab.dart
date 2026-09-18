@@ -94,6 +94,8 @@ class AnimationTab extends StatelessWidget {
                       label: label,
                       onChanged: editor.setVideoFormat,
                     ),
+                  if (media.videoInfo case final info? when info.hasAudio && !info.audioCompatible)
+                    Text(l10n.audioUnsupportedShort, style: theme.disabledTextStyle),
                 ],
               ),
             ),

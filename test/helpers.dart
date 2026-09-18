@@ -150,6 +150,7 @@ class FakeVideoIO implements VideoIO {
     this.frameCount = 30,
     this.frameRate = 30,
     this.hasAudio = true,
+    this.audioCompatible = true,
   });
 
   final int width;
@@ -157,6 +158,7 @@ class FakeVideoIO implements VideoIO {
   final int frameCount;
   final double frameRate;
   final bool hasAudio;
+  bool audioCompatible;
 
   final opened = <(String, int?)>[];
   final sinks = <FakeVideoSink>[];
@@ -182,7 +184,13 @@ class FakeVideoIO implements VideoIO {
     required double frameRate,
     String? audioSourcePath,
   }) async {
-    final sink = FakeVideoSink(path, width & ~1, height & ~1, audioSourcePath);
+    final sink = FakeVideoSink(
+      path,
+      width & ~1,
+      height & ~1,
+      audioSourcePath,
+      includesAudio: audioSourcePath != null && hasAudio && audioCompatible,
+    );
     sinks.add(sink);
     return sink;
   }
@@ -221,6 +229,7 @@ class FakeVideoSource implements VideoSource {
     frameRate: io.frameRate,
     rotationDegrees: 0,
     hasAudio: io.hasAudio,
+    audioCompatible: io.hasAudio && io.audioCompatible,
   );
 
   @override
@@ -252,13 +261,21 @@ class FakeVideoSource implements VideoSource {
 }
 
 class FakeVideoSink implements VideoSink {
-  FakeVideoSink(this.path, this.width, this.height, this.audioSourcePath);
+  FakeVideoSink(
+    this.path,
+    this.width,
+    this.height,
+    this.audioSourcePath, {
+    this.includesAudio = false,
+  });
   final String path;
   @override
   final int width;
   @override
   final int height;
   final String? audioSourcePath;
+  @override
+  final bool includesAudio;
   final frames = <(Uint8List, Duration)>[];
   bool finished = false;
   bool cancelled = false;

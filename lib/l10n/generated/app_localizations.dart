@@ -749,7 +749,7 @@ abstract class AppLocalizations {
   /// No description provided for @formatGif.
   ///
   /// In en, this message translates to:
-  /// **'Animated GIF'**
+  /// **'Animated GIF (no sound)'**
   String get formatGif;
 
   /// No description provided for @mp4Resolution.
@@ -799,6 +799,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sampling frames...'**
   String get statusSampling;
+
+  /// No description provided for @audioUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This video\'s sound uses a format that can\'t be copied into an MP4, so saved videos will be silent. The picture is not affected.'**
+  String get audioUnsupported;
+
+  /// No description provided for @audioUnsupportedShort.
+  ///
+  /// In en, this message translates to:
+  /// **'This video\'s sound can\'t be kept; the MP4 will be silent.'**
+  String get audioUnsupportedShort;
+
+  /// No description provided for @statusSavedNoSound.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {name} (without sound)'**
+  String statusSavedNoSound(String name);
 }
 
 class _AppLocalizationsDelegate

@@ -381,7 +381,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get formatMp4 => 'Vídeo MP4 (com som)';
 
   @override
-  String get formatGif => 'GIF animado';
+  String get formatGif => 'GIF animado (sem som)';
 
   @override
   String get mp4Resolution => 'Resolução';
@@ -408,4 +408,17 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get statusSampling => 'Amostrando quadros...';
+
+  @override
+  String get audioUnsupported =>
+      'O som deste vídeo usa um formato que não pode ser copiado para MP4, então os vídeos salvos ficarão sem som. A imagem não é afetada.';
+
+  @override
+  String get audioUnsupportedShort =>
+      'O som deste vídeo não pode ser mantido; o MP4 ficará sem som.';
+
+  @override
+  String statusSavedNoSound(String name) {
+    return '$name salvo (sem som)';
+  }
 }

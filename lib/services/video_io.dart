@@ -17,6 +17,9 @@ abstract class VideoSink {
   /// Encoded size (even numbers).
   int get width;
   int get height;
+
+  /// Whether the audio source's track is being copied into the file.
+  bool get includesAudio;
   Future<void> addFrame(Uint8List rgba, Duration pts);
   Future<void> finish();
   Future<void> cancel();
@@ -83,6 +86,8 @@ class _PluginSink implements VideoSink {
   int get width => _writer.width;
   @override
   int get height => _writer.height;
+  @override
+  bool get includesAudio => _writer.includesAudio;
   @override
   Future<void> addFrame(Uint8List rgba, Duration pts) => _writer.addFrame(rgba, pts);
   @override

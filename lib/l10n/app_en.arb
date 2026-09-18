@@ -290,7 +290,7 @@
   "emptyVideo": "Video...",
   "exportFormat": "Save as",
   "formatMp4": "MP4 video (with sound)",
-  "formatGif": "Animated GIF",
+  "formatGif": "Animated GIF (no sound)",
   "mp4Resolution": "Resolution",
   "resOriginal": "Original size",
   "res720": "720p",
@@ -305,5 +305,15 @@
   },
   "errorVideo": "Couldn't open that video.",
   "exportVideoTitle": "Saving video",
-  "statusSampling": "Sampling frames..."
+  "statusSampling": "Sampling frames...",
+  "audioUnsupported": "This video's sound uses a format that can't be copied into an MP4, so saved videos will be silent. The picture is not affected.",
+  "audioUnsupportedShort": "This video's sound can't be kept; the MP4 will be silent.",
+  "statusSavedNoSound": "Saved {name} (without sound)",
+  "@statusSavedNoSound": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

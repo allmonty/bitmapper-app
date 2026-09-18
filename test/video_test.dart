@@ -130,6 +130,38 @@ void main() {
       expect(all.length, lessThanOrEqualTo(8), reason: 'one 3-bit palette for every frame');
     });
 
+    test('MP4 with sound the MP4 can\'t hold: saved silent and reported', () async {
+      final io = FakeVideoIO(frameCount: 3, audioCompatible: false);
+      final result = await exportVideo(
+        const VideoExportJob(
+          inputPath: '/in.mov',
+          outputPath: '/o.mp4',
+          config: config,
+          paletteFrames: [],
+          format: VideoFormat.mp4,
+        ),
+        io,
+      );
+      expect(io.sinks.single.finished, isTrue);
+      expect(io.sinks.single.frames, hasLength(3));
+      expect(result.audioDropped, isTrue);
+    });
+
+    test('compatible sound is kept', () async {
+      final io = FakeVideoIO(frameCount: 2);
+      final result = await exportVideo(
+        const VideoExportJob(
+          inputPath: '/in.mp4',
+          outputPath: '/o.mp4',
+          config: config,
+          paletteFrames: [],
+          format: VideoFormat.mp4,
+        ),
+        io,
+      );
+      expect(result.audioDropped, isFalse);
+    });
+
     test('MP4 without audio passes no audio source', () async {
       final io = FakeVideoIO(frameCount: 2, hasAudio: false);
       await exportVideo(
@@ -221,6 +253,43 @@ void main() {
       await tester.pumpAndSettle();
       expect(mp4, findsOneWidget);
       expect(find.text('720p'), findsOneWidget);
+    });
+
+    testWidgets('a video whose sound can\'t be kept warns on load, in the tab and after saving', (
+      tester,
+    ) async {
+      usePhoneScreen(tester);
+      final app = TestApp()..loader.video = pick;
+      app.videoIO.audioCompatible = false;
+      await tester.pumpWidget(app.build());
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Video...'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining("can't be copied into an MP4"), findsOneWidget);
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Animation'));
+      await tester.pumpAndSettle();
+      final note = find.text("This video's sound can't be kept; the MP4 will be silent.");
+      await tester.ensureVisible(note);
+      expect(note, findsOneWidget);
+
+      await tester.tap(find.text('File'));
+      await tester.pump();
+      await tester.tap(find.text('Save as...'));
+      await tester.pumpAndSettle();
+      expect(app.saver.savedFiles, hasLength(1));
+      expect(find.text('Saved bitmapper_1234.mp4 (without sound)'), findsOneWidget);
+    });
+
+    testWidgets('videos with compatible or no sound don\'t warn', (tester) async {
+      await openVideo(tester);
+      expect(find.textContaining("can't be copied into an MP4"), findsNothing);
+      await tester.tap(find.text('Animation'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining("sound can't be kept"), findsNothing);
+      expect(find.text('Animated GIF (no sound)'), findsOneWidget);
     });
 
     testWidgets('File > Open video uses the video picker', (tester) async {

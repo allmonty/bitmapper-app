@@ -108,7 +108,7 @@
   "emptyVideo": "Vídeo...",
   "exportFormat": "Salvar como",
   "formatMp4": "Vídeo MP4 (com som)",
-  "formatGif": "GIF animado",
+  "formatGif": "GIF animado (sem som)",
   "mp4Resolution": "Resolução",
   "resOriginal": "Tamanho original",
   "res720": "720p",
@@ -116,5 +116,8 @@
   "gifFrameRate": "Taxa do GIF: {fps} qps",
   "errorVideo": "Não foi possível abrir esse vídeo.",
   "exportVideoTitle": "Salvando vídeo",
-  "statusSampling": "Amostrando quadros..."
+  "statusSampling": "Amostrando quadros...",
+  "audioUnsupported": "O som deste vídeo usa um formato que não pode ser copiado para MP4, então os vídeos salvos ficarão sem som. A imagem não é afetada.",
+  "audioUnsupportedShort": "O som deste vídeo não pode ser mantido; o MP4 ficará sem som.",
+  "statusSavedNoSound": "{name} salvo (sem som)"
 }
