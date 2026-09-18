@@ -12,10 +12,16 @@ import 'rgb_image_view.dart';
 /// The sunken canvas: filtered preview with pinch-zoom, and hold-to-compare
 /// against the original.
 class PreviewPane extends StatefulWidget {
-  const PreviewPane({super.key, required this.onGallery, required this.onCamera});
+  const PreviewPane({
+    super.key,
+    required this.onGallery,
+    required this.onCamera,
+    required this.onVideo,
+  });
 
   final VoidCallback onGallery;
   final VoidCallback onCamera;
+  final VoidCallback onVideo;
 
   @override
   State<PreviewPane> createState() => _PreviewPaneState();
@@ -40,7 +46,11 @@ class _PreviewPaneState extends State<PreviewPane> {
     if (preview == null) {
       content = image.loading
           ? const Center(child: SizedBox(width: 200, child: Win98ProgressBar()))
-          : EmptyState(onGallery: widget.onGallery, onCamera: widget.onCamera);
+          : EmptyState(
+              onGallery: widget.onGallery,
+              onCamera: widget.onCamera,
+              onVideo: widget.onVideo,
+            );
     } else {
       final output = filter.result?.output;
       final showOriginal = _showOriginal || output == null;
@@ -89,7 +99,7 @@ class _PreviewPaneState extends State<PreviewPane> {
       color: theme.shadow,
       child: ClipRect(child: content),
     );
-    if (!image.isAnimation) return canvas;
+    if (!image.isSequence) return canvas;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

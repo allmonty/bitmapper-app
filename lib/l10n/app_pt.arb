@@ -103,5 +103,18 @@
   "exportPreparing": "Preparando...",
   "statusSavedLossy": "{name} salvo (alguns quadros reduzidos a 256 cores)",
   "gifColorLimit": "GIF suporta até 256 cores por quadro; paletas maiores são reduzidas ao salvar.",
-  "animationTruncated": "Este GIF é longo, então só os primeiros {count} quadros foram carregados."
+  "animationTruncated": "Este GIF é longo, então só os primeiros {count} quadros foram carregados.",
+  "menuOpenVideo": "Abrir vídeo...",
+  "emptyVideo": "Vídeo...",
+  "exportFormat": "Salvar como",
+  "formatMp4": "Vídeo MP4 (com som)",
+  "formatGif": "GIF animado",
+  "mp4Resolution": "Resolução",
+  "resOriginal": "Tamanho original",
+  "res720": "720p",
+  "res480": "480p",
+  "gifFrameRate": "Taxa do GIF: {fps} qps",
+  "errorVideo": "Não foi possível abrir esse vídeo.",
+  "exportVideoTitle": "Salvando vídeo",
+  "statusSampling": "Amostrando quadros..."
 }

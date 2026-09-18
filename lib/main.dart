@@ -31,7 +31,9 @@ class BitmapperApp extends StatelessWidget {
       providers: [
         Provider<AppServices>.value(value: services),
         ChangeNotifierProvider(create: (_) => EditorModel()),
-        ChangeNotifierProvider(create: (_) => MediaModel(services.imageLoader)),
+        ChangeNotifierProvider(
+          create: (_) => MediaModel(services.imageLoader, videoIO: services.videoIO),
+        ),
         ChangeNotifierProvider(create: (_) => PresetsModel(services.presetRepository)..load()),
         ChangeNotifierProvider(
           create: (_) =>

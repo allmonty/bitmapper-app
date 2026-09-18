@@ -7,6 +7,8 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../models/editor_model.dart';
 import '../../models/media_model.dart';
 import '../../services/gif_io.dart';
+import '../../services/image_codec.dart';
+import '../../services/video_exporter.dart';
 import 'labeled_slider.dart';
 
 /// Settings that only matter for animations: how one palette is shared
@@ -26,7 +28,12 @@ class AnimationTab extends StatelessWidget {
     // Sizes shown next to the GIF size options.
     final frame = media.preview;
     final grid = frame == null ? config : editor.configFor(frame.width, frame.height);
-    final (srcW, srcH) = frame == null ? (0, 0) : (frame.width, frame.height);
+    // A GIF made from video is read at most kMaxAnimationDimension wide.
+    final (srcW, srcH) = frame == null
+        ? (0, 0)
+        : media.isVideo
+        ? fitWithin(frame.width, frame.height, kMaxAnimationDimension)
+        : (frame.width, frame.height);
     final gifSize = editor.gifSize;
     final perCell = gifSize is GifSizePerCell ? gifSize.pixels : 4;
     final perCellIndex = kGifPixelsPerCell.indexOf(perCell).clamp(0, kGifPixelsPerCell.length - 1);
@@ -71,41 +78,96 @@ class AnimationTab extends StatelessWidget {
               onChanged: editor.setAnimateNoise,
             ),
           kControlGap,
-          Win98GroupBox(
-            label: l10n.gifSize,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Win98Radio<bool>(
-                  value: false,
-                  groupValue: gifSize is GifSizePerCell,
-                  label: l10n.gifOriginal(srcW, srcH),
-                  onChanged: (_) => editor.setGifSize(const GifSizeOriginal()),
-                ),
-                Win98Radio<bool>(
-                  value: true,
-                  groupValue: gifSize is GifSizePerCell,
-                  label: l10n.gifPerCell,
-                  onChanged: (_) => editor.setGifSize(GifSizePerCell(perCell)),
-                ),
-                if (gifSize is GifSizePerCell)
-                  LabeledSlider(
-                    label: l10n.gifPerCellValue(
-                      perCell,
-                      grid.gridCols * perCell,
-                      grid.gridRows * perCell,
+          if (media.isVideo) ...[
+            Win98GroupBox(
+              label: l10n.exportFormat,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final (f, label) in [
+                    (VideoFormat.mp4, l10n.formatMp4),
+                    (VideoFormat.gif, l10n.formatGif),
+                  ])
+                    Win98Radio<VideoFormat>(
+                      value: f,
+                      groupValue: editor.videoFormat,
+                      label: label,
+                      onChanged: editor.setVideoFormat,
                     ),
-                    value: perCellIndex.toDouble(),
-                    min: 0,
-                    max: (kGifPixelsPerCell.length - 1).toDouble(),
-                    divisions: kGifPixelsPerCell.length - 1,
-                    onChanged: (v) =>
-                        editor.setGifSize(GifSizePerCell(kGifPixelsPerCell[v.round()])),
-                  ),
-                if (config.bitDepth > 8) Text(l10n.gifColorLimit, style: theme.disabledTextStyle),
-              ],
+                ],
+              ),
             ),
-          ),
+            kControlGap,
+          ],
+          if (media.isVideo && editor.videoFormat == VideoFormat.mp4)
+            Win98GroupBox(
+              label: l10n.mp4Resolution,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final (r, label) in [
+                    (Mp4Resolution.original, l10n.resOriginal),
+                    (Mp4Resolution.p720, l10n.res720),
+                    (Mp4Resolution.p480, l10n.res480),
+                  ])
+                    Win98Radio<Mp4Resolution>(
+                      value: r,
+                      groupValue: editor.mp4Resolution,
+                      label: label,
+                      onChanged: editor.setMp4Resolution,
+                    ),
+                ],
+              ),
+            )
+          else ...[
+            Win98GroupBox(
+              label: l10n.gifSize,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Win98Radio<bool>(
+                    value: false,
+                    groupValue: gifSize is GifSizePerCell,
+                    label: l10n.gifOriginal(srcW, srcH),
+                    onChanged: (_) => editor.setGifSize(const GifSizeOriginal()),
+                  ),
+                  Win98Radio<bool>(
+                    value: true,
+                    groupValue: gifSize is GifSizePerCell,
+                    label: l10n.gifPerCell,
+                    onChanged: (_) => editor.setGifSize(GifSizePerCell(perCell)),
+                  ),
+                  if (gifSize is GifSizePerCell)
+                    LabeledSlider(
+                      label: l10n.gifPerCellValue(
+                        perCell,
+                        grid.gridCols * perCell,
+                        grid.gridRows * perCell,
+                      ),
+                      value: perCellIndex.toDouble(),
+                      min: 0,
+                      max: (kGifPixelsPerCell.length - 1).toDouble(),
+                      divisions: kGifPixelsPerCell.length - 1,
+                      onChanged: (v) =>
+                          editor.setGifSize(GifSizePerCell(kGifPixelsPerCell[v.round()])),
+                    ),
+                  if (config.bitDepth > 8) Text(l10n.gifColorLimit, style: theme.disabledTextStyle),
+                ],
+              ),
+            ),
+            if (media.isVideo)
+              LabeledSlider(
+                label: l10n.gifFrameRate(editor.gifFrameRate),
+                value: kGifFrameRates
+                    .indexOf(editor.gifFrameRate)
+                    .clamp(0, kGifFrameRates.length - 1)
+                    .toDouble(),
+                min: 0,
+                max: (kGifFrameRates.length - 1).toDouble(),
+                divisions: kGifFrameRates.length - 1,
+                onChanged: (v) => editor.setGifFrameRate(kGifFrameRates[v.round()]),
+              ),
+          ],
           kControlGap,
           Text(l10n.animationFriendlyHint),
           const SizedBox(height: 6),

@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:bitmapper_core/bitmapper_core.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:win98_ui/win98_ui.dart';
@@ -11,6 +14,7 @@ import '../services/app_services.dart';
 import '../services/filter_controller.dart';
 import '../services/image_loader.dart';
 import '../services/image_saver.dart';
+import '../services/video_exporter.dart';
 import '../widgets/controls/adjust_tab.dart';
 import '../widgets/controls/animation_tab.dart';
 import '../widgets/controls/dither_tab.dart';
@@ -19,6 +23,13 @@ import '../widgets/controls/grid_tab.dart';
 import '../widgets/controls/palette_tab.dart';
 import '../widgets/controls/presets_tab.dart';
 import '../widgets/preview_pane.dart';
+
+/// Delete a temporary file, ignoring errors.
+void deleteQuietly(String path) {
+  try {
+    File(path).deleteSync();
+  } catch (_) {}
+}
 
 const kAppVersion = '1.0.0';
 
@@ -63,15 +74,35 @@ class _HomeScreenState extends State<HomeScreen> {
       if (_filter.result != null || _filter.busy) _filter.clear();
       return;
     }
-    final animation = _media.animation;
-    _filter.request(
-      preview,
-      _editor.configFor(preview.width, preview.height),
-      animation: animation == null
-          ? null
-          : AnimationContext(frames: animation.frames, frameIndex: _media.currentFrame),
-    );
+    final config = _editor.configFor(preview.width, preview.height);
+    AnimationContext? animation;
+    if (_media.isAnimation) {
+      animation = AnimationContext(
+        frames: _media.animation!.frames,
+        frameIndex: _media.currentFrame,
+      );
+    } else if (_media.isVideo) {
+      final samples = _videoPaletteFrames(config);
+      if (samples == null) return; // sampling; MediaModel notifies when ready
+      animation = AnimationContext(
+        frames: samples,
+        frameIndex: _media.currentFrame,
+        document: _media.document,
+      );
+    }
+    _filter.request(preview, config, animation: animation);
     if (_message != null) setState(() => _message = null);
+  }
+
+  /// The video frames the shared palette is built from for `config` (none
+  /// for per-frame or non-auto palettes), or null while they're decoded.
+  List<RgbImage>? _videoPaletteFrames(BitmapFilterConfig config) {
+    if (!needsSequencePalette(config)) return const [];
+    return switch (config.paletteStrategy) {
+      PaletteStrategy.perFrame => const [],
+      PaletteStrategy.firstFrame => _media.paletteSamples(1),
+      PaletteStrategy.sampled => _media.paletteSamples(config.paletteSamples),
+    };
   }
 
   Future<void> _open(ImageOrigin origin) async {
@@ -101,7 +132,28 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _save() => _media.isAnimation ? _saveAnimation() : _saveStill();
+  Future<void> _openVideo() async {
+    final l10n = AppLocalizations.of(context);
+    try {
+      await _media.loadVideo();
+    } catch (e) {
+      debugPrint('Video load failed: $e');
+      if (!mounted) return;
+      await showWin98MessageBox(
+        context: context,
+        title: l10n.errorTitle,
+        message: l10n.errorVideo,
+        icon: Win98MessageIconType.error,
+        buttons: [l10n.ok],
+      );
+    }
+  }
+
+  Future<void> _save() => switch (_media.kind) {
+    MediaKind.animation => _saveAnimation(),
+    MediaKind.video => _saveVideo(),
+    _ => _saveStill(),
+  };
 
   Future<void> _saveStill() async {
     final full = _media.full;
@@ -153,31 +205,52 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Filter every frame on a worker isolate and save an animated GIF, with
-  /// a progress dialog that can cancel.
+  /// Filter every frame of the GIF on a worker isolate and save an animated
+  /// GIF.
   Future<void> _saveAnimation() async {
     final bytes = _media.animationBytes;
     final frame = _media.preview;
     if (bytes == null || frame == null || _saving) return;
     final l10n = AppLocalizations.of(context);
     final services = context.read<AppServices>();
+    final job = GifExportJob(
+      gifBytes: bytes,
+      config: _editor.configFor(frame.width, frame.height),
+      size: _editor.gifSize,
+    );
+    await _runExport<GifExportResult>(
+      title: l10n.exportTitle,
+      start: (onProgress) => services.gifExporter(job, onProgress),
+      save: (result) async {
+        final fileName = exportFileName(services.clock(), extension: 'gif');
+        final saved = await services.imageSaver.save(result.bytes, fileName, mimeType: 'image/gif');
+        if (saved == null) return null;
+        return result.lossyFrames > 0
+            ? l10n.statusSavedLossy(fileName)
+            : l10n.statusSaved(fileName);
+      },
+    );
+  }
+
+  /// Run an export with a progress dialog whose Cancel (or close box) stops
+  /// it, then `save` the result; `save` returns the status message, or null
+  /// if the user cancelled the save dialog.
+  Future<void> _runExport<T>({
+    required String title,
+    required ExportTask<T> Function(ProgressCallback onProgress) start,
+    required Future<String?> Function(T result) save,
+  }) async {
+    final l10n = AppLocalizations.of(context);
     final navigator = Navigator.of(context);
     final progress = ValueNotifier<(int, int)?>(null);
 
     setState(() => _saving = true);
-    final task = services.gifExporter(
-      GifExportJob(
-        gifBytes: bytes,
-        config: _editor.configFor(frame.width, frame.height),
-        size: _editor.gifSize,
-      ),
-      (done, total) => progress.value = (done, total),
-    );
+    final task = start((done, total) => progress.value = (done, total));
 
     var dialogOpen = true;
     showWin98Dialog<void>(
       context: context,
-      title: l10n.exportTitle,
+      title: title,
       builder: (context) => ValueListenableBuilder<(int, int)?>(
         valueListenable: progress,
         builder: (context, value, _) => Column(
@@ -208,19 +281,12 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final result = await task.result;
       closeDialog();
-      final fileName = exportFileName(services.clock(), extension: 'gif');
-      final saved = await services.imageSaver.save(result.bytes, fileName, mimeType: 'image/gif');
-      if (mounted && saved != null) {
-        setState(
-          () => _message = result.lossyFrames > 0
-              ? l10n.statusSavedLossy(fileName)
-              : l10n.statusSaved(fileName),
-        );
-      }
+      final message = await save(result);
+      if (mounted && message != null) setState(() => _message = message);
     } on ExportCancelled {
       closeDialog();
     } catch (e) {
-      debugPrint('Animation save failed: $e');
+      debugPrint('Export failed: $e');
       closeDialog();
       if (mounted) {
         await showWin98MessageBox(
@@ -235,6 +301,56 @@ class _HomeScreenState extends State<HomeScreen> {
       progress.dispose();
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  /// Filter a whole video on a worker isolate into an MP4 (sound copied
+  /// through) or a GIF, then hand it to the save dialog.
+  Future<void> _saveVideo() async {
+    final path = _media.videoPath;
+    final frame = _media.preview;
+    if (path == null || frame == null || _saving) return;
+    final config = _editor.configFor(frame.width, frame.height);
+    final paletteFrames = _videoPaletteFrames(config);
+    if (paletteFrames == null) return; // still sampling; try again shortly
+    final l10n = AppLocalizations.of(context);
+    final services = context.read<AppServices>();
+    final format = _editor.videoFormat;
+    final job = VideoExportJob(
+      inputPath: path,
+      outputPath: tempVideoPath(services.clock()),
+      config: config,
+      paletteFrames: paletteFrames,
+      format: format,
+      mp4Resolution: _editor.mp4Resolution,
+      gifSize: _editor.gifSize,
+      gifFrameRate: _editor.gifFrameRate,
+    );
+    await _runExport<VideoExportResult>(
+      title: l10n.exportVideoTitle,
+      start: (onProgress) => services.videoExporter(job, onProgress),
+      save: (result) async {
+        final gif = format == VideoFormat.gif;
+        final fileName = exportFileName(services.clock(), extension: gif ? 'gif' : 'mp4');
+        final String? saved;
+        if (gif) {
+          saved = await services.imageSaver.save(result.gifBytes!, fileName, mimeType: 'image/gif');
+        } else {
+          try {
+            saved = await services.imageSaver.saveFile(
+              result.path!,
+              fileName,
+              mimeType: 'video/mp4',
+            );
+          } finally {
+            deleteQuietly(result.path!);
+          }
+        }
+        if (saved == null) return null;
+        return result.lossyFrames > 0
+            ? l10n.statusSavedLossy(fileName)
+            : l10n.statusSaved(fileName);
+      },
+    );
   }
 
   void _about() {
@@ -256,6 +372,7 @@ class _HomeScreenState extends State<HomeScreen> {
           items: [
             Win98MenuItem(label: l10n.menuOpen, onSelected: () => _open(ImageOrigin.gallery)),
             Win98MenuItem(label: l10n.menuCamera, onSelected: () => _open(ImageOrigin.camera)),
+            Win98MenuItem(label: l10n.menuOpenVideo, onSelected: _openVideo),
             Win98MenuItem(label: l10n.menuSave, onSelected: hasImage && !_saving ? _save : null),
             const Win98MenuDivider(),
             Win98MenuItem(label: l10n.menuClose, onSelected: hasImage ? _media.clear : null),
@@ -287,6 +404,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final String status;
     if (_saving) {
       status = l10n.statusSaving;
+    } else if (image.sampling) {
+      status = l10n.statusSampling;
     } else if (image.loading || filter.busy) {
       status = l10n.statusWorking;
     } else if (filter.error != null) {
@@ -296,7 +415,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _message ??
           switch (preview) {
             null => l10n.statusNoImage,
-            _ when image.isAnimation && editor.isErrorDiffusion => l10n.statusShimmer,
+            _ when image.isSequence && editor.isErrorDiffusion => l10n.statusShimmer,
             _ => l10n.statusReady,
           };
     }
@@ -329,7 +448,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Win98Tab(label: l10n.tabGrid, builder: (_) => const GridTab()),
         Win98Tab(label: l10n.tabAdjust, builder: (_) => const AdjustTab()),
         Win98Tab(label: l10n.tabEffects, builder: (_) => const EffectsTab()),
-        if (image.isAnimation)
+        if (image.isSequence)
           Win98Tab(label: l10n.tabAnimation, builder: (_) => const AnimationTab()),
         Win98Tab(label: l10n.tabPresets, builder: (_) => const PresetsTab()),
       ],
@@ -337,6 +456,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final preview = PreviewPane(
       onGallery: () => _open(ImageOrigin.gallery),
       onCamera: () => _open(ImageOrigin.camera),
+      onVideo: _openVideo,
     );
 
     return Win98Desktop(

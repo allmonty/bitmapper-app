@@ -367,4 +367,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String animationTruncated(int count) {
     return 'This GIF is long, so only the first $count frames were loaded.';
   }
+
+  @override
+  String get menuOpenVideo => 'Open video...';
+
+  @override
+  String get emptyVideo => 'Video...';
+
+  @override
+  String get exportFormat => 'Save as';
+
+  @override
+  String get formatMp4 => 'MP4 video (with sound)';
+
+  @override
+  String get formatGif => 'Animated GIF';
+
+  @override
+  String get mp4Resolution => 'Resolution';
+
+  @override
+  String get resOriginal => 'Original size';
+
+  @override
+  String get res720 => '720p';
+
+  @override
+  String get res480 => '480p';
+
+  @override
+  String gifFrameRate(int fps) {
+    return 'GIF frame rate: $fps fps';
+  }
+
+  @override
+  String get errorVideo => 'Couldn\'t open that video.';
+
+  @override
+  String get exportVideoTitle => 'Saving video';
+
+  @override
+  String get statusSampling => 'Sampling frames...';
 }

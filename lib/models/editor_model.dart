@@ -2,6 +2,7 @@ import 'package:bitmapper_core/bitmapper_core.dart';
 import 'package:flutter/foundation.dart';
 
 import '../services/gif_io.dart';
+import '../services/video_exporter.dart';
 import 'preset.dart';
 
 const kMinColumns = 16;
@@ -55,6 +56,32 @@ class EditorModel extends ChangeNotifier {
   void setGifSize(GifSize size) {
     if (size == _gifSize) return;
     _gifSize = size;
+    notifyListeners();
+  }
+
+  /// Video export settings (not part of presets).
+  VideoFormat _videoFormat = VideoFormat.mp4;
+  Mp4Resolution _mp4Resolution = Mp4Resolution.original;
+  int _gifFrameRate = 15;
+  VideoFormat get videoFormat => _videoFormat;
+  Mp4Resolution get mp4Resolution => _mp4Resolution;
+  int get gifFrameRate => _gifFrameRate;
+
+  void setVideoFormat(VideoFormat format) {
+    if (format == _videoFormat) return;
+    _videoFormat = format;
+    notifyListeners();
+  }
+
+  void setMp4Resolution(Mp4Resolution resolution) {
+    if (resolution == _mp4Resolution) return;
+    _mp4Resolution = resolution;
+    notifyListeners();
+  }
+
+  void setGifFrameRate(int fps) {
+    if (fps == _gifFrameRate) return;
+    _gifFrameRate = fps;
     notifyListeners();
   }
 

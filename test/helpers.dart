@@ -8,6 +8,8 @@ import 'package:bitmapper/services/filter_controller.dart';
 import 'package:bitmapper/services/image_codec.dart';
 import 'package:bitmapper/services/image_loader.dart';
 import 'package:bitmapper/services/image_saver.dart';
+import 'package:bitmapper/services/video_exporter.dart';
+import 'package:bitmapper/services/video_io.dart';
 import 'package:bitmapper_core/bitmapper_core.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -40,6 +42,11 @@ class FakeImageLoader implements ImageLoader {
     if (error != null) throw error!;
     return result;
   }
+
+  PickedVideo? video;
+
+  @override
+  Future<PickedVideo?> pickVideo() async => video;
 }
 
 class FakeImageSaver implements ImageSaver {
@@ -50,6 +57,15 @@ class FakeImageSaver implements ImageSaver {
   Future<String?> save(Uint8List bytes, String fileName, {String mimeType = 'image/png'}) async {
     if (error != null) throw error!;
     saved.add((bytes, fileName, mimeType));
+    return '/fake/$fileName';
+  }
+
+  final List<(String, String, String)> savedFiles = [];
+
+  @override
+  Future<String?> saveFile(String path, String fileName, {required String mimeType}) async {
+    if (error != null) throw error!;
+    savedFiles.add((path, fileName, mimeType));
     return '/fake/$fileName';
   }
 }
@@ -84,6 +100,7 @@ class TestApp {
   final FakeImageLoader loader;
   final FakeImageSaver saver;
   final InMemoryPresetRepository repository;
+  final FakeVideoIO videoIO = FakeVideoIO();
 
   AppServices get services => AppServices(
     imageLoader: loader,
@@ -92,6 +109,8 @@ class TestApp {
     filterRunner: syncRunner,
     pngEncoder: (image) async => encodePng(image),
     gifExporter: fakeGifExporter,
+    videoIO: videoIO,
+    videoExporter: (job, onProgress) => fakeVideoExporter(job, onProgress, videoIO),
     clock: () => DateTime.fromMillisecondsSinceEpoch(1234),
   );
 
@@ -120,4 +139,153 @@ Uint8List makeGif({int n = 3, int width = 40, int height = 30, int loopCount = 0
     encoder.addFrame(frame, duration: 5 + f * 5); // 50, 100, 150 ms
   }
   return encoder.finish()!;
+}
+
+/// Synthetic video: `frameCount` frames at `frameRate`, each a gradient
+/// whose red channel drifts over time.
+class FakeVideoIO implements VideoIO {
+  FakeVideoIO({
+    this.width = 64,
+    this.height = 48,
+    this.frameCount = 30,
+    this.frameRate = 30,
+    this.hasAudio = true,
+  });
+
+  final int width;
+  final int height;
+  final int frameCount;
+  final double frameRate;
+  final bool hasAudio;
+
+  final opened = <(String, int?)>[];
+  final sinks = <FakeVideoSink>[];
+  Object? openError;
+
+  @override
+  Future<VideoSource> open(String path, {int? maxDimension}) async {
+    if (openError != null) throw openError!;
+    opened.add((path, maxDimension));
+    var (w, h) = (width, height);
+    if (maxDimension != null && (w > maxDimension || h > maxDimension)) {
+      final scale = maxDimension / (w > h ? w : h);
+      (w, h) = ((w * scale).round(), (h * scale).round());
+    }
+    return FakeVideoSource(this, w, h);
+  }
+
+  @override
+  Future<VideoSink> create(
+    String path, {
+    required int width,
+    required int height,
+    required double frameRate,
+    String? audioSourcePath,
+  }) async {
+    final sink = FakeVideoSink(path, width & ~1, height & ~1, audioSourcePath);
+    sinks.add(sink);
+    return sink;
+  }
+
+  Uint8List frameRgba(int w, int h, int index) {
+    final out = Uint8List(w * h * 4);
+    for (var y = 0; y < h; y++) {
+      for (var x = 0; x < w; x++) {
+        final o = (y * w + x) * 4;
+        out[o] = (x * 255 ~/ w + index * 5) % 256;
+        out[o + 1] = y * 255 ~/ h;
+        out[o + 2] = 90;
+        out[o + 3] = 255;
+      }
+    }
+    return out;
+  }
+}
+
+class FakeVideoSource implements VideoSource {
+  FakeVideoSource(this.io, this.width, this.height);
+  final FakeVideoIO io;
+  final int width;
+  final int height;
+  int _next = 0;
+  bool closed = false;
+  final frameAtCalls = <Duration>[];
+
+  Duration _pts(int i) => Duration(microseconds: (i * 1000000 / io.frameRate).round());
+
+  @override
+  VideoInfo get info => VideoInfo(
+    width: width,
+    height: height,
+    duration: _pts(io.frameCount),
+    frameRate: io.frameRate,
+    rotationDegrees: 0,
+    hasAudio: io.hasAudio,
+  );
+
+  @override
+  Future<VideoFrame?> nextFrame() async {
+    if (_next >= io.frameCount) return null;
+    final i = _next++;
+    return VideoFrame(
+      pts: _pts(i),
+      width: width,
+      height: height,
+      rgba: io.frameRgba(width, height, i),
+    );
+  }
+
+  @override
+  Future<VideoFrame> frameAt(Duration time) async {
+    frameAtCalls.add(time);
+    final i = (time.inMicroseconds * io.frameRate / 1000000).round().clamp(0, io.frameCount - 1);
+    return VideoFrame(
+      pts: _pts(i),
+      width: width,
+      height: height,
+      rgba: io.frameRgba(width, height, i),
+    );
+  }
+
+  @override
+  Future<void> close() async => closed = true;
+}
+
+class FakeVideoSink implements VideoSink {
+  FakeVideoSink(this.path, this.width, this.height, this.audioSourcePath);
+  final String path;
+  @override
+  final int width;
+  @override
+  final int height;
+  final String? audioSourcePath;
+  final frames = <(Uint8List, Duration)>[];
+  bool finished = false;
+  bool cancelled = false;
+
+  @override
+  Future<void> addFrame(Uint8List rgba, Duration pts) async {
+    if (rgba.length != width * height * 4) throw ArgumentError('bad frame size');
+    frames.add((rgba, pts));
+  }
+
+  @override
+  Future<void> finish() async => finished = true;
+
+  @override
+  Future<void> cancel() async => cancelled = true;
+}
+
+/// Runs [exportVideo] with [FakeVideoIO] on the test isolate.
+ExportTask<VideoExportResult> fakeVideoExporter(
+  VideoExportJob job,
+  ProgressCallback onProgress,
+  VideoIO io,
+) {
+  var cancelled = false;
+  final result = Future(() async {
+    await Future<void>.delayed(Duration.zero);
+    return exportVideo(job, io, onProgress: onProgress, isCancelled: () => cancelled);
+  });
+  return ExportTask(result, () => cancelled = true);
 }

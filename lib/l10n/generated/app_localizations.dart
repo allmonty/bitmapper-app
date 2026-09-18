@@ -721,6 +721,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This GIF is long, so only the first {count} frames were loaded.'**
   String animationTruncated(int count);
+
+  /// No description provided for @menuOpenVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Open video...'**
+  String get menuOpenVideo;
+
+  /// No description provided for @emptyVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Video...'**
+  String get emptyVideo;
+
+  /// No description provided for @exportFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as'**
+  String get exportFormat;
+
+  /// No description provided for @formatMp4.
+  ///
+  /// In en, this message translates to:
+  /// **'MP4 video (with sound)'**
+  String get formatMp4;
+
+  /// No description provided for @formatGif.
+  ///
+  /// In en, this message translates to:
+  /// **'Animated GIF'**
+  String get formatGif;
+
+  /// No description provided for @mp4Resolution.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolution'**
+  String get mp4Resolution;
+
+  /// No description provided for @resOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Original size'**
+  String get resOriginal;
+
+  /// No description provided for @res720.
+  ///
+  /// In en, this message translates to:
+  /// **'720p'**
+  String get res720;
+
+  /// No description provided for @res480.
+  ///
+  /// In en, this message translates to:
+  /// **'480p'**
+  String get res480;
+
+  /// No description provided for @gifFrameRate.
+  ///
+  /// In en, this message translates to:
+  /// **'GIF frame rate: {fps} fps'**
+  String gifFrameRate(int fps);
+
+  /// No description provided for @errorVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open that video.'**
+  String get errorVideo;
+
+  /// No description provided for @exportVideoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving video'**
+  String get exportVideoTitle;
+
+  /// No description provided for @statusSampling.
+  ///
+  /// In en, this message translates to:
+  /// **'Sampling frames...'**
+  String get statusSampling;
 }
 
 class _AppLocalizationsDelegate

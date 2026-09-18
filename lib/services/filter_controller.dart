@@ -48,9 +48,17 @@ FilterResult runFilterJob(FilterJob job) {
 
 /// The frames of an animation and which one to render.
 class AnimationContext {
-  const AnimationContext({required this.frames, required this.frameIndex});
+  const AnimationContext({required this.frames, required this.frameIndex, this.document});
+
+  /// Frames the shared palette is built from: every frame of a GIF, or the
+  /// sampled frames of a video.
   final List<RgbImage> frames;
+
+  /// Index of the rendered frame in the whole animation (for the noise seed).
   final int frameIndex;
+
+  /// Identifies the animation; defaults to [frames].
+  final Object? document;
 }
 
 typedef FilterRunner = Future<FilterResult> Function(FilterJob job);
@@ -106,7 +114,7 @@ class FilterController extends ChangeNotifier {
   /// animations, `animation` gives the frames (for the shared palette and
   /// the per-frame noise seed).
   void request(RgbImage source, BitmapFilterConfig config, {AnimationContext? animation}) {
-    final document = animation?.frames ?? source;
+    final document = animation?.document ?? animation?.frames ?? source;
     if (!identical(document, _document)) {
       _document = document;
       _generation++;

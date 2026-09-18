@@ -285,5 +285,25 @@
         "type": "int"
       }
     }
-  }
+  },
+  "menuOpenVideo": "Open video...",
+  "emptyVideo": "Video...",
+  "exportFormat": "Save as",
+  "formatMp4": "MP4 video (with sound)",
+  "formatGif": "Animated GIF",
+  "mp4Resolution": "Resolution",
+  "resOriginal": "Original size",
+  "res720": "720p",
+  "res480": "480p",
+  "gifFrameRate": "GIF frame rate: {fps} fps",
+  "@gifFrameRate": {
+    "placeholders": {
+      "fps": {
+        "type": "int"
+      }
+    }
+  },
+  "errorVideo": "Couldn't open that video.",
+  "exportVideoTitle": "Saving video",
+  "statusSampling": "Sampling frames..."
 }

@@ -9,6 +9,8 @@ import 'filter_controller.dart';
 import 'image_codec.dart';
 import 'image_loader.dart';
 import 'image_saver.dart';
+import 'video_exporter.dart';
+import 'video_io.dart';
 
 typedef PngEncoder = Future<Uint8List> Function(RgbImage image);
 
@@ -22,6 +24,8 @@ class AppServices {
     this.filterRunner = runInIsolate,
     this.pngEncoder = encodePngInBackground,
     this.gifExporter = exportGifInIsolate,
+    this.videoIO = const PluginVideoIO(),
+    this.videoExporter = exportVideoInIsolate,
     this.previewDebounce = const Duration(milliseconds: 120),
     this.clock = DateTime.now,
   });
@@ -38,6 +42,10 @@ class AppServices {
   final FilterRunner filterRunner;
   final PngEncoder pngEncoder;
   final GifExporter gifExporter;
+
+  /// Reads video for the preview (on the UI isolate).
+  final VideoIO videoIO;
+  final VideoExporter videoExporter;
   final Duration previewDebounce;
   final DateTime Function() clock;
 }

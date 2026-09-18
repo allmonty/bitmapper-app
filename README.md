@@ -12,6 +12,7 @@ hold-to-compare, and zoom.
 | `lib/` | The app: Provider + `ChangeNotifier` models, services, Win98 screens |
 | `packages/bitmapper_core/` | Filter engine, pure Dart ([README](packages/bitmapper_core/README.md)) |
 | `packages/win98_ui/` | Reusable Windows 98 widget kit ([README](packages/win98_ui/README.md)) |
+| `packages/video_frames/` | Reusable plugin that decodes video to RGBA and encodes MP4s ([README](packages/video_frames/README.md)) |
 | `tool/gen_palettes.py` | Regenerates the palette table from the Python reference |
 
 ## Features
@@ -48,6 +49,13 @@ hold-to-compare, and zoom.
   - Export runs on a worker isolate, with progress and a Cancel button.
     Frames of up to 256 colors are written exactly; deeper palettes are
     reduced by the GIF encoder.
+- **Videos:** open a video from the library, scrub it, and save it as an
+  MP4 (H.264, with the sound copied through) or an animated GIF.
+  - The palette strategies and noise options are the same as for GIFs.
+  - MP4 resolution can be the original, 720p or 480p.
+  - GIFs made from video have a frame-rate cap of 5–30 fps.
+  - Decoding and encoding use the platform codecs through
+    `packages/video_frames`. The whole export runs on a background isolate.
 - **Hold to compare** the original, and **pinch to zoom**.
 - **English and Portuguese**, following the device locale.
 
@@ -60,6 +68,8 @@ flutter analyze
 flutter test                                    # app tests
 (cd packages/bitmapper_core && dart test)       # engine tests
 (cd packages/win98_ui && flutter test)          # kit tests, including goldens
+(cd packages/video_frames && flutter test)      # plugin Dart API tests
+packages/video_frames/tool/apple_check.sh       # plugin Swift code on macOS AVFoundation
 flutter gen-l10n                                # after editing lib/l10n/*.arb
 ```
 

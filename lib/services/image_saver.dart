@@ -6,6 +6,10 @@ import 'package:flutter_file_dialog/flutter_file_dialog.dart';
 abstract class ImageSaver {
   /// Returns the saved location, or `null` if the user cancelled.
   Future<String?> save(Uint8List bytes, String fileName, {String mimeType = 'image/png'});
+
+  /// Like [save], for a file already on disk (big videos never need to be
+  /// loaded into memory).
+  Future<String?> saveFile(String path, String fileName, {required String mimeType});
 }
 
 /// Opens the system "save file" dialog (like ColorTrix): the document picker
@@ -17,6 +21,17 @@ class FileDialogImageSaver implements ImageSaver {
   Future<String?> save(Uint8List bytes, String fileName, {String mimeType = 'image/png'}) {
     return FlutterFileDialog.saveFile(
       params: SaveFileDialogParams(data: bytes, fileName: fileName, mimeTypesFilter: [mimeType]),
+    );
+  }
+
+  @override
+  Future<String?> saveFile(String path, String fileName, {required String mimeType}) {
+    return FlutterFileDialog.saveFile(
+      params: SaveFileDialogParams(
+        sourceFilePath: path,
+        fileName: fileName,
+        mimeTypesFilter: [mimeType],
+      ),
     );
   }
 }

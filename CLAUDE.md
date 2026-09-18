@@ -57,6 +57,27 @@ filter, with a Windows 98 UI. Flutter is pinned by asdf in `.tool-versions`
     `palette` and `seed`.
   - Export uses `configFor(preview size)`, so the grid matches the preview,
     rendered at full source size.
+- **`packages/video_frames`** is a standalone plugin with no app
+  dependencies.
+  - Its API is defined with Pigeon in `pigeons/messages.dart`, and the
+    generated files are committed. After editing the definition, regenerate
+    them with `dart run pigeon --input pigeons/messages.dart`.
+  - Android is written in Kotlin (`FrameReader`, `FrameWriter`,
+    `ColorConversion`), iOS in Swift (the same names, with
+    `PixelConversion`).
+  - The Swift files other than the plugin glue don't import Flutter, which
+    is what lets `tool/apple_check.sh` run them on macOS.
+  - The Kotlin unit tests need JDK 17–21 (Android Studio's bundled JDK). The
+    system Java 25 is too new for Gradle 8.14.
+- **Video in the app:**
+  - `MediaModel` opens a video through `VideoIO` at preview size and fetches
+    frames with `frameAt` as the scrubber moves (the latest request wins).
+    It samples palette frames on demand with `paletteSamples`.
+  - `exportVideo` (`video_exporter.dart`) is the pure core of the export.
+    `exportVideoInIsolate` runs it on a worker isolate that talks to the
+    plugin through `BackgroundIsolateBinaryMessenger`. Cancel there is
+    cooperative, so the partial MP4 gets deleted.
+  - Tests use `FakeVideoIO` and `fakeVideoExporter` from `test/helpers.dart`.
 - **Side effects** (picker, saver, preset storage, filter runner, PNG
   encoder, clock) are injected through `AppServices`. Tests use the fakes in
   `test/helpers.dart`.

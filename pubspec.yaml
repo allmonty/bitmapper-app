@@ -15,6 +15,8 @@ dependencies:
     path: packages/bitmapper_core
   win98_ui:
     path: packages/win98_ui
+  video_frames:
+    path: packages/video_frames
   flutter_file_dialog: ^3.0.0
   image: ^4.5.4
   image_picker: ^1.2.1

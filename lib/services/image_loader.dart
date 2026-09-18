@@ -29,9 +29,18 @@ class LoadedAnimation extends LoadedMedia {
   final DecodedAnimation animation;
 }
 
-/// Picks and decodes a photo or GIF. Returns `null` when the user cancels.
+/// A video picked from the library (not decoded; it is read on demand).
+class PickedVideo {
+  const PickedVideo({required this.name, required this.path});
+  final String name;
+  final String path;
+}
+
+/// Picks and decodes a photo or GIF, or picks a video. Returns `null` when
+/// the user cancels.
 abstract class ImageLoader {
   Future<LoadedMedia?> load(ImageOrigin origin);
+  Future<PickedVideo?> pickVideo();
 }
 
 /// Picks with `image_picker` and decodes with the platform codec.
@@ -50,6 +59,12 @@ class PickerImageLoader implements ImageLoader {
     );
     if (file == null) return null;
     return decodeMedia(file.name, await file.readAsBytes());
+  }
+
+  @override
+  Future<PickedVideo?> pickVideo() async {
+    final file = await _picker.pickVideo(source: ImageSource.gallery);
+    return file == null ? null : PickedVideo(name: file.name, path: file.path);
   }
 }
 
