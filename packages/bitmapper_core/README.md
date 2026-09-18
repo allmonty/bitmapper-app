@@ -1,0 +1,52 @@
+# bitmapper_core
+
+Pure-Dart port of the Python `bitmapper` reference (`../../../bitmapper`):
+downsample to a grid → palette (fixed / custom / median cut / k-means) →
+dither (11 methods) → upscale with optional gutters → scanlines. It has no
+Flutter dependency, so it runs in `Isolate.run` and tests with `dart test`.
+
+```dart
+final result = applyBitmapFilter(
+  RgbImage.fromRgba(w, h, rgba),
+  getPreset('gameboy_camera').copyWith(gridCols: 120, gridRows: 90),
+  outputWidth: w,
+  outputHeight: h,
+);
+```
+
+## Differences from the Python reference
+
+These follow `docs/FLUTTER_MIGRATION.md`:
+
+- **No canvas resize.** The source is downsampled straight to the grid, and
+  the output size only affects the final upscale (§6.1).
+- **Deterministic k-means init.** Evenly spaced entries of the sorted unique
+  colors instead of PCG64 sampling (§6.4b).
+- **`random` dither uses xorshift128+.** It's seeded from `config.randomSeed`,
+  so a given seed always gives the same output (§6.4a).
+- **Median cut sorts stably.** NumPy's default argsort isn't stable, so ties
+  on the split channel can differ from Python.
+- **API shape.** `output_size` is an argument rather than a config field, and
+  colors are packed `0xRRGGBB` ints.
+
+Everything else is intended to be bit-exact: `array_split` block sizes,
+uint8 truncation, float operation order, and round-half-even in `subsample`.
+The tests compare stage outputs byte for byte against values produced by the
+Python code.
+
+## Palettes
+
+`lib/src/palettes_data.dart` is generated from Python:
+
+```sh
+../bitmapper/.venv/bin/python tool/gen_palettes.py   # from the repo root
+```
+
+## Benchmark
+
+```sh
+dart compile exe tool/benchmark.dart -o /tmp/bench && /tmp/bench
+```
+
+On a 1200×1200 source with a 150×150 grid, the full pipeline takes about
+25 ms (AOT, Apple Silicon). The Python reference takes about 240 ms.

@@ -1,0 +1,15 @@
+name: win98_ui_example
+description: Gallery of the win98_ui widgets.
+publish_to: none
+
+environment:
+  sdk: ^3.11.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  win98_ui:
+    path: ../
+
+dev_dependencies:
+  flutter_lints: ^6.0.0

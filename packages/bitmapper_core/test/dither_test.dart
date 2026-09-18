@@ -1,0 +1,137 @@
+import 'dart:typed_data';
+
+import 'package:bitmapper_core/bitmapper_core.dart';
+import 'package:test/test.dart';
+
+import 'helpers.dart';
+
+void main() {
+  final cga = getPalette('cga');
+  final bw = Uint8List.fromList([0, 0, 0, 255, 255, 255]);
+
+  // 6x4 horizontal gray ramp: np.linspace(0, 255, 6).astype(uint8).
+  RgbImage grad() {
+    const ramp = [0, 51, 102, 153, 204, 255];
+    return imageFromRows([
+      for (var y = 0; y < 4; y++) [for (final v in ramp) [v, v, v]],
+    ]);
+  }
+
+  test('lists none first, then sorted methods', () {
+    expect(listDitherMethods(), [
+      'none', 'atkinson', 'burkes', 'floyd_steinberg', 'jarvis_judice_ninke', //
+      'ordered', 'ordered_2x2', 'ordered_8x8', 'random', 'sierra', 'sierra_lite', 'stucki',
+    ]);
+  });
+
+  group('matches the Python reference byte-for-byte', () {
+    const expected = {
+      'none': [0, 0, 0, 0, 0, 0, 0, 0, 0, 85, 255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 85, 255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 85, 255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 85, 255, 255, 255, 255, 255, 255, 255, 255],
+      'floyd_steinberg': [0, 0, 0, 0, 0, 0, 85, 255, 255, 255, 85, 255, 85, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 85, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 255, 85, 255, 0, 0, 0, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 85, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255],
+      'atkinson': [0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 85, 255, 255, 255, 85, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 255, 85, 255, 0, 0, 0, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 85, 255, 255, 255, 255, 255, 255, 255, 255],
+      'ordered': [0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 85, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 85, 255, 255, 85, 255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 85, 255, 255, 85, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 85, 255, 255, 85, 255, 255, 255, 255, 255, 255, 255, 255],
+      'ordered_2x2': [0, 0, 0, 0, 0, 0, 0, 0, 0, 85, 255, 255, 85, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 85, 255, 255, 0, 0, 0, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 85, 255, 255, 85, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 85, 255, 255, 0, 0, 0, 255, 255, 255, 255, 255, 255],
+    };
+    for (final e in expected.entries) {
+      test(e.key, () {
+        expect(applyDither(grad(), cga, e.key).data, e.value);
+      });
+    }
+
+    test('floyd_steinberg at strength 0.5', () {
+      expect(applyDither(grad(), cga, 'floyd_steinberg', strength: 0.5).data, [0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 85, 255, 255, 255, 85, 255, 85, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 85, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 85, 255, 255, 255, 85, 255, 85, 255, 255, 255, 255, 255]);
+    });
+  });
+
+  for (final method in listDitherMethods()) {
+    test('$method only uses palette colors', () {
+      final out = applyDither(randomImage(20, 20), cga, method);
+      expect(onlyUsesPalette(out, cga), isTrue);
+      expect(out.width, 20);
+      expect(out.height, 20);
+    });
+
+    test('$method at strength 0 equals none', () {
+      final img = randomImage(12, 12, seed: 4);
+      expect(applyDither(img, cga, method, strength: 0).data,
+          applyDither(img, cga, 'none').data);
+    });
+  }
+
+  for (final method in kDiffusionKernels.keys) {
+    test('$method roughly preserves mean brightness on a gradient', () {
+      final img = gradientImage();
+      final out = applyDither(img, bw, method);
+      double mean(Uint8List d) => d.fold<int>(0, (a, b) => a + b) / d.length;
+      expect((mean(out.data) - mean(img.data)).abs(), lessThan(20));
+    });
+  }
+
+  test('bayer matrices match the recursive construction', () {
+    expect(bayerMatrix(1), [0]);
+    expect(bayerMatrix(2), [0, 2, 3, 1]);
+    expect(bayerMatrix(4), [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5]);
+    final m8 = bayerMatrix(8);
+    expect(m8.toSet(), Set.of(List.generate(64, (i) => i)));
+    expect(() => bayerMatrix(3), throwsArgumentError);
+  });
+
+  test('ordered matrix sizes give different results', () {
+    final img = gradientImage();
+    final a = applyDither(img, bw, 'ordered_2x2').data;
+    final b = applyDither(img, bw, 'ordered').data;
+    final c = applyDither(img, bw, 'ordered_8x8').data;
+    expect(a, isNot(b));
+    expect(b, isNot(c));
+  });
+
+  test('ordered differs from floyd_steinberg', () {
+    final img = gradientImage();
+    expect(applyDither(img, bw, 'ordered').data,
+        isNot(applyDither(img, bw, 'floyd_steinberg').data));
+  });
+
+  test('random dither is deterministic per seed and varies across seeds', () {
+    final img = gradientImage();
+    final a = applyDither(img, bw, 'random', seed: 1).data;
+    final b = applyDither(img, bw, 'random', seed: 1).data;
+    final c = applyDither(img, bw, 'random', seed: 2).data;
+    expect(a, b);
+    expect(a, isNot(c));
+  });
+
+  test('negative strength and unknown methods throw', () {
+    expect(() => applyDither(gradientImage(), bw, 'none', strength: -1), throwsArgumentError);
+    expect(() => applyDither(gradientImage(), bw, 'nope'), throwsArgumentError);
+    expect(() => errorDiffusion(gradientImage(), bw, 'ordered'), throwsArgumentError);
+  });
+
+  test('error diffusion honours cancellation', () {
+    var calls = 0;
+    expect(
+      () => errorDiffusion(gradientImage(), bw, 'floyd_steinberg',
+          isCancelled: () => ++calls > 3),
+      throwsA(isA<FilterCancelled>()),
+    );
+    expect(calls, 4);
+  });
+
+  group('XorShift128Plus', () {
+    test('doubles are in [0, 1)', () {
+      final rng = XorShift128Plus(123);
+      for (var i = 0; i < 1000; i++) {
+        final v = rng.nextDouble();
+        expect(v, greaterThanOrEqualTo(0));
+        expect(v, lessThan(1));
+      }
+    });
+    test('is roughly uniform', () {
+      final rng = XorShift128Plus(7);
+      var sum = 0.0;
+      for (var i = 0; i < 10000; i++) {
+        sum += rng.nextDouble();
+      }
+      expect(sum / 10000, closeTo(0.5, 0.02));
+    });
+  });
+}

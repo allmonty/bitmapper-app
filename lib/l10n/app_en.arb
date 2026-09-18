@@ -1,0 +1,203 @@
+{
+  "@@locale": "en",
+  "appTitle": "Bitmapper",
+  "windowTitle": "Bitmapper - {name}",
+  "@windowTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "untitled": "(untitled)",
+  "menuFile": "File",
+  "menuOpen": "Open...",
+  "menuCamera": "Take photo...",
+  "menuSave": "Save as...",
+  "menuClose": "Close image",
+  "menuPresets": "Presets",
+  "menuSavePreset": "Save current...",
+  "menuHelp": "Help",
+  "menuAbout": "About Bitmapper...",
+  "emptyTitle": "Open an image",
+  "emptyBody": "Pick a photo to turn into retro pixel art.",
+  "emptyGallery": "Gallery...",
+  "emptyCamera": "Camera...",
+  "holdToCompare": "Hold to compare",
+  "tabPalette": "Palette",
+  "tabDither": "Dither",
+  "tabGrid": "Grid",
+  "tabAdjust": "Adjust",
+  "tabEffects": "Effects",
+  "tabPresets": "Presets",
+  "paletteMode": "Mode",
+  "paletteAuto": "Auto (from image)",
+  "paletteFixed": "Fixed",
+  "paletteCustom": "Custom",
+  "paletteAlgorithm": "Algorithm",
+  "algoMedianCut": "Median cut",
+  "algoKmeans": "K-means",
+  "fixedPalette": "Palette",
+  "colorsGroup": "Colors",
+  "bitDepth": "Bit depth: {bits} ({colors} colors)",
+  "@bitDepth": {
+    "placeholders": {
+      "bits": {
+        "type": "int"
+      },
+      "colors": {
+        "type": "int"
+      }
+    }
+  },
+  "trueColor": "True color (no quantizing)",
+  "customColors": "Custom colors",
+  "addColor": "Add...",
+  "editColor": "Edit...",
+  "removeColor": "Remove",
+  "ditherMethod": "Method",
+  "ditherStrength": "Strength: {percent}%",
+  "@ditherStrength": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "gridColumns": "Pixel columns: {cols}",
+  "@gridColumns": {
+    "placeholders": {
+      "cols": {
+        "type": "int"
+      }
+    }
+  },
+  "gridSampling": "Block sampling",
+  "samplingAverage": "Average",
+  "samplingNearest": "Nearest (center)",
+  "gridGap": "Grid gap: {px} px",
+  "@gridGap": {
+    "placeholders": {
+      "px": {
+        "type": "int"
+      }
+    }
+  },
+  "gridGapColor": "Gap color...",
+  "adjustContrast": "Contrast: {value}",
+  "@adjustContrast": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "adjustSaturation": "Saturation: {value}",
+  "@adjustSaturation": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "adjustGamma": "Gamma: {value}",
+  "@adjustGamma": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "reset": "Reset",
+  "effectScanlines": "Scanlines: {percent}%",
+  "@effectScanlines": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "presetsApply": "Apply",
+  "presetsSave": "Save current...",
+  "presetsRename": "Rename...",
+  "presetsDelete": "Delete",
+  "presetBuiltIn": "{name} (built-in)",
+  "@presetBuiltIn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "presetNameTitle": "Save preset",
+  "presetNamePrompt": "Preset name:",
+  "presetDefaultName": "My preset",
+  "renameTitle": "Rename preset",
+  "deleteTitle": "Delete preset",
+  "deleteConfirm": "Delete \"{name}\"?",
+  "@deleteConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "ok": "OK",
+  "cancel": "Cancel",
+  "yes": "Yes",
+  "no": "No",
+  "statusReady": "Ready",
+  "statusNoImage": "No image",
+  "statusCells": "{cols}×{rows} cells",
+  "@statusCells": {
+    "placeholders": {
+      "cols": {
+        "type": "int"
+      },
+      "rows": {
+        "type": "int"
+      }
+    }
+  },
+  "statusColors": "{count} colors",
+  "@statusColors": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "statusMs": "{ms} ms",
+  "@statusMs": {
+    "placeholders": {
+      "ms": {
+        "type": "int"
+      }
+    }
+  },
+  "statusWorking": "Working...",
+  "statusSaved": "Saved {name}",
+  "@statusSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "statusSaving": "Saving...",
+  "savingTitle": "Saving",
+  "savingBody": "Rendering the full-size image...",
+  "errorTitle": "Bitmapper",
+  "errorLoad": "Couldn't open that image.",
+  "errorSave": "Couldn't save the image.",
+  "errorFilter": "Couldn't apply the filter.",
+  "aboutTitle": "About Bitmapper",
+  "aboutBody": "Bitmapper {version}\nA retro pixel-art photo filter.",
+  "@aboutBody": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  }
+}
