@@ -28,6 +28,7 @@ class AdjustTab extends StatelessWidget {
             divisions: 40,
             onChanged: editor.setContrast,
           ),
+          kControlGap,
           LabeledSlider(
             label: l10n.adjustSaturation(fmt(config.saturation)),
             value: config.saturation,
@@ -36,6 +37,7 @@ class AdjustTab extends StatelessWidget {
             divisions: 40,
             onChanged: editor.setSaturation,
           ),
+          kControlGap,
           LabeledSlider(
             label: l10n.adjustGamma(fmt(config.gamma)),
             value: config.gamma,

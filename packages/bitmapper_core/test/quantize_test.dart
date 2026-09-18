@@ -36,8 +36,37 @@ void main() {
       [128.0, 128.0, 128.0],
       [200.0, 10.0, 0.0],
     ]) {
-      expect(nearestCenterIndex(c[0], c[1], c[2], centers),
-          nearestIndex(c[0], c[1], c[2], palette));
+      expect(
+        nearestCenterIndex(c[0], c[1], c[2], centers),
+        nearestIndex(c[0], c[1], c[2], palette),
+      );
     }
+  });
+
+  group('PaletteSearch', () {
+    // Deterministic pseudo-random bytes.
+    final rng = XorShift128Plus(99);
+    int byte() => rng.nextInt64() & 0xFF;
+
+    for (final size in [1, 2, 7, 24, 25, 64, 256, 1000, 4096]) {
+      test('matches nearestIndex exactly for a $size-color palette', () {
+        // Coarse values force many exact ties and duplicate entries.
+        final palette = Uint8List.fromList([for (var i = 0; i < size * 3; i++) byte() & 0xF0]);
+        final search = PaletteSearch(palette);
+        for (var q = 0; q < 3000; q++) {
+          final r = (byte() & 0xF8).toDouble(), g = (byte() & 0xF8).toDouble(), b = byte() + 0.5;
+          expect(search.nearest(r, g, b), nearestIndex(r, g, b, palette));
+        }
+      });
+    }
+
+    test('float centers match nearestCenterIndex', () {
+      final centers = Float64List.fromList([for (var i = 0; i < 300 * 3; i++) byte() / 3]);
+      final search = PaletteSearch.floats(centers);
+      for (var q = 0; q < 2000; q++) {
+        final r = byte().toDouble(), g = byte().toDouble(), b = byte().toDouble();
+        expect(search.nearest(r, g, b), nearestCenterIndex(r, g, b, centers));
+      }
+    });
   });
 }

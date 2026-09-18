@@ -32,18 +32,6 @@ double _bucketPriority(List<int> bucket) {
   return maxRange.toDouble() * bucket.length;
 }
 
-/// Stable sort, since `List.sort` makes no stability guarantee.
-void _stableSort<T>(List<T> list, int Function(T a, T b) compare) {
-  final indexed = List.generate(list.length, (i) => (i, list[i]));
-  indexed.sort((a, b) {
-    final c = compare(a.$2, b.$2);
-    return c != 0 ? c : a.$1.compareTo(b.$1);
-  });
-  for (var i = 0; i < list.length; i++) {
-    list[i] = indexed[i].$2;
-  }
-}
-
 /// Stable O(n) sort of packed colors by one 8-bit channel.
 List<int> _countingSortByChannel(List<int> colors, int channel) {
   final counts = List<int>.filled(257, 0);
@@ -79,21 +67,35 @@ Uint8List _padPalette(List<List<int>> colors, int nColors) {
 /// so results are fully deterministic.
 Uint8List medianCut(Uint8List rgb, int nColors) {
   if (nColors < 1) throw ArgumentError.value(nColors, 'nColors', 'must be >= 1');
+  // Python re-sorts the whole bucket list by priority (stable) on every
+  // pass and splits the last one. Keeping the list sorted and inserting the
+  // two halves with an upper-bound search gives the identical order, since
+  // the halves were appended after every existing bucket; priorities are
+  // computed once per bucket. On the final pass Python appends the halves
+  // without sorting again, and palette order matters for ties, so do too.
   final buckets = <List<int>>[uniqueColors(rgb)];
+  final priorities = <double>[_bucketPriority(buckets.first)];
+
+  void insertSorted(List<int> bucket) {
+    final priority = _bucketPriority(bucket);
+    var lo = 0, hi = priorities.length;
+    while (lo < hi) {
+      final mid = (lo + hi) >> 1;
+      if (priorities[mid] <= priority) {
+        lo = mid + 1;
+      } else {
+        hi = mid;
+      }
+    }
+    buckets.insert(lo, bucket);
+    priorities.insert(lo, priority);
+  }
 
   while (buckets.length < nColors) {
-    // Stable-sort by priority and take the last bucket, exactly like the
-    // Python `buckets.sort(key=...)`; priorities are computed once per pass.
-    final priorities = [for (final b in buckets) _bucketPriority(b)];
-    final order = List<int>.generate(buckets.length, (i) => i);
-    _stableSort<int>(order, (a, b) => priorities[a].compareTo(priorities[b]));
-    final reordered = [for (final i in order) buckets[i]];
-    buckets
-      ..clear()
-      ..addAll(reordered);
     final bucket = buckets.last;
     if (bucket.length <= 1) break;
     buckets.removeLast();
+    priorities.removeLast();
 
     var channel = 0, bestRange = -1;
     for (var c = 0; c < 3; c++) {
@@ -110,8 +112,15 @@ Uint8List medianCut(Uint8List rgb, int nColors) {
     }
     final sorted = _countingSortByChannel(bucket, channel);
     final mid = sorted.length ~/ 2;
-    buckets.add(sorted.sublist(0, mid));
-    buckets.add(sorted.sublist(mid));
+    final low = sorted.sublist(0, mid), high = sorted.sublist(mid);
+    if (buckets.length + 2 >= nColors) {
+      buckets
+        ..add(low)
+        ..add(high);
+    } else {
+      insertSorted(low);
+      insertSorted(high);
+    }
   }
 
   final colors = <List<int>>[];
@@ -147,11 +156,12 @@ Uint8List kmeans(Uint8List rgb, int nColors, {int iterations = 10}) {
 
   final pixelCount = rgb.length ~/ 3;
   for (var it = 0; it < iterations; it++) {
+    final search = PaletteSearch.floats(centers);
     final sums = Float64List(k * 3);
     final counts = Int32List(k);
     for (var p = 0; p < pixelCount; p++) {
       final r = rgb[p * 3].toDouble(), g = rgb[p * 3 + 1].toDouble(), b = rgb[p * 3 + 2].toDouble();
-      final best = nearestCenterIndex(r, g, b, centers);
+      final best = search.nearest(r, g, b);
       sums[best * 3] += r;
       sums[best * 3 + 1] += g;
       sums[best * 3 + 2] += b;
@@ -169,15 +179,13 @@ Uint8List kmeans(Uint8List rgb, int nColors, {int iterations = 10}) {
   }
 
   final colors = [
-    for (var i = 0; i < k; i++)
-      [for (var c = 0; c < 3; c++) clampToByte(centers[i * 3 + c])],
+    for (var i = 0; i < k; i++) [for (var c = 0; c < 3; c++) clampToByte(centers[i * 3 + c])],
   ];
   return _padPalette(colors, nColors);
 }
 
 /// Build an `nColors` palette from the image's own colors.
-Uint8List generatePalette(Uint8List rgb, int nColors,
-    {String algorithm = 'median_cut'}) {
+Uint8List generatePalette(Uint8List rgb, int nColors, {String algorithm = 'median_cut'}) {
   switch (algorithm) {
     case 'median_cut':
       return medianCut(rgb, nColors);

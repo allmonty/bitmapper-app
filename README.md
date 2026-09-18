@@ -23,9 +23,10 @@ hold-to-compare, and zoom.
 - **Controls:**
   - Palette: auto (median cut or k-means), 14 fixed palettes, or a custom
     palette edited with a Win98 color dialog.
-  - Bit depth and true color.
+  - Bit depth: up to 12 bits (4096 colors) in auto mode, then true color;
+    up to 8 bits for fixed and custom palettes.
   - 12 dither methods and dither strength.
-  - Pixel columns (rows follow the aspect ratio), block sampling, and grid
+  - Pixel columns from 16 to 512 (rows follow the aspect ratio), block sampling, and grid
     gap with gap color.
   - Contrast, saturation, gamma, and scanlines.
 - **Presets:** the 8 built-in looks from the Python reference, plus user

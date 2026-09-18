@@ -1,0 +1,31 @@
+{
+    // Run Bitmapper on Android. "deviceId" is the first Android emulator's
+    // default id; run `flutter devices` and change it for a physical phone.
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Android (debug)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main.dart",
+            "deviceId": "emulator-5554"
+        },
+        {
+            // Use profile mode to judge filter/preview performance.
+            "name": "Android (profile)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main.dart",
+            "deviceId": "emulator-5554",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "Android (release)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main.dart",
+            "deviceId": "emulator-5554",
+            "flutterMode": "release"
+        }
+    ]
+}

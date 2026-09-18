@@ -50,3 +50,15 @@ dart compile exe tool/benchmark.dart -o /tmp/bench && /tmp/bench
 
 On a 1200×1200 source with a 150×150 grid, the full pipeline takes about
 25 ms (AOT, Apple Silicon). The Python reference takes about 240 ms.
+
+Large palettes stay fast because of two optimizations. Tests check that
+both give exactly the same output as the straightforward versions:
+
+- `PaletteSearch`: nearest-color lookups over entries sorted by red, with
+  early exit, using the same distance and lowest-index tie rule as
+  `nearestIndex`.
+- Median cut keeps its bucket list sorted incrementally instead of
+  re-sorting it on every split.
+
+With these, a 12-bit (4096-color) auto palette on a 120-column grid takes
+about 130 ms, where it used to take 13 s.

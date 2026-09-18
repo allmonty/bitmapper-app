@@ -4,7 +4,19 @@ import 'package:flutter/foundation.dart';
 import 'preset.dart';
 
 const kMinColumns = 16;
-const kMaxColumns = 320;
+const kMaxColumns = 512;
+
+/// Deepest auto-generated palette (4096 colors). The slider's next stop is
+/// [kTrueColorStop].
+const kMaxAutoBitDepth = 12;
+
+/// Fixed and custom palettes have at most 256 colors, so more bits than
+/// this would change nothing.
+const kMaxPaletteBitDepth = 8;
+
+/// The bit-depth slider stop, one past [kMaxAutoBitDepth], meaning true
+/// color (auto mode only).
+const kTrueColorStop = kMaxAutoBitDepth + 1;
 
 /// Bit depth used for the "true color" checkbox (auto mode, >= 16 bits).
 const kTrueColorBitDepth = 24;
@@ -38,6 +50,10 @@ class EditorModel extends ChangeNotifier {
   int _lastPaletteDepth = kDefaultConfig.bitDepth;
 
   int get columns => _config.gridCols;
+
+  /// Highest bit depth for the current palette mode.
+  int get maxBitDepth =>
+      _config.paletteMode == PaletteMode.auto ? kMaxAutoBitDepth : kMaxPaletteBitDepth;
   bool get trueColor => _config.bitDepth >= kTrueColorThreshold;
 
   /// The config to render for a `width x height` source: rows follow the
@@ -62,9 +78,9 @@ class EditorModel extends ChangeNotifier {
     if (mode == PaletteMode.custom && (next.customPalette?.isEmpty ?? true)) {
       next = next.copyWith(customPalette: kDefaultCustomPalette);
     }
-    // True color only exists in auto mode; fixed/custom cap at 8 bits here.
-    if (mode != PaletteMode.auto && next.bitDepth > 8) {
-      next = next.copyWith(bitDepth: _lastPaletteDepth);
+    // True color and depths past 8 bits only exist in auto mode.
+    if (mode != PaletteMode.auto && next.bitDepth > kMaxPaletteBitDepth) {
+      next = next.copyWith(bitDepth: _lastPaletteDepth.clamp(1, kMaxPaletteBitDepth));
     }
     _set(next);
   }
@@ -72,7 +88,14 @@ class EditorModel extends ChangeNotifier {
   void setFixedPalette(String name) => _set(_config.copyWith(fixedPalette: name));
   void setPaletteAlgorithm(String algorithm) => _set(_config.copyWith(paletteAlgorithm: algorithm));
 
+  /// Set the palette bit depth, clamped to [maxBitDepth]. In auto mode,
+  /// [kTrueColorStop] or more switches to true color.
   void setBitDepth(int bits) {
+    if (_config.paletteMode == PaletteMode.auto && bits >= kTrueColorStop) {
+      setTrueColor(true);
+      return;
+    }
+    bits = bits.clamp(1, maxBitDepth);
     _lastPaletteDepth = bits;
     _set(_config.copyWith(bitDepth: bits));
   }
@@ -114,8 +137,9 @@ class EditorModel extends ChangeNotifier {
   void applyPreset(AppPreset preset) {
     var next = preset.config;
     if (preset.builtIn) next = next.copyWith(gridCols: _config.gridCols);
-    // Built-in fixed/custom presets can use bit depth 8; keep true color off.
-    if (next.bitDepth < kTrueColorThreshold) _lastPaletteDepth = next.bitDepth.clamp(1, 8);
+    if (next.bitDepth < kTrueColorThreshold) {
+      _lastPaletteDepth = next.bitDepth.clamp(1, kMaxAutoBitDepth);
+    }
     _set(next);
   }
 

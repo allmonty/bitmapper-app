@@ -18,6 +18,7 @@ class PaletteTab extends StatelessWidget {
     final editor = context.watch<EditorModel>();
     final config = editor.config;
     final mode = config.paletteMode;
+    final maxStop = mode == PaletteMode.auto ? kTrueColorStop : kMaxPaletteBitDepth;
 
     return Win98ScrollView(
       child: Column(
@@ -54,11 +55,6 @@ class PaletteTab extends StatelessWidget {
               ],
               onChanged: editor.trueColor ? null : editor.setPaletteAlgorithm,
             ),
-            Win98Checkbox(
-              value: editor.trueColor,
-              label: l10n.trueColor,
-              onChanged: editor.setTrueColor,
-            ),
           ],
           if (mode == PaletteMode.fixed) ...[
             Text(l10n.fixedPalette),
@@ -87,15 +83,16 @@ class PaletteTab extends StatelessWidget {
           kControlGap,
           Win98GroupBox(
             label: l10n.colorsGroup,
+            // Auto mode: 1–12 bits, then a final "true color" stop.
             child: LabeledSlider(
               label: editor.trueColor
                   ? l10n.trueColor
                   : l10n.bitDepth(config.bitDepth, config.nColors),
-              value: editor.trueColor ? 8 : config.bitDepth.toDouble(),
+              value: editor.trueColor ? kTrueColorStop.toDouble() : config.bitDepth.toDouble(),
               min: 1,
-              max: 8,
-              divisions: 7,
-              onChanged: editor.trueColor ? null : (v) => editor.setBitDepth(v.round()),
+              max: maxStop.toDouble(),
+              divisions: maxStop - 1,
+              onChanged: (v) => editor.setBitDepth(v.round()),
             ),
           ),
         ],

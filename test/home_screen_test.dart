@@ -98,6 +98,24 @@ void main() {
     expect(editorOf(tester).config.fixedPalette, 'gameboy');
   });
 
+  testWidgets('bit depth slider reaches 12 bits and then true color', (tester) async {
+    await pumpApp(tester, TestApp());
+    final slider = find.byType(Win98Slider); // the only slider on the Palette tab
+    await tester.ensureVisible(slider);
+    await tester.pumpAndSettle();
+    final rect = tester.getRect(slider);
+    // The last notch is true color; the one before it is 12 bits.
+    await tester.tapAt(Offset(rect.right - 7, rect.center.dy));
+    await tester.pump();
+    expect(editorOf(tester).trueColor, isTrue);
+    expect(find.text('True color (no quantizing)'), findsOneWidget);
+    final notch = (rect.width - 14) / 12;
+    await tester.tapAt(Offset(rect.right - 7 - notch, rect.center.dy));
+    await tester.pump();
+    expect(editorOf(tester).config.bitDepth, 12);
+    expect(find.text('Bit depth: 12 (4096 colors)'), findsOneWidget);
+  });
+
   testWidgets('dither tab changes the method', (tester) async {
     await pumpApp(tester, TestApp());
     await tester.tap(find.text('Dither'));

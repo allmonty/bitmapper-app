@@ -83,13 +83,18 @@ const _orderedSizes = {'ordered': 4, 'ordered_2x2': 2, 'ordered_8x8': 8};
 
 /// `none` first, then every other method sorted by name.
 List<String> listDitherMethods() => [
-      'none',
-      ...([...kDiffusionKernels.keys, ..._orderedSizes.keys, 'random']..sort()),
-    ];
+  'none',
+  ...([...kDiffusionKernels.keys, ..._orderedSizes.keys, 'random']..sort()),
+];
 
 /// Raster-scan error diffusion onto `palette` with `kernel`.
-RgbImage errorDiffusion(RgbImage image, Uint8List palette, String method,
-    {double strength = 1.0, CancelCheck? isCancelled}) {
+RgbImage errorDiffusion(
+  RgbImage image,
+  Uint8List palette,
+  String method, {
+  double strength = 1.0,
+  CancelCheck? isCancelled,
+}) {
   final kernel = kDiffusionKernels[method];
   if (kernel == null) {
     throw ArgumentError('unknown error-diffusion kernel: "$method"');
@@ -107,12 +112,13 @@ RgbImage errorDiffusion(RgbImage image, Uint8List palette, String method,
     scaled[t] = taps[t].weight * strength / kernel.divisor;
   }
 
+  final search = PaletteSearch(palette);
   for (var y = 0; y < h; y++) {
     if (isCancelled != null && isCancelled()) throw const FilterCancelled();
     for (var x = 0; x < w; x++) {
       final i = (y * w + x) * 3;
       final oldR = img[i], oldG = img[i + 1], oldB = img[i + 2];
-      final k = nearestIndex(oldR, oldG, oldB, palette) * 3;
+      final k = search.nearest(oldR, oldG, oldB) * 3;
       final newR = palette[k].toDouble();
       final newG = palette[k + 1].toDouble();
       final newB = palette[k + 2].toDouble();
@@ -171,8 +177,7 @@ double _noiseStep(Uint8List palette) {
 double _clamp255(double v) => v < 0 ? 0 : (v > 255 ? 255 : v);
 
 /// Ordered (Bayer) dithering with a `matrixSize` threshold map.
-RgbImage ordered(RgbImage image, Uint8List palette,
-    {int matrixSize = 4, double strength = 1.0}) {
+RgbImage ordered(RgbImage image, Uint8List palette, {int matrixSize = 4, double strength = 1.0}) {
   final matrix = bayerMatrix(matrixSize);
   final cells = matrixSize * matrixSize;
   final threshold = Float64List(cells);
@@ -197,8 +202,7 @@ RgbImage ordered(RgbImage image, Uint8List palette,
 
 /// White-noise dithering: uniform noise in [-0.5, 0.5) scaled to the
 /// palette spacing, shared across channels. Deterministic for a `seed`.
-RgbImage randomDither(RgbImage image, Uint8List palette,
-    {double strength = 1.0, int seed = 0}) {
+RgbImage randomDither(RgbImage image, Uint8List palette, {double strength = 1.0, int seed = 0}) {
   final rng = XorShift128Plus(seed);
   final step = _noiseStep(palette);
   final perturbed = Float64List(image.data.length);
@@ -213,8 +217,14 @@ RgbImage randomDither(RgbImage image, Uint8List palette,
 
 /// Dither `image` onto `palette` with `method` (see [listDitherMethods]).
 /// `strength` 0 behaves like `none`; 1 is full-strength.
-RgbImage applyDither(RgbImage image, Uint8List palette, String method,
-    {double strength = 1.0, int seed = 0, CancelCheck? isCancelled}) {
+RgbImage applyDither(
+  RgbImage image,
+  Uint8List palette,
+  String method, {
+  double strength = 1.0,
+  int seed = 0,
+  CancelCheck? isCancelled,
+}) {
   if (strength < 0) {
     throw ArgumentError.value(strength, 'strength', 'must be >= 0');
   }
@@ -222,8 +232,7 @@ RgbImage applyDither(RgbImage image, Uint8List palette, String method,
     return RgbImage(image.width, image.height, nearestColor(image.data, palette));
   }
   if (kDiffusionKernels.containsKey(method)) {
-    return errorDiffusion(image, palette, method,
-        strength: strength, isCancelled: isCancelled);
+    return errorDiffusion(image, palette, method, strength: strength, isCancelled: isCancelled);
   }
   final size = _orderedSizes[method];
   if (size != null) {

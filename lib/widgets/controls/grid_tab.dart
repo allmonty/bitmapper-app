@@ -58,6 +58,7 @@ class GridTab extends StatelessWidget {
             divisions: 4,
             onChanged: (v) => editor.setGridGap(v.round()),
           ),
+          const SizedBox(height: 6),
           Align(
             alignment: Alignment.centerLeft,
             child: Win98Button(

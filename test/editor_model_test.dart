@@ -112,6 +112,31 @@ void main() {
       expect(model.config.bitDepth, 3);
     });
 
+    test('auto mode goes up to 12 bits, then true color', () {
+      expect(model.maxBitDepth, 12);
+      model.setBitDepth(12);
+      expect(model.config.bitDepth, 12);
+      expect(model.config.nColors, 4096);
+      expect(model.trueColor, isFalse);
+      model.setBitDepth(kTrueColorStop);
+      expect(model.trueColor, isTrue);
+      model.setBitDepth(10);
+      expect(model.trueColor, isFalse);
+      expect(model.config.bitDepth, 10);
+    });
+
+    test('fixed and custom palettes cap at 8 bits', () {
+      model.setBitDepth(11);
+      model.setPaletteMode(PaletteMode.fixed);
+      expect(model.maxBitDepth, 8);
+      expect(model.config.bitDepth, 8);
+      model.setBitDepth(kTrueColorStop);
+      expect(model.config.bitDepth, 8);
+      expect(model.trueColor, isFalse);
+      model.setPaletteMode(PaletteMode.custom);
+      expect(model.config.bitDepth, 8);
+    });
+
     test('leaving auto mode drops true color', () {
       model.setBitDepth(5);
       model.setTrueColor(true);
