@@ -15,3 +15,4 @@ export 'src/pipeline.dart';
 export 'src/presets.dart';
 export 'src/prng.dart';
 export 'src/quantize.dart';
+export 'src/sequence.dart';

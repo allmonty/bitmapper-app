@@ -285,4 +285,86 @@ class AppLocalizationsPt extends AppLocalizations {
   String aboutBody(String version) {
     return 'Bitmapper $version\nUm filtro de fotos em pixel art retrô.';
   }
+
+  @override
+  String get tabAnimation => 'Animação';
+
+  @override
+  String frameLabel(int current, int total) {
+    return 'Quadro $current / $total';
+  }
+
+  @override
+  String get paletteAcrossFrames => 'Paleta entre quadros';
+
+  @override
+  String get strategyFirst => 'Primeiro quadro';
+
+  @override
+  String get strategySampled => 'Quadros amostrados';
+
+  @override
+  String get strategyPerFrame => 'Cada quadro (pode piscar)';
+
+  @override
+  String paletteSamples(int count) {
+    return 'Amostras: $count quadros';
+  }
+
+  @override
+  String get strategyOnlyAuto => 'Só se aplica a paletas automáticas.';
+
+  @override
+  String get animateNoise => 'Animar ruído aleatório';
+
+  @override
+  String get gifSize => 'Tamanho do GIF';
+
+  @override
+  String gifOriginal(int width, int height) {
+    return 'Tamanho original ($width×$height)';
+  }
+
+  @override
+  String get gifPerCell => 'Pixels por célula';
+
+  @override
+  String gifPerCellValue(int pixels, int width, int height) {
+    return '$pixels px por célula ($width×$height)';
+  }
+
+  @override
+  String get animationFriendly => 'Usar ajustes para animação';
+
+  @override
+  String get animationFriendlyHint =>
+      'Uma paleta amostrada entre quadros e dither ordenado, que ficam estáveis entre quadros.';
+
+  @override
+  String get statusShimmer => 'O dither pode tremular entre quadros';
+
+  @override
+  String get exportTitle => 'Salvando animação';
+
+  @override
+  String exportProgress(int done, int total) {
+    return 'Quadro $done de $total';
+  }
+
+  @override
+  String get exportPreparing => 'Preparando...';
+
+  @override
+  String statusSavedLossy(String name) {
+    return '$name salvo (alguns quadros reduzidos a 256 cores)';
+  }
+
+  @override
+  String get gifColorLimit =>
+      'GIF suporta até 256 cores por quadro; paletas maiores são reduzidas ao salvar.';
+
+  @override
+  String animationTruncated(int count) {
+    return 'Este GIF é longo, então só os primeiros $count quadros foram carregados.';
+  }
 }

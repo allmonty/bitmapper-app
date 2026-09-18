@@ -34,6 +34,20 @@ hold-to-compare, and zoom.
 - **Save as** renders at full resolution, encodes PNG in an isolate, and
   opens the system save dialog (`flutter_file_dialog`). It needs no
   permissions.
+- **Animated GIFs:** open a GIF, scrub through its frames, and save it back
+  as an animated GIF. Up to 1000 frames are loaded, capped at 640 px on the
+  long edge.
+  - **Palette across frames:** built from the first frame, from sampled
+    frames, or from each frame. Each frame may flicker.
+  - **Random noise:** static (the same on every frame) or animated.
+  - **Size:** the original size, or N pixels per grid cell for crisp pixel
+    art and small files.
+  - **Animation-friendly settings** (sampled palette, ordered dither) are
+    one button away and never applied automatically. The status bar warns
+    when an error-diffusion dither may shimmer.
+  - Export runs on a worker isolate, with progress and a Cancel button.
+    Frames of up to 256 colors are written exactly; deeper palettes are
+    reduced by the GIF encoder.
 - **Hold to compare** the original, and **pinch to zoom**.
 - **English and Portuguese**, following the device locale.
 

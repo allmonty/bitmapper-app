@@ -1,6 +1,7 @@
 import 'package:bitmapper_core/bitmapper_core.dart';
 import 'package:flutter/foundation.dart';
 
+import '../services/gif_io.dart';
 import 'preset.dart';
 
 const kMinColumns = 16;
@@ -46,6 +47,16 @@ class EditorModel extends ChangeNotifier {
 
   BitmapFilterConfig _config;
   BitmapFilterConfig get config => _config;
+
+  /// Output size of animated GIF exports (not part of presets).
+  GifSize _gifSize = const GifSizePerCell(4);
+  GifSize get gifSize => _gifSize;
+
+  void setGifSize(GifSize size) {
+    if (size == _gifSize) return;
+    _gifSize = size;
+    notifyListeners();
+  }
 
   int _lastPaletteDepth = kDefaultConfig.bitDepth;
 
@@ -129,6 +140,26 @@ class EditorModel extends ChangeNotifier {
   void setSaturation(double v) => _set(_config.copyWith(saturation: v));
   void setGamma(double v) => _set(_config.copyWith(gamma: v));
   void setScanlines(double v) => _set(_config.copyWith(scanlines: v));
+
+  void setPaletteStrategy(PaletteStrategy strategy) =>
+      _set(_config.copyWith(paletteStrategy: strategy));
+  void setPaletteSamples(int n) =>
+      _set(_config.copyWith(paletteSamples: n.clamp(kMinPaletteSamples, kMaxPaletteSamples)));
+  void setAnimateNoise(bool on) => _set(_config.copyWith(animateNoise: on));
+
+  /// Settings that stay stable from frame to frame: one palette sampled
+  /// across the animation, and ordered dithering (error diffusion shimmers).
+  /// Offered to the user, never applied automatically.
+  void applyAnimationFriendly() =>
+      _set(_config.copyWith(paletteStrategy: PaletteStrategy.sampled, dither: 'ordered'));
+
+  /// Whether [applyAnimationFriendly] would change anything.
+  bool get isAnimationFriendly =>
+      _config.paletteStrategy == PaletteStrategy.sampled && !isErrorDiffusion;
+
+  /// Error-diffusion dithers change pattern whenever a pixel changes, so
+  /// they may shimmer between animation frames.
+  bool get isErrorDiffusion => kDiffusionKernels.containsKey(_config.dither);
 
   void resetAdjustments() => _set(_config.copyWith(contrast: 1, saturation: 1, gamma: 1));
 

@@ -34,14 +34,27 @@ filter, with a Windows 98 UI. Flutter is pinned by asdf in `.tool-versions`
 - **App (`lib/`):**
   - State uses Provider with `ChangeNotifier`.
   - `EditorModel` owns the `BitmapFilterConfig`.
-  - `ImageModel` holds the full source plus a preview copy of at most
-    1024 px.
+  - `MediaModel` holds a still (the full source plus a preview copy of at
+    most 1024 px) or an animation.
   - `PresetsModel` holds built-in and user presets.
   - `FilterController` debounces preview renders, keeps one run in flight
     with the latest request winning, and drops results for a replaced
     source.
-  - `HomeScreen` listens to the editor and image models and calls
-    `FilterController.request`.
+  - `HomeScreen` listens to the editor and media models and calls
+    `FilterController.request`. For animations it also passes an
+    `AnimationContext` (the frames plus the current frame index).
+  - `MediaModel` holds either a still or an animation. For an animation it
+    keeps the decoded frames plus the original GIF bytes.
+  - `FilterController` caches the shared animation palette, keyed by
+    `paletteKeyFor`, so scrubbing and changes to dither, scanlines or gaps
+    reuse it.
+  - GIF export (`animation_exporter.dart`) sends the GIF bytes to a worker
+    isolate, which decodes, filters and encodes them. Progress arrives over
+    a `ReceivePort`, and cancel kills the isolate.
+  - `exportGif` is the pure core of the export; tests call it directly.
+  - Engine: `sequence.dart` provides `paletteSourceFrames`,
+    `sequencePalette` and `frameSeed`. `applyBitmapFilter` takes an optional
+    `palette` and `seed`.
   - Export uses `configFor(preview size)`, so the grid matches the preview,
     rendered at full source size.
 - **Side effects** (picker, saver, preset storage, filter runner, PNG

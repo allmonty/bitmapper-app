@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:bitmapper/models/image_model.dart';
+import 'package:bitmapper/models/media_model.dart';
 import 'package:bitmapper/services/image_codec.dart';
 import 'package:bitmapper/services/image_loader.dart';
 import 'package:bitmapper/services/image_saver.dart';
@@ -75,12 +75,12 @@ void main() {
     expect(exportFileName(DateTime.fromMillisecondsSinceEpoch(42)), 'bitmapper_42.png');
   });
 
-  group('ImageModel', () {
+  group('MediaModel', () {
     test('load sets full and preview images', () async {
       final loader = FakeImageLoader(
         result: LoadedImage(name: 'cat.png', image: gradient(2000, 1000)),
       );
-      final model = ImageModel(loader);
+      final model = MediaModel(loader);
       expect(await model.load(ImageOrigin.gallery), isTrue);
       expect(model.hasImage, isTrue);
       expect(model.name, 'cat.png');
@@ -94,7 +94,7 @@ void main() {
       final loader = FakeImageLoader(
         result: LoadedImage(name: 'a', image: gradient(10, 10)),
       );
-      final model = ImageModel(loader);
+      final model = MediaModel(loader);
       await model.load(ImageOrigin.camera);
       loader.result = null;
       expect(await model.load(ImageOrigin.camera), isFalse);
@@ -102,14 +102,14 @@ void main() {
     });
 
     test('errors propagate and reset the loading flag', () async {
-      final model = ImageModel(FakeImageLoader(error: Exception('bad file')));
+      final model = MediaModel(FakeImageLoader(error: Exception('bad file')));
       await expectLater(model.load(ImageOrigin.gallery), throwsException);
       expect(model.loading, isFalse);
       expect(model.hasImage, isFalse);
     });
 
     test('clear removes the image', () {
-      final model = ImageModel(FakeImageLoader())..setImage('x', gradient(4, 4));
+      final model = MediaModel(FakeImageLoader())..setImage('x', gradient(4, 4));
       model.clear();
       expect(model.hasImage, isFalse);
       expect(model.preview, isNull);

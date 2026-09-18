@@ -3,9 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:win98_ui/win98_ui.dart';
 
 import '../l10n/generated/app_localizations.dart';
-import '../models/image_model.dart';
+import '../models/media_model.dart';
 import '../services/filter_controller.dart';
 import 'empty_state.dart';
+import 'frame_scrubber.dart';
 import 'rgb_image_view.dart';
 
 /// The sunken canvas: filtered preview with pinch-zoom, and hold-to-compare
@@ -31,7 +32,7 @@ class _PreviewPaneState extends State<PreviewPane> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Win98Theme.of(context);
-    final image = context.watch<ImageModel>();
+    final image = context.watch<MediaModel>();
     final filter = context.watch<FilterController>();
     final preview = image.preview;
 
@@ -83,10 +84,18 @@ class _PreviewPaneState extends State<PreviewPane> {
       );
     }
 
-    return Bevel(
+    final canvas = Bevel(
       style: BevelStyle.field,
       color: theme.shadow,
       child: ClipRect(child: content),
+    );
+    if (!image.isAnimation) return canvas;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(child: canvas),
+        const FrameScrubber(),
+      ],
     );
   }
 }

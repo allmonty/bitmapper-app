@@ -5,7 +5,7 @@ import 'package:win98_ui/win98_ui.dart';
 
 import 'l10n/generated/app_localizations.dart';
 import 'models/editor_model.dart';
-import 'models/image_model.dart';
+import 'models/media_model.dart';
 import 'models/presets_model.dart';
 import 'screens/home_screen.dart';
 import 'services/app_services.dart';
@@ -31,7 +31,7 @@ class BitmapperApp extends StatelessWidget {
       providers: [
         Provider<AppServices>.value(value: services),
         ChangeNotifierProvider(create: (_) => EditorModel()),
-        ChangeNotifierProvider(create: (_) => ImageModel(services.imageLoader)),
+        ChangeNotifierProvider(create: (_) => MediaModel(services.imageLoader)),
         ChangeNotifierProvider(create: (_) => PresetsModel(services.presetRepository)..load()),
         ChangeNotifierProvider(
           create: (_) =>

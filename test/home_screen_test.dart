@@ -211,7 +211,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(app.saver.saved, hasLength(1));
-    final (png, name) = app.saver.saved.single;
+    final (png, name, mime) = app.saver.saved.single;
+    expect(mime, 'image/png');
     expect(name, 'bitmapper_1234.png');
     expect(png.sublist(0, 4), [137, 80, 78, 71]);
     expect(find.text('Saved bitmapper_1234.png'), findsOneWidget);

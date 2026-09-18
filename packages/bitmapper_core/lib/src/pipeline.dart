@@ -57,6 +57,10 @@ Uint8List? resolvePalette(RgbImage grid, BitmapFilterConfig config) {
 /// the grid directly and `outputWidth x outputHeight` only governs the final
 /// upscale (migration doc §6.1). Defaults to the source size.
 ///
+/// For animations, pass a precomputed `palette` (see `sequencePalette`) to
+/// reuse one palette across frames instead of resolving it per frame, and a
+/// per-frame `seed` (see `frameSeed`) for `random` dither.
+///
 /// `isCancelled` is polled per grid row in error diffusion and between
 /// stages; when it fires the run throws [FilterCancelled].
 FilterResult applyBitmapFilter(
@@ -65,6 +69,8 @@ FilterResult applyBitmapFilter(
   int? outputWidth,
   int? outputHeight,
   CancelCheck? isCancelled,
+  Uint8List? palette,
+  int? seed,
 }) {
   config.validate();
   void checkCancelled() {
@@ -78,18 +84,18 @@ FilterResult applyBitmapFilter(
       mode: config.blockSampling);
   checkCancelled();
 
-  final palette = resolvePalette(gridColors, config);
+  final resolvedPalette = palette ?? resolvePalette(gridColors, config);
   final RgbImage quantized;
   final Uint8List resolved;
-  if (palette == null) {
+  if (resolvedPalette == null) {
     final unique = uniqueColors(gridColors.data);
     resolved = _packedToPalette(unique);
     quantized = gridColors;
   } else {
-    resolved = palette;
-    quantized = applyDither(gridColors, palette, config.dither,
+    resolved = resolvedPalette;
+    quantized = applyDither(gridColors, resolvedPalette, config.dither,
         strength: config.ditherStrength,
-        seed: config.randomSeed,
+        seed: seed ?? config.randomSeed,
         isCancelled: isCancelled);
   }
   checkCancelled();

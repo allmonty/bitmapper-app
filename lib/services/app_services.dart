@@ -4,6 +4,7 @@ import 'package:bitmapper_core/bitmapper_core.dart';
 
 import '../repositories/preset_repository.dart';
 import '../repositories/shared_prefs_preset_repository.dart';
+import 'animation_exporter.dart';
 import 'filter_controller.dart';
 import 'image_codec.dart';
 import 'image_loader.dart';
@@ -20,6 +21,7 @@ class AppServices {
     required this.presetRepository,
     this.filterRunner = runInIsolate,
     this.pngEncoder = encodePngInBackground,
+    this.gifExporter = exportGifInIsolate,
     this.previewDebounce = const Duration(milliseconds: 120),
     this.clock = DateTime.now,
   });
@@ -35,6 +37,7 @@ class AppServices {
   final PresetRepository presetRepository;
   final FilterRunner filterRunner;
   final PngEncoder pngEncoder;
+  final GifExporter gifExporter;
   final Duration previewDebounce;
   final DateTime Function() clock;
 }

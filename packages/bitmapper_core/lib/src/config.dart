@@ -11,11 +11,29 @@ const kTrueColorThreshold = 16;
 
 enum PaletteMode { auto, fixed, custom }
 
+/// How an auto palette is chosen for an animation (a sequence of frames).
+enum PaletteStrategy {
+  /// Generate a palette for every frame (colors may flicker).
+  perFrame,
+
+  /// Generate one palette from the first frame and reuse it.
+  firstFrame,
+
+  /// Generate one palette from [BitmapFilterConfig.paletteSamples] frames
+  /// spread across the animation.
+  sampled,
+}
+
+const kMinPaletteSamples = 2;
+const kMaxPaletteSamples = 32;
+
 /// Every knob of the filter. Mirrors the Python `BitmapFilterConfig`, except:
 /// - `output_size` is an argument of `applyBitmapFilter` instead (preview
 ///   and export render the same config at different sizes);
 /// - colors (custom palette, gap color) are packed `0xRRGGBB` ints;
-/// - `randomSeed` makes `random` dither deterministic.
+/// - `randomSeed` makes `random` dither deterministic;
+/// - `paletteStrategy`, `paletteSamples` and `animateNoise` only matter for
+///   animations (see `sequence.dart`).
 class BitmapFilterConfig {
   const BitmapFilterConfig({
     this.gridCols = 200,
@@ -35,6 +53,9 @@ class BitmapFilterConfig {
     this.saturation = 1.0,
     this.gamma = 1.0,
     this.randomSeed = 0,
+    this.paletteStrategy = PaletteStrategy.sampled,
+    this.paletteSamples = 8,
+    this.animateNoise = false,
   });
 
   final int gridCols;
@@ -54,6 +75,12 @@ class BitmapFilterConfig {
   final double saturation;
   final double gamma;
   final int randomSeed;
+  final PaletteStrategy paletteStrategy;
+  final int paletteSamples;
+
+  /// Give `random` dither a different seed per frame (moving noise) instead
+  /// of the same noise on every frame.
+  final bool animateNoise;
 
   /// Color budget: `2 ^ bitDepth`.
   int get nColors => 1 << bitDepth;
@@ -90,6 +117,10 @@ class BitmapFilterConfig {
       throw ArgumentError('saturation must be >= 0, got $saturation');
     }
     if (gamma <= 0) throw ArgumentError('gamma must be > 0, got $gamma');
+    if (paletteSamples < kMinPaletteSamples || paletteSamples > kMaxPaletteSamples) {
+      throw ArgumentError(
+          'paletteSamples must be between $kMinPaletteSamples and $kMaxPaletteSamples, got $paletteSamples');
+    }
     if (paletteMode == PaletteMode.fixed &&
         (fixedPalette == null || fixedPalette!.isEmpty)) {
       throw ArgumentError('fixedPalette must be set when paletteMode is fixed');
@@ -118,6 +149,9 @@ class BitmapFilterConfig {
     double? saturation,
     double? gamma,
     int? randomSeed,
+    PaletteStrategy? paletteStrategy,
+    int? paletteSamples,
+    bool? animateNoise,
   }) {
     return BitmapFilterConfig(
       gridCols: gridCols ?? this.gridCols,
@@ -137,6 +171,9 @@ class BitmapFilterConfig {
       saturation: saturation ?? this.saturation,
       gamma: gamma ?? this.gamma,
       randomSeed: randomSeed ?? this.randomSeed,
+      paletteStrategy: paletteStrategy ?? this.paletteStrategy,
+      paletteSamples: paletteSamples ?? this.paletteSamples,
+      animateNoise: animateNoise ?? this.animateNoise,
     );
   }
 
@@ -158,6 +195,9 @@ class BitmapFilterConfig {
         'saturation': saturation,
         'gamma': gamma,
         'randomSeed': randomSeed,
+        'paletteStrategy': paletteStrategy.name,
+        'paletteSamples': paletteSamples,
+        'animateNoise': animateNoise,
       };
 
   /// Missing keys fall back to defaults, so older saved presets keep loading.
@@ -189,6 +229,12 @@ class BitmapFilterConfig {
       saturation: getDouble('saturation') ?? d.saturation,
       gamma: getDouble('gamma') ?? d.gamma,
       randomSeed: get<int>('randomSeed') ?? d.randomSeed,
+      paletteStrategy: PaletteStrategy.values
+              .where((e) => e.name == json['paletteStrategy'])
+              .firstOrNull ??
+          d.paletteStrategy,
+      paletteSamples: get<int>('paletteSamples') ?? d.paletteSamples,
+      animateNoise: get<bool>('animateNoise') ?? d.animateNoise,
     );
   }
 
@@ -212,7 +258,10 @@ class BitmapFilterConfig {
         contrast == other.contrast &&
         saturation == other.saturation &&
         gamma == other.gamma &&
-        randomSeed == other.randomSeed;
+        randomSeed == other.randomSeed &&
+        paletteStrategy == other.paletteStrategy &&
+        paletteSamples == other.paletteSamples &&
+        animateNoise == other.animateNoise;
   }
 
   @override
@@ -234,6 +283,9 @@ class BitmapFilterConfig {
         saturation,
         gamma,
         randomSeed,
+        paletteStrategy,
+        paletteSamples,
+        animateNoise,
       ]);
 
   @override

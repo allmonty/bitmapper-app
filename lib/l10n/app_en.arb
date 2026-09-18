@@ -199,5 +199,91 @@
         "type": "String"
       }
     }
+  },
+  "tabAnimation": "Animation",
+  "frameLabel": "Frame {current} / {total}",
+  "@frameLabel": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "paletteAcrossFrames": "Palette across frames",
+  "strategyFirst": "First frame",
+  "strategySampled": "Sampled frames",
+  "strategyPerFrame": "Each frame (may flicker)",
+  "paletteSamples": "Samples: {count} frames",
+  "@paletteSamples": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "strategyOnlyAuto": "Only applies to auto palettes.",
+  "animateNoise": "Animate random noise",
+  "gifSize": "GIF size",
+  "gifOriginal": "Original size ({width}×{height})",
+  "@gifOriginal": {
+    "placeholders": {
+      "width": {
+        "type": "int"
+      },
+      "height": {
+        "type": "int"
+      }
+    }
+  },
+  "gifPerCell": "Pixels per cell",
+  "gifPerCellValue": "{pixels} px per cell ({width}×{height})",
+  "@gifPerCellValue": {
+    "placeholders": {
+      "pixels": {
+        "type": "int"
+      },
+      "width": {
+        "type": "int"
+      },
+      "height": {
+        "type": "int"
+      }
+    }
+  },
+  "animationFriendly": "Use animation-friendly settings",
+  "animationFriendlyHint": "One palette sampled across frames and ordered dithering, which stay stable between frames.",
+  "statusShimmer": "Dither may shimmer between frames",
+  "exportTitle": "Saving animation",
+  "exportProgress": "Frame {done} of {total}",
+  "@exportProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "exportPreparing": "Preparing...",
+  "statusSavedLossy": "Saved {name} (some frames reduced to 256 colors)",
+  "@statusSavedLossy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "gifColorLimit": "GIF supports up to 256 colors per frame; deeper palettes are reduced when saving.",
+  "animationTruncated": "This GIF is long, so only the first {count} frames were loaded.",
+  "@animationTruncated": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

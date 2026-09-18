@@ -589,6 +589,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Bitmapper {version}\nA retro pixel-art photo filter.'**
   String aboutBody(String version);
+
+  /// No description provided for @tabAnimation.
+  ///
+  /// In en, this message translates to:
+  /// **'Animation'**
+  String get tabAnimation;
+
+  /// No description provided for @frameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Frame {current} / {total}'**
+  String frameLabel(int current, int total);
+
+  /// No description provided for @paletteAcrossFrames.
+  ///
+  /// In en, this message translates to:
+  /// **'Palette across frames'**
+  String get paletteAcrossFrames;
+
+  /// No description provided for @strategyFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'First frame'**
+  String get strategyFirst;
+
+  /// No description provided for @strategySampled.
+  ///
+  /// In en, this message translates to:
+  /// **'Sampled frames'**
+  String get strategySampled;
+
+  /// No description provided for @strategyPerFrame.
+  ///
+  /// In en, this message translates to:
+  /// **'Each frame (may flicker)'**
+  String get strategyPerFrame;
+
+  /// No description provided for @paletteSamples.
+  ///
+  /// In en, this message translates to:
+  /// **'Samples: {count} frames'**
+  String paletteSamples(int count);
+
+  /// No description provided for @strategyOnlyAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Only applies to auto palettes.'**
+  String get strategyOnlyAuto;
+
+  /// No description provided for @animateNoise.
+  ///
+  /// In en, this message translates to:
+  /// **'Animate random noise'**
+  String get animateNoise;
+
+  /// No description provided for @gifSize.
+  ///
+  /// In en, this message translates to:
+  /// **'GIF size'**
+  String get gifSize;
+
+  /// No description provided for @gifOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Original size ({width}×{height})'**
+  String gifOriginal(int width, int height);
+
+  /// No description provided for @gifPerCell.
+  ///
+  /// In en, this message translates to:
+  /// **'Pixels per cell'**
+  String get gifPerCell;
+
+  /// No description provided for @gifPerCellValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{pixels} px per cell ({width}×{height})'**
+  String gifPerCellValue(int pixels, int width, int height);
+
+  /// No description provided for @animationFriendly.
+  ///
+  /// In en, this message translates to:
+  /// **'Use animation-friendly settings'**
+  String get animationFriendly;
+
+  /// No description provided for @animationFriendlyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'One palette sampled across frames and ordered dithering, which stay stable between frames.'**
+  String get animationFriendlyHint;
+
+  /// No description provided for @statusShimmer.
+  ///
+  /// In en, this message translates to:
+  /// **'Dither may shimmer between frames'**
+  String get statusShimmer;
+
+  /// No description provided for @exportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving animation'**
+  String get exportTitle;
+
+  /// No description provided for @exportProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Frame {done} of {total}'**
+  String exportProgress(int done, int total);
+
+  /// No description provided for @exportPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing...'**
+  String get exportPreparing;
+
+  /// No description provided for @statusSavedLossy.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {name} (some frames reduced to 256 colors)'**
+  String statusSavedLossy(String name);
+
+  /// No description provided for @gifColorLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'GIF supports up to 256 colors per frame; deeper palettes are reduced when saving.'**
+  String get gifColorLimit;
+
+  /// No description provided for @animationTruncated.
+  ///
+  /// In en, this message translates to:
+  /// **'This GIF is long, so only the first {count} frames were loaded.'**
+  String animationTruncated(int count);
 }
 
 class _AppLocalizationsDelegate

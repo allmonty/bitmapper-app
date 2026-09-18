@@ -285,4 +285,86 @@ class AppLocalizationsEn extends AppLocalizations {
   String aboutBody(String version) {
     return 'Bitmapper $version\nA retro pixel-art photo filter.';
   }
+
+  @override
+  String get tabAnimation => 'Animation';
+
+  @override
+  String frameLabel(int current, int total) {
+    return 'Frame $current / $total';
+  }
+
+  @override
+  String get paletteAcrossFrames => 'Palette across frames';
+
+  @override
+  String get strategyFirst => 'First frame';
+
+  @override
+  String get strategySampled => 'Sampled frames';
+
+  @override
+  String get strategyPerFrame => 'Each frame (may flicker)';
+
+  @override
+  String paletteSamples(int count) {
+    return 'Samples: $count frames';
+  }
+
+  @override
+  String get strategyOnlyAuto => 'Only applies to auto palettes.';
+
+  @override
+  String get animateNoise => 'Animate random noise';
+
+  @override
+  String get gifSize => 'GIF size';
+
+  @override
+  String gifOriginal(int width, int height) {
+    return 'Original size ($width×$height)';
+  }
+
+  @override
+  String get gifPerCell => 'Pixels per cell';
+
+  @override
+  String gifPerCellValue(int pixels, int width, int height) {
+    return '$pixels px per cell ($width×$height)';
+  }
+
+  @override
+  String get animationFriendly => 'Use animation-friendly settings';
+
+  @override
+  String get animationFriendlyHint =>
+      'One palette sampled across frames and ordered dithering, which stay stable between frames.';
+
+  @override
+  String get statusShimmer => 'Dither may shimmer between frames';
+
+  @override
+  String get exportTitle => 'Saving animation';
+
+  @override
+  String exportProgress(int done, int total) {
+    return 'Frame $done of $total';
+  }
+
+  @override
+  String get exportPreparing => 'Preparing...';
+
+  @override
+  String statusSavedLossy(String name) {
+    return 'Saved $name (some frames reduced to 256 colors)';
+  }
+
+  @override
+  String get gifColorLimit =>
+      'GIF supports up to 256 colors per frame; deeper palettes are reduced when saving.';
+
+  @override
+  String animationTruncated(int count) {
+    return 'This GIF is long, so only the first $count frames were loaded.';
+  }
 }

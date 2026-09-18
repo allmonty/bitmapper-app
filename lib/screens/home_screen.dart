@@ -4,13 +4,15 @@ import 'package:win98_ui/win98_ui.dart';
 
 import '../l10n/generated/app_localizations.dart';
 import '../models/editor_model.dart';
-import '../models/image_model.dart';
+import '../models/media_model.dart';
 import '../models/presets_model.dart';
+import '../services/animation_exporter.dart';
 import '../services/app_services.dart';
 import '../services/filter_controller.dart';
 import '../services/image_loader.dart';
 import '../services/image_saver.dart';
 import '../widgets/controls/adjust_tab.dart';
+import '../widgets/controls/animation_tab.dart';
 import '../widgets/controls/dither_tab.dart';
 import '../widgets/controls/effects_tab.dart';
 import '../widgets/controls/grid_tab.dart';
@@ -31,7 +33,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late final EditorModel _editor = context.read<EditorModel>();
-  late final ImageModel _image = context.read<ImageModel>();
+  late final MediaModel _media = context.read<MediaModel>();
   late final FilterController _filter = context.read<FilterController>();
 
   /// A transient status-bar message (e.g. "Saved ..."), cleared on the next
@@ -43,31 +45,49 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _editor.addListener(_rerender);
-    _image.addListener(_rerender);
+    _media.addListener(_rerender);
   }
 
   @override
   void dispose() {
     _editor.removeListener(_rerender);
-    _image.removeListener(_rerender);
+    _media.removeListener(_rerender);
     super.dispose();
   }
 
-  /// Keep the preview in sync with the settings and the loaded image.
+  /// Keep the preview in sync with the settings and the loaded media (and,
+  /// for animations, the frame being scrubbed).
   void _rerender() {
-    final preview = _image.preview;
+    final preview = _media.preview;
     if (preview == null) {
       if (_filter.result != null || _filter.busy) _filter.clear();
       return;
     }
-    _filter.request(preview, _editor.configFor(preview.width, preview.height));
+    final animation = _media.animation;
+    _filter.request(
+      preview,
+      _editor.configFor(preview.width, preview.height),
+      animation: animation == null
+          ? null
+          : AnimationContext(frames: animation.frames, frameIndex: _media.currentFrame),
+    );
     if (_message != null) setState(() => _message = null);
   }
 
   Future<void> _open(ImageOrigin origin) async {
     final l10n = AppLocalizations.of(context);
     try {
-      await _image.load(origin);
+      await _media.load(origin);
+      final animation = _media.animation;
+      if (animation != null && animation.truncated && mounted) {
+        await showWin98MessageBox(
+          context: context,
+          title: l10n.errorTitle,
+          message: l10n.animationTruncated(animation.frameCount),
+          icon: Win98MessageIconType.warning,
+          buttons: [l10n.ok],
+        );
+      }
     } catch (e) {
       debugPrint('Image load failed: $e');
       if (!mounted) return;
@@ -81,9 +101,11 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _save() async {
-    final full = _image.full;
-    final preview = _image.preview;
+  Future<void> _save() => _media.isAnimation ? _saveAnimation() : _saveStill();
+
+  Future<void> _saveStill() async {
+    final full = _media.full;
+    final preview = _media.preview;
     if (full == null || preview == null || _saving) return;
     final l10n = AppLocalizations.of(context);
     final services = context.read<AppServices>();
@@ -131,6 +153,90 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// Filter every frame on a worker isolate and save an animated GIF, with
+  /// a progress dialog that can cancel.
+  Future<void> _saveAnimation() async {
+    final bytes = _media.animationBytes;
+    final frame = _media.preview;
+    if (bytes == null || frame == null || _saving) return;
+    final l10n = AppLocalizations.of(context);
+    final services = context.read<AppServices>();
+    final navigator = Navigator.of(context);
+    final progress = ValueNotifier<(int, int)?>(null);
+
+    setState(() => _saving = true);
+    final task = services.gifExporter(
+      GifExportJob(
+        gifBytes: bytes,
+        config: _editor.configFor(frame.width, frame.height),
+        size: _editor.gifSize,
+      ),
+      (done, total) => progress.value = (done, total),
+    );
+
+    var dialogOpen = true;
+    showWin98Dialog<void>(
+      context: context,
+      title: l10n.exportTitle,
+      builder: (context) => ValueListenableBuilder<(int, int)?>(
+        valueListenable: progress,
+        builder: (context, value, _) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(value == null ? l10n.exportPreparing : l10n.exportProgress(value.$1, value.$2)),
+            const SizedBox(height: 10),
+            Win98ProgressBar(value: value == null ? null : value.$1 / value.$2),
+            Win98DialogButtons(
+              children: [
+                Win98Button(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ).whenComplete(() {
+      // Cancel, or the title bar's close button, stops the export.
+      dialogOpen = false;
+      task.cancel();
+    });
+
+    void closeDialog() {
+      if (dialogOpen) navigator.pop();
+    }
+
+    try {
+      final result = await task.result;
+      closeDialog();
+      final fileName = exportFileName(services.clock(), extension: 'gif');
+      final saved = await services.imageSaver.save(result.bytes, fileName, mimeType: 'image/gif');
+      if (mounted && saved != null) {
+        setState(
+          () => _message = result.lossyFrames > 0
+              ? l10n.statusSavedLossy(fileName)
+              : l10n.statusSaved(fileName),
+        );
+      }
+    } on ExportCancelled {
+      closeDialog();
+    } catch (e) {
+      debugPrint('Animation save failed: $e');
+      closeDialog();
+      if (mounted) {
+        await showWin98MessageBox(
+          context: context,
+          title: l10n.errorTitle,
+          message: l10n.errorSave,
+          icon: Win98MessageIconType.error,
+          buttons: [l10n.ok],
+        );
+      }
+    } finally {
+      progress.dispose();
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   void _about() {
     final l10n = AppLocalizations.of(context);
     showWin98MessageBox(
@@ -152,7 +258,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Win98MenuItem(label: l10n.menuCamera, onSelected: () => _open(ImageOrigin.camera)),
             Win98MenuItem(label: l10n.menuSave, onSelected: hasImage && !_saving ? _save : null),
             const Win98MenuDivider(),
-            Win98MenuItem(label: l10n.menuClose, onSelected: hasImage ? _image.clear : null),
+            Win98MenuItem(label: l10n.menuClose, onSelected: hasImage ? _media.clear : null),
           ],
         ),
         Win98Menu(
@@ -173,7 +279,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Win98StatusBar _statusBar(AppLocalizations l10n) {
-    final image = context.watch<ImageModel>();
+    final image = context.watch<MediaModel>();
     final filter = context.watch<FilterController>();
     final editor = context.watch<EditorModel>();
     final preview = image.preview;
@@ -186,7 +292,13 @@ class _HomeScreenState extends State<HomeScreen> {
     } else if (filter.error != null) {
       status = l10n.errorFilter;
     } else {
-      status = _message ?? (preview == null ? l10n.statusNoImage : l10n.statusReady);
+      status =
+          _message ??
+          switch (preview) {
+            null => l10n.statusNoImage,
+            _ when image.isAnimation && editor.isErrorDiffusion => l10n.statusShimmer,
+            _ => l10n.statusReady,
+          };
     }
 
     // The message pane takes the slack; the stats panes size to their text.
@@ -208,7 +320,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final image = context.watch<ImageModel>();
+    final image = context.watch<MediaModel>();
 
     final tabs = Win98TabView(
       tabs: [
@@ -217,6 +329,8 @@ class _HomeScreenState extends State<HomeScreen> {
         Win98Tab(label: l10n.tabGrid, builder: (_) => const GridTab()),
         Win98Tab(label: l10n.tabAdjust, builder: (_) => const AdjustTab()),
         Win98Tab(label: l10n.tabEffects, builder: (_) => const EffectsTab()),
+        if (image.isAnimation)
+          Win98Tab(label: l10n.tabAnimation, builder: (_) => const AnimationTab()),
         Win98Tab(label: l10n.tabPresets, builder: (_) => const PresetsTab()),
       ],
     );
@@ -232,7 +346,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Win98Window(
             title: l10n.windowTitle(image.name ?? l10n.untitled),
             expand: true,
-            onClose: image.hasImage ? _image.clear : null,
+            onClose: image.hasImage ? _media.clear : null,
             menuBar: _menuBar(l10n, image.hasImage),
             statusBar: _statusBar(l10n),
             child: LayoutBuilder(
