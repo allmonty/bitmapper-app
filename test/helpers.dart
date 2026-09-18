@@ -162,7 +162,11 @@ class FakeVideoIO implements VideoIO {
 
   final opened = <(String, int?)>[];
   final sinks = <FakeVideoSink>[];
+  final sources = <FakeVideoSource>[];
   Object? openError;
+
+  /// Runs before every `frameAt`; can delay it (return a future) or throw.
+  Future<void> Function(Duration time)? beforeFrameAt;
 
   @override
   Future<VideoSource> open(String path, {int? maxDimension}) async {
@@ -173,7 +177,9 @@ class FakeVideoIO implements VideoIO {
       final scale = maxDimension / (w > h ? w : h);
       (w, h) = ((w * scale).round(), (h * scale).round());
     }
-    return FakeVideoSource(this, w, h);
+    final source = FakeVideoSource(this, w, h);
+    sources.add(source);
+    return source;
   }
 
   @override
@@ -247,6 +253,7 @@ class FakeVideoSource implements VideoSource {
   @override
   Future<VideoFrame> frameAt(Duration time) async {
     frameAtCalls.add(time);
+    await io.beforeFrameAt?.call(time);
     final i = (time.inMicroseconds * io.frameRate / 1000000).round().clamp(0, io.frameCount - 1);
     return VideoFrame(
       pts: _pts(i),

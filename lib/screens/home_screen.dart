@@ -82,8 +82,10 @@ class _HomeScreenState extends State<HomeScreen> {
         frameIndex: _media.currentFrame,
       );
     } else if (_media.isVideo) {
-      final samples = _videoPaletteFrames(config);
-      if (samples == null) return; // sampling; MediaModel notifies when ready
+      // While the palette's sample frames are still being decoded, render
+      // with this frame's own palette so scrubbing never waits on sampling;
+      // MediaModel notifies when the samples are ready and this re-renders.
+      final samples = _videoPaletteFrames(config) ?? const <RgbImage>[];
       animation = AnimationContext(
         frames: samples,
         frameIndex: _media.currentFrame,

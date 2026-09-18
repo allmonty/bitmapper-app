@@ -1,13 +1,17 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:bitmapper/models/editor_model.dart';
 import 'package:bitmapper/models/media_model.dart';
 import 'package:bitmapper/screens/home_screen.dart';
 import 'package:bitmapper/services/animation_exporter.dart';
+import 'package:bitmapper/services/filter_controller.dart';
 import 'package:bitmapper/services/gif_io.dart';
 import 'package:bitmapper/services/image_loader.dart';
 import 'package:bitmapper/services/video_exporter.dart';
+import 'package:bitmapper/widgets/rgb_image_view.dart';
 import 'package:bitmapper_core/bitmapper_core.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -64,6 +68,54 @@ void main() {
       expect(model.preview!.data, RgbImage.fromRgba(64, 48, io.frameRgba(64, 48, 30)).data);
       model.setFrame(1000);
       expect(model.currentFrame, 59);
+    });
+
+    test('a failed frame doesn\'t block the next request, and can be retried', () async {
+      final io = FakeVideoIO(frameCount: 60);
+      final model = MediaModel(FakeImageLoader()..video = pick, videoIO: io);
+      await model.loadVideo();
+      io.beforeFrameAt = (t) async {
+        if (t == model.frameTime(10)) throw Exception('decoder hiccup');
+      };
+      model.setFrame(10);
+      await pumpEventQueue();
+      expect(model.preview!.data, isNot(RgbImage.fromRgba(64, 48, io.frameRgba(64, 48, 10)).data));
+      model.setFrame(20);
+      await pumpEventQueue();
+      expect(model.preview!.data, RgbImage.fromRgba(64, 48, io.frameRgba(64, 48, 20)).data);
+
+      // Frame 20 is shown; selecting it again doesn't refetch.
+      final calls = io.sources.last.frameAtCalls.length;
+      model.setFrame(20);
+      await pumpEventQueue();
+      expect(io.sources.last.frameAtCalls.length, calls);
+
+      // A frame that failed is fetched again when re-selected.
+      io.beforeFrameAt = (t) async {
+        if (t == model.frameTime(30)) throw Exception('once');
+      };
+      model.setFrame(30);
+      await pumpEventQueue();
+      io.beforeFrameAt = null;
+      model.setFrame(30);
+      await pumpEventQueue();
+      expect(model.preview!.data, RgbImage.fromRgba(64, 48, io.frameRgba(64, 48, 30)).data);
+    });
+
+    test('a frame that never arrives times out instead of blocking scrubbing', () {
+      fakeAsync((async) {
+        final io = FakeVideoIO(frameCount: 60);
+        final model = MediaModel(FakeImageLoader()..video = pick, videoIO: io);
+        model.loadVideo();
+        async.flushMicrotasks();
+        final never = Completer<void>();
+        io.beforeFrameAt = (t) => t == model.frameTime(5) ? never.future : Future.value();
+        model.setFrame(5);
+        async.flushMicrotasks();
+        model.setFrame(6); // queued behind the stuck frame
+        async.elapse(MediaModel.frameTimeout + const Duration(seconds: 1));
+        expect(model.preview!.data, RgbImage.fromRgba(64, 48, io.frameRgba(64, 48, 6)).data);
+      });
     });
 
     test('palette samples are decoded once per count and cached', () async {
@@ -346,6 +398,34 @@ void main() {
       expect(mime, 'image/gif');
       expect(name, 'bitmapper_1234.gif');
       expect(decodeGif(bytes)!.frameCount, 15, reason: '1 s of video at 15 fps');
+    });
+
+    testWidgets('scrubbing updates the picture while palette samples are still decoding', (
+      tester,
+    ) async {
+      final app = await openVideo(tester);
+      final media = read<MediaModel>(tester);
+      // Ask for a new sample count and hold its decoding back.
+      final gate = Completer<void>();
+      app.videoIO.beforeFrameAt = (t) =>
+          media.sampling && !gate.isCompleted ? gate.future : Future.value();
+      read<EditorModel>(tester).setPaletteSamples(5);
+      await tester.pump();
+      expect(media.sampling, isTrue);
+      expect(find.text('Sampling frames...'), findsOneWidget);
+
+      media.setFrame(20);
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+      final filter = read<FilterController>(tester);
+      final shown = tester.widget<RgbImageView>(find.byKey(const Key('preview-image'))).image;
+      expect(identical(shown, filter.result?.output), isTrue);
+      expect(filter.result!.output.data.length, media.preview!.data.length);
+      expect(media.currentFrame, 20);
+
+      gate.complete();
+      await tester.pumpAndSettle();
+      expect(media.sampling, isFalse);
     });
 
     testWidgets('scrubbing a video fetches the frame', (tester) async {

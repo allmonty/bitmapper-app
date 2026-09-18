@@ -39,6 +39,7 @@ class MediaModel extends ChangeNotifier {
   String? _videoPath;
   Object? _videoToken;
   int? _pendingFrame;
+  int _shownFrame = 0;
   bool _fetchingFrame = false;
   final Map<int, List<RgbImage>> _samples = {};
   final Set<int> _fetchingSamples = {};
@@ -159,7 +160,8 @@ class MediaModel extends ChangeNotifier {
   void setFrame(int index) {
     if (!isSequence) return;
     final i = index.clamp(0, frameCount - 1);
-    if (i == _frame) return;
+    // A video frame that failed to load can be retried by selecting it again.
+    if (i == _frame && (isAnimation || _shownFrame == i)) return;
     _frame = i;
     if (isAnimation) {
       _preview = _animation!.frames[i];
@@ -170,6 +172,10 @@ class MediaModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Longest wait for one decoded frame before giving up on it, so a stuck
+  /// decode can't block scrubbing forever.
+  static const frameTimeout = Duration(seconds: 15);
+
   Future<void> _fetchFrames() async {
     if (_fetchingFrame) return; // the running fetch picks up _pendingFrame
     _fetchingFrame = true;
@@ -179,15 +185,19 @@ class MediaModel extends ChangeNotifier {
         _pendingFrame = null;
         final source = _video;
         if (source == null) return;
-        final frame = await source.frameAt(frameTime(index));
-        if (_disposed || !identical(source, _video)) return; // closed or replaced
-        if (index == _frame) {
-          _preview = _toRgb(frame);
-          notifyListeners();
+        try {
+          final frame = await source.frameAt(frameTime(index)).timeout(frameTimeout);
+          if (_disposed || !identical(source, _video)) return; // closed or replaced
+          if (index == _frame) {
+            _preview = _toRgb(frame);
+            _shownFrame = index;
+            notifyListeners();
+          }
+        } catch (e) {
+          // Keep going: a newer request may already be pending.
+          debugPrint('Video frame $index failed to load: $e');
         }
       }
-    } catch (e) {
-      debugPrint('Video frame fetch failed: $e');
     } finally {
       _fetchingFrame = false;
     }
@@ -221,7 +231,7 @@ class MediaModel extends ChangeNotifier {
     try {
       final frames = <RgbImage>[];
       for (final i in sampleIndices(frameCount, count)) {
-        frames.add(_toRgb(await source.frameAt(frameTime(i))));
+        frames.add(_toRgb(await source.frameAt(frameTime(i)).timeout(frameTimeout)));
       }
       if (_disposed || !identical(source, _video)) return;
       _fetchingSamples.remove(count);
@@ -245,6 +255,7 @@ class MediaModel extends ChangeNotifier {
     _videoPath = null;
     _videoToken = null;
     _pendingFrame = null;
+    _shownFrame = 0;
     _samples.clear();
     _fetchingSamples.clear();
     _kind = null;
