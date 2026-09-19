@@ -292,7 +292,7 @@ void main() {
     final gesture = await tester.startGesture(tester.getCenter(view));
     await tester.pump(const Duration(milliseconds: 600));
     expect(identical(tester.widget<RgbImageView>(view).image, filtered), isFalse);
-    expect(find.text('◀ Hold to compare'), findsOneWidget);
+    expect(find.text('< Hold to compare'), findsOneWidget);
     await gesture.up();
     await tester.pump();
     expect(identical(tester.widget<RgbImageView>(view).image, filtered), isTrue);

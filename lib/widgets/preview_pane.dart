@@ -82,7 +82,7 @@ class _PreviewPaneState extends State<PreviewPane> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                   child: Text(
-                    _showOriginal ? '◀ ${l10n.holdToCompare}' : l10n.holdToCompare,
+                    _showOriginal ? '< ${l10n.holdToCompare}' : l10n.holdToCompare,
                     style: theme.textStyle.copyWith(fontSize: theme.fontSize - 3),
                   ),
                 ),

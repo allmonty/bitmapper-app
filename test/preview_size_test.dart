@@ -104,7 +104,7 @@ void main() {
         // ...and is laid out at exactly one image pixel per screen pixel.
         final view = find.byKey(const Key('preview-image'));
         expect(identical(tester.widget<RgbImageView>(view).image, output), isTrue);
-        final drawn = tester.getSize(find.descendant(of: view, matching: find.byType(Image)));
+        final drawn = tester.getSize(find.descendant(of: view, matching: find.byType(RawImage)));
         expect(drawn.width * dpr, closeTo(output.width, 0.01));
         expect(drawn.height * dpr, closeTo(output.height, 0.01));
       });

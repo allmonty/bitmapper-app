@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:bitmapper/models/media_model.dart';
 import 'package:bitmapper/services/image_codec.dart';
 import 'package:bitmapper/services/image_loader.dart';
@@ -38,25 +36,6 @@ void main() {
     expect(decoded.height, 9);
     final p = decoded.getPixel(16, 8);
     expect([p.r, p.g, p.b], source.pixel(16, 8));
-  });
-
-  test('encodeBmp writes a top-down 24-bit bitmap with padded rows', () {
-    final source = gradient(3, 2); // 9 bytes per row -> padded to 12
-    final bmp = encodeBmp(source);
-    final bd = ByteData.view(bmp.buffer);
-    expect(String.fromCharCodes(bmp.sublist(0, 2)), 'BM');
-    expect(bmp.length, 54 + 12 * 2);
-    expect(bd.getInt32(18, Endian.little), 3);
-    expect(bd.getInt32(22, Endian.little), -2);
-    expect(bd.getUint16(28, Endian.little), 24);
-    // First pixel, stored as BGR.
-    expect(bmp.sublist(54, 57), source.pixel(0, 0).reversed.toList());
-    // Second row starts after the padding.
-    expect(bmp.sublist(54 + 12, 54 + 15), source.pixel(0, 1).reversed.toList());
-    // And it decodes.
-    final decoded = img.decodeBmp(bmp)!;
-    final p = decoded.getPixel(2, 1);
-    expect([p.r, p.g, p.b], source.pixel(2, 1));
   });
 
   testWidgets('decodeToRgb decodes with the platform codec and caps size', (tester) async {

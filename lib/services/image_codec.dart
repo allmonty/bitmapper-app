@@ -115,34 +115,3 @@ Uint8List encodePng(RgbImage image) {
 }
 
 Future<Uint8List> encodePngInBackground(RgbImage image) => Isolate.run(() => encodePng(image));
-
-/// Encode as an uncompressed 24-bit BMP. Cheap enough to do per preview
-/// frame, and `Image.memory` can display it directly.
-Uint8List encodeBmp(RgbImage image) {
-  final w = image.width, h = image.height;
-  final rowSize = (w * 3 + 3) & ~3;
-  final pixelBytes = rowSize * h;
-  final out = Uint8List(54 + pixelBytes);
-  final bd = ByteData.view(out.buffer);
-  out[0] = 0x42; // 'B'
-  out[1] = 0x4D; // 'M'
-  bd.setUint32(2, out.length, Endian.little);
-  bd.setUint32(10, 54, Endian.little); // pixel data offset
-  bd.setUint32(14, 40, Endian.little); // BITMAPINFOHEADER size
-  bd.setInt32(18, w, Endian.little);
-  bd.setInt32(22, -h, Endian.little); // negative height: top-down rows
-  bd.setUint16(26, 1, Endian.little); // planes
-  bd.setUint16(28, 24, Endian.little); // bits per pixel
-  bd.setUint32(34, pixelBytes, Endian.little);
-  final src = image.data;
-  for (var y = 0; y < h; y++) {
-    var o = 54 + y * rowSize;
-    var i = y * w * 3;
-    for (var x = 0; x < w; x++, i += 3, o += 3) {
-      out[o] = src[i + 2]; // BGR
-      out[o + 1] = src[i + 1];
-      out[o + 2] = src[i];
-    }
-  }
-  return out;
-}
