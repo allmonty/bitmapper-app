@@ -127,16 +127,27 @@ class PixelGridPainter extends CustomPainter {
     }
 
     final px = 1 / devicePixelRatio; // one physical pixel, in logical units
-    if (gapPx > 0) {
-      // Same placement as the engine's upscale: centred on each interior
-      // cell edge, never on the outer border.
+    // Same placement as the engine's upscale: centred on each interior cell
+    // edge, never on the outer border. The gap shrinks (and, below 2
+    // physical pixels per cell, disappears) when a cell is too small to show
+    // any of its own color around a full-width gutter — otherwise, with
+    // enough grid cells, adjacent gutters would tile the whole preview and
+    // it would render as solid `gapColor`.
+    final effectiveGap = math.min(gapPx, cell - 1);
+    if (effectiveGap > 0) {
       paint.color = Color(0xFF000000 | gapColor);
-      final half = gapPx ~/ 2;
+      final half = effectiveGap ~/ 2;
       for (var x = 1; x < cols; x++) {
-        canvas.drawRect(Rect.fromLTWH((x * cell - half) * px, 0, gapPx * px, size.height), paint);
+        canvas.drawRect(
+          Rect.fromLTWH((x * cell - half) * px, 0, effectiveGap * px, size.height),
+          paint,
+        );
       }
       for (var y = 1; y < grid.height; y++) {
-        canvas.drawRect(Rect.fromLTWH(0, (y * cell - half) * px, size.width, gapPx * px), paint);
+        canvas.drawRect(
+          Rect.fromLTWH(0, (y * cell - half) * px, size.width, effectiveGap * px),
+          paint,
+        );
       }
     }
 

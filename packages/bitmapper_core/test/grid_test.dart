@@ -194,6 +194,21 @@ void main() {
       expect(out.pixel(2, 0), [10, 20, 30]);
     });
 
+    test('the gap is dropped when a cell is only 1px, instead of covering the canvas', () {
+      // 1:1 replication (cell = 1px): a gap this wide would otherwise paint
+      // every column/row, leaving no cell color visible at all.
+      final out = upscale(grid, 2, 2, gapPx: 5, gapColor: [255, 0, 0]);
+      expect(out.data, upscale(grid, 2, 2).data);
+      expect(colorSet(out.data), colorSet(grid.data));
+    });
+
+    test('the gap shrinks to fit when it would otherwise cover a cell', () {
+      // cell = 2px; a requested gap of 3 can't fit, so it shrinks to 1
+      // (the largest gap that still leaves each cell visible).
+      final out = upscale(grid, 4, 4, gapPx: 3, gapColor: [255, 0, 0]);
+      expect(out.data, upscale(grid, 4, 4, gapPx: 1, gapColor: [255, 0, 0]).data);
+    });
+
     test('round trip keeps the image blocky', () {
       final small = downsample(randomImage(40, 40), 5, 5);
       final big = upscale(small, 40, 40);

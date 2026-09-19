@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'image.dart';
@@ -115,9 +116,25 @@ RgbImage downsample(
   return RgbImage(cols, rows, out);
 }
 
+/// The smallest non-empty block size in `repeats` (0 if every block is
+/// empty, which only happens when the grid has more cells than output
+/// pixels along that axis).
+int _minPositiveRun(List<int> repeats) {
+  var min = 0;
+  for (final r in repeats) {
+    if (r > 0 && (min == 0 || r < min)) min = r;
+  }
+  return min;
+}
+
 /// Replicate each grid cell up to `outWidth x outHeight`, nearest-neighbor
 /// style. When `gapPx > 0`, a gutter in `gapColor` is drawn on every interior
 /// block boundary (never on the canvas edge).
+///
+/// The gap shrinks (and, below 2px, disappears) when a block is too small to
+/// show any of its own color around a full-width gutter — otherwise, with
+/// enough grid cells, adjacent gutters would tile the whole canvas and the
+/// image would render as solid `gapColor` instead of a fine chunky grid.
 RgbImage upscale(
   RgbImage grid,
   int outWidth,
@@ -159,7 +176,10 @@ RgbImage upscale(
   }
 
   if (gapPx > 0) {
-    final half = gapPx ~/ 2;
+    final minRun = math.min(_minPositiveRun(rowRepeats), _minPositiveRun(colRepeats));
+    final effectiveGap = minRun > 0 ? math.min(gapPx, minRun - 1) : 0;
+    if (effectiveGap == 0) return RgbImage(outWidth, outHeight, out);
+    final half = effectiveGap ~/ 2;
     final fr = gapColor[0], fg = gapColor[1], fb = gapColor[2];
     void fillPixel(int i) {
       out[i] = fr;
@@ -171,7 +191,7 @@ RgbImage upscale(
     for (var i = 0; i < rowRepeats.length - 1; i++) {
       edge += rowRepeats[i];
       final lo = edge - half < 0 ? 0 : edge - half;
-      final hi = edge + gapPx - half > outHeight ? outHeight : edge + gapPx - half;
+      final hi = edge + effectiveGap - half > outHeight ? outHeight : edge + effectiveGap - half;
       for (var yy = lo; yy < hi; yy++) {
         for (var x = 0; x < outWidth; x++) {
           fillPixel((yy * outWidth + x) * 3);
@@ -182,7 +202,7 @@ RgbImage upscale(
     for (var i = 0; i < colRepeats.length - 1; i++) {
       edge += colRepeats[i];
       final lo = edge - half < 0 ? 0 : edge - half;
-      final hi = edge + gapPx - half > outWidth ? outWidth : edge + gapPx - half;
+      final hi = edge + effectiveGap - half > outWidth ? outWidth : edge + effectiveGap - half;
       for (var yy = 0; yy < outHeight; yy++) {
         for (var x = lo; x < hi; x++) {
           fillPixel((yy * outWidth + x) * 3);

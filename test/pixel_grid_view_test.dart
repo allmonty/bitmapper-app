@@ -92,6 +92,32 @@ void main() {
     }
   });
 
+  testWidgets('a gap wider than the cell shrinks instead of covering it, like the export', (
+    tester,
+  ) async {
+    // cell = 1 physical pixel per grid cell: a gap of 2 can't fit around
+    // any cell without covering the whole canvas in gapColor.
+    const cols = 6, rows = 4, cell = 1;
+    final grid = distinctGrid(cols, rows);
+    final pixels = await rasterize(
+      tester,
+      PixelGridPainter(grid: grid, cell: cell, devicePixelRatio: 1, gapPx: 2, gapColor: 0x00FF00),
+      cols * cell,
+      rows * cell,
+    );
+    // Same pixels as the engine's upscale with the same (shrunk) gap.
+    final expected = upscale(grid, cols * cell, rows * cell, gapPx: 2, gapColor: [0, 255, 0]);
+    for (var i = 0; i < pixels.length; i++) {
+      expect(pixels[i], packedAt(expected.data, i * 3), reason: 'pixel $i');
+    }
+    // Every cell's own color is still visible somewhere: the gap didn't
+    // paint over the whole canvas.
+    expect(
+      colorSet(Uint8List.fromList([for (final p in pixels) ...unpackRgb(p)])),
+      colorSet(grid.data),
+    );
+  });
+
   testWidgets('scanlines darken every other screen row, like the export', (tester) async {
     final grid = RgbImage(2, 2, Uint8List(12)..fillRange(0, 12, 200));
     final pixels = await rasterize(
