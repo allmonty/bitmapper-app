@@ -430,4 +430,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String effectOutline(int percent) {
     return 'Outline: $percent%';
   }
+
+  @override
+  String get toonGroup => 'Toon';
+
+  @override
+  String effectShadeBands(int bands) {
+    return 'Shade bands: $bands';
+  }
+
+  @override
+  String get effectShadeBandsOff => 'Shade bands: off';
+
+  @override
+  String get effectDespeckle => 'Clean up stray pixels';
 }

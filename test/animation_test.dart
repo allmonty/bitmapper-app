@@ -128,6 +128,12 @@ void main() {
           reason: 'dither, scanlines and outline keep the palette',
         );
 
+        render(4, config.copyWith(despeckle: true));
+        expect(jobs.last.palette, first.palette, reason: 'despeckle keeps the palette');
+
+        render(4, config.copyWith(shadeBands: 3));
+        expect(jobs.last.paletteFrames, isNotNull, reason: 'shade bands change the palette');
+
         render(4, config.copyWith(bitDepth: 3));
         expect(jobs.last.paletteFrames, isNotNull, reason: 'bit depth changes the palette');
       });

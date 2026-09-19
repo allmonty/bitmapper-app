@@ -324,5 +324,16 @@
         "type": "int"
       }
     }
+  },
+  "toonGroup": "Toon",
+  "effectShadeBands": "Shade bands: {bands}",
+  "effectShadeBandsOff": "Shade bands: off",
+  "effectDespeckle": "Clean up stray pixels",
+  "@effectShadeBands": {
+    "placeholders": {
+      "bands": {
+        "type": "int"
+      }
+    }
   }
 }

@@ -121,5 +121,9 @@
   "cameraPrompt": "Tirar uma foto ou gravar um vídeo?",
   "cameraPhoto": "Foto",
   "cameraVideo": "Vídeo",
-  "effectOutline": "Contorno: {percent}%"
+  "effectOutline": "Contorno: {percent}%",
+  "toonGroup": "Desenho animado",
+  "effectShadeBands": "Faixas de sombra: {bands}",
+  "effectShadeBandsOff": "Faixas de sombra: desligado",
+  "effectDespeckle": "Limpar pixels soltos"
 }

@@ -71,6 +71,25 @@ void main() {
     expect(model.config.outline, 0.4);
   });
 
+  test('toon setters and validation', () {
+    model.setShadeBands(3);
+    model.setDespeckle(true);
+    expect((model.config.shadeBands, model.config.despeckle), (3, true));
+    expect(() => model.setShadeBands(1), throwsArgumentError);
+    expect(model.config.shadeBands, 3);
+    model.setShadeBands(0);
+    expect(model.config.shadeBands, 0);
+  });
+
+  test('Toon applies bands, cleanup, outline and 96 columns', () {
+    final toon = PresetsModel.builtIns.firstWhere((p) => p.id == 'builtin:toon');
+    model.applyPreset(toon);
+    expect(model.config.shadeBands, 3);
+    expect(model.config.despeckle, isTrue);
+    expect(model.config.outline, 0.5);
+    expect(model.columns, 96);
+  });
+
   test('Pixel Art Sprite applies its outline and columns', () {
     final sprite = PresetsModel.builtIns.firstWhere((p) => p.id == 'builtin:pixel_art_sprite');
     model.applyPreset(sprite);

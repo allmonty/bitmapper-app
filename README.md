@@ -30,7 +30,9 @@ hold-to-compare, and zoom.
   - 19 dither methods and dither strength.
   - Pixel columns from 16 to 512 (rows follow the aspect ratio), block sampling, and grid
     gap with gap color.
-  - Contrast, saturation, gamma, scanlines, and sprite-style ink outlines.
+  - Contrast, saturation, gamma and scanlines.
+  - Toon (cel) shading: shade bands, stray-pixel cleanup and sprite-style
+    ink outlines.
 - **Presets:** the 19 built-in looks from the Python reference, plus user
   presets saved to `shared_preferences`.
 - **Save as** renders at full resolution, encodes PNG in an isolate, and

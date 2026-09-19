@@ -829,6 +829,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Outline: {percent}%'**
   String effectOutline(int percent);
+
+  /// No description provided for @toonGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Toon'**
+  String get toonGroup;
+
+  /// No description provided for @effectShadeBands.
+  ///
+  /// In en, this message translates to:
+  /// **'Shade bands: {bands}'**
+  String effectShadeBands(int bands);
+
+  /// No description provided for @effectShadeBandsOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Shade bands: off'**
+  String get effectShadeBandsOff;
+
+  /// No description provided for @effectDespeckle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean up stray pixels'**
+  String get effectDespeckle;
 }
 
 class _AppLocalizationsDelegate

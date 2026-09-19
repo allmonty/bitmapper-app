@@ -1,6 +1,7 @@
 import 'dither.dart';
 import 'grid.dart';
 import 'palette_gen.dart';
+import 'toon.dart';
 
 const kMinBitDepth = 1;
 const kMaxBitDepth = 24;
@@ -50,6 +51,8 @@ class BitmapFilterConfig {
     this.gridGapPx = 0,
     this.gridGapColor = 0x000000,
     this.outline = 0.0,
+    this.shadeBands = 0,
+    this.despeckle = false,
     this.contrast = 1.0,
     this.saturation = 1.0,
     this.gamma = 1.0,
@@ -75,6 +78,12 @@ class BitmapFilterConfig {
 
   /// Sprite-style ink outlines on strong edges: 0 = off, 1 = most edges.
   final double outline;
+
+  /// Toon shading: 0 = off, else 2..8 flat brightness bands.
+  final int shadeBands;
+
+  /// Replace isolated cells with their most common neighbour color.
+  final bool despeckle;
   final double contrast;
   final double saturation;
   final double gamma;
@@ -116,6 +125,10 @@ class BitmapFilterConfig {
     if (outline < 0 || outline > 1) {
       throw ArgumentError('outline must be between 0 and 1, got $outline');
     }
+    if (shadeBands != 0 && (shadeBands < kMinShadeBands || shadeBands > kMaxShadeBands)) {
+      throw ArgumentError(
+          'shadeBands must be 0 or $kMinShadeBands..$kMaxShadeBands, got $shadeBands');
+    }
     if (gridGapPx < 0) {
       throw ArgumentError('gridGapPx must be >= 0, got $gridGapPx');
     }
@@ -153,6 +166,8 @@ class BitmapFilterConfig {
     int? gridGapPx,
     int? gridGapColor,
     double? outline,
+    int? shadeBands,
+    bool? despeckle,
     double? contrast,
     double? saturation,
     double? gamma,
@@ -176,6 +191,8 @@ class BitmapFilterConfig {
       gridGapPx: gridGapPx ?? this.gridGapPx,
       gridGapColor: gridGapColor ?? this.gridGapColor,
       outline: outline ?? this.outline,
+      shadeBands: shadeBands ?? this.shadeBands,
+      despeckle: despeckle ?? this.despeckle,
       contrast: contrast ?? this.contrast,
       saturation: saturation ?? this.saturation,
       gamma: gamma ?? this.gamma,
@@ -201,6 +218,8 @@ class BitmapFilterConfig {
         'gridGapPx': gridGapPx,
         'gridGapColor': gridGapColor,
         'outline': outline,
+        'shadeBands': shadeBands,
+        'despeckle': despeckle,
         'contrast': contrast,
         'saturation': saturation,
         'gamma': gamma,
@@ -236,6 +255,8 @@ class BitmapFilterConfig {
       gridGapPx: get<int>('gridGapPx') ?? d.gridGapPx,
       gridGapColor: get<int>('gridGapColor') ?? d.gridGapColor,
       outline: getDouble('outline') ?? d.outline,
+      shadeBands: get<int>('shadeBands') ?? d.shadeBands,
+      despeckle: get<bool>('despeckle') ?? d.despeckle,
       contrast: getDouble('contrast') ?? d.contrast,
       saturation: getDouble('saturation') ?? d.saturation,
       gamma: getDouble('gamma') ?? d.gamma,
@@ -267,6 +288,8 @@ class BitmapFilterConfig {
         gridGapPx == other.gridGapPx &&
         gridGapColor == other.gridGapColor &&
         outline == other.outline &&
+        shadeBands == other.shadeBands &&
+        despeckle == other.despeckle &&
         contrast == other.contrast &&
         saturation == other.saturation &&
         gamma == other.gamma &&
@@ -292,6 +315,8 @@ class BitmapFilterConfig {
         gridGapPx,
         gridGapColor,
         outline,
+        shadeBands,
+        despeckle,
         contrast,
         saturation,
         gamma,

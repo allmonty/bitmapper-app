@@ -80,6 +80,8 @@ const kPresetLabels = <String, String>{
   'pixel_art_earthy': 'Pixel Art Earthy',
   'pixel_art_mono': 'Pixel Art Mono',
   'pixel_art_sprite': 'Pixel Art Sprite',
+  'toon': 'Toon',
+  'toon_pastel': 'Toon Pastel',
 };
 
 String ditherLabel(String id) => kDitherLabels[id] ?? id;

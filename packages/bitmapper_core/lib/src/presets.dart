@@ -95,6 +95,26 @@ const Map<String, BitmapFilterConfig> kBuiltInPresets = {
     dither: 'floyd_steinberg',
     contrast: 1.1,
   ),
+  // Cel shading: flat brightness bands, no stray cells, ink outlines.
+  'toon': BitmapFilterConfig(
+    paletteMode: PaletteMode.auto,
+    bitDepth: 4,
+    dither: 'none',
+    saturation: 1.3,
+    shadeBands: 3,
+    despeckle: true,
+    outline: 0.5,
+  ),
+  'toon_pastel': BitmapFilterConfig(
+    paletteMode: PaletteMode.fixed,
+    fixedPalette: 'sweetie16',
+    bitDepth: 4,
+    dither: 'none',
+    saturation: 1.3,
+    shadeBands: 4,
+    despeckle: true,
+    outline: 0.5,
+  ),
   'vaporwave': BitmapFilterConfig(
     paletteMode: PaletteMode.custom,
     customPalette: [0x09032E, 0xFF69B4, 0x00FFFF, 0xFFFDD0],
@@ -195,6 +215,8 @@ const Map<String, int> kPresetColumns = {
   'pixel_art_earthy': 64,
   'pixel_art_mono': 48,
   'pixel_art_sprite': 64,
+  'toon': 96,
+  'toon_pastel': 96,
 };
 
 /// The grid width preset `name` is designed for, or null if it works at any

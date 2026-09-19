@@ -229,6 +229,7 @@ BitmapFilterConfig paletteKeyFor(BitmapFilterConfig config) => config.copyWith(
   ditherStrength: 1,
   scanlines: 0,
   outline: 0,
+  despeckle: false,
   gridGapPx: 0,
   gridGapColor: 0,
   randomSeed: 0,

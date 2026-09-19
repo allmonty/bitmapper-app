@@ -203,7 +203,9 @@ void main() {
     final before = filter.result!.grid;
     await tester.tap(find.text('Effects'));
     await tester.pumpAndSettle();
-    final slider = find.byType(Win98Slider).at(1); // scanlines, then outline
+    final slider = find.byType(Win98Slider).at(2); // scanlines, shade bands, outline
+    await tester.ensureVisible(slider);
+    await tester.pumpAndSettle();
     final rect = tester.getRect(slider);
     await tester.tapAt(Offset(rect.right - 7, rect.center.dy));
     await tester.pump(const Duration(milliseconds: 200));
@@ -211,6 +213,27 @@ void main() {
     expect(editorOf(tester).config.outline, 1.0);
     expect(find.text('Outline: 100%'), findsOneWidget);
     expect(filter.result!.grid.data, isNot(before.data), reason: 'edges got inked');
+  });
+
+  testWidgets('the Toon controls set shade bands and cleanup', (tester) async {
+    await pumpApp(tester, TestApp(image: photo()));
+    await openPhoto(tester);
+    await tester.tap(find.text('Effects'));
+    await tester.pumpAndSettle();
+    expect(find.text('Shade bands: off'), findsOneWidget);
+    final bands = find.byType(Win98Slider).at(1);
+    final rect = tester.getRect(bands);
+    await tester.tapAt(Offset(rect.right - 7, rect.center.dy));
+    await tester.pump();
+    expect(editorOf(tester).config.shadeBands, 8);
+    expect(find.text('Shade bands: 8'), findsOneWidget);
+    await tester.tapAt(Offset(rect.left + 7, rect.center.dy));
+    await tester.pump();
+    expect(editorOf(tester).config.shadeBands, 0);
+
+    await tester.tap(find.text('Clean up stray pixels'));
+    await tester.pump();
+    expect(editorOf(tester).config.despeckle, isTrue);
   });
 
   testWidgets('the Pixel Art preset switches to its chunky grid', (tester) async {
