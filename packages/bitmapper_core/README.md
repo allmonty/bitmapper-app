@@ -83,10 +83,12 @@ export and palette tab, import it rather than re-implementing:
 
 ## Palettes
 
-`lib/src/palettes_data.dart` is generated from Python:
+`lib/src/palettes_data.dart` is generated from `tool/palette_source.py`; do
+not edit it by hand. Regenerate it (from the repo root, with `numpy`
+installed — `pip install -r tool/requirements.txt`) with:
 
 ```sh
-../bitmapper/.venv/bin/python tool/gen_palettes.py   # from the repo root
+python3 tool/gen_palettes.py
 ```
 
 ## Benchmark
