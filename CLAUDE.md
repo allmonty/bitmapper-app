@@ -116,8 +116,20 @@ filter, with a Windows 98 UI. Flutter is pinned by asdf in `.tool-versions`
   - Tests use `FakeVideoIO` and `fakeVideoExporter` from `test/helpers.dart`.
 - **Native builds:**
   - Android uses Gradle 9.3.1, AGP 9.1.0 and Kotlin 2.4.0 (the Flutter 3.47
-    template). `android.builtInKotlin=false` stays until every plugin
-    supports built-in Kotlin; `flutter_file_dialog` doesn't yet.
+    template), with `android.builtInKotlin=true`. `flutter_file_dialog`
+    (>= 3.1.0) supports this — its `android/build.gradle` only applies the
+    Kotlin Gradle Plugin when built-in Kotlin is off or AGP < 9, neither of
+    which is true here. A "your app uses plugins that apply KGP" build
+    warning can still show for it anyway: Flutter's detector
+    (`FlutterPluginUtils.detectApplyingKotlinGradlePlugin`) regex-scans
+    plugin build scripts for an `apply plugin: 'kotlin-android'`/
+    `id("org.jetbrains.kotlin.android")` line and flags it even when that
+    line is behind a runtime condition that evaluates to false — a
+    deliberate tradeoff on Flutter's side (see the comment above
+    `detectApplyingKotlinGradlePlugin` in `FlutterPluginUtils.kt`), not
+    something fixable from this project. It only goes away if
+    `flutter_file_dialog` drops AGP < 9 support entirely (no conditional
+    left to scan for) or we replace it.
   - iOS has a 15.0 minimum and uses Swift Package Manager only. There's no
     Podfile, because every plugin is a Swift package.
 - **Side effects** (picker, saver, preset storage, filter runner, PNG
