@@ -49,7 +49,14 @@ void main() {
       async.elapse(debounce);
       expect(runner.jobs, hasLength(1));
       expect(runner.jobs.single.config.bitDepth, 5);
-      expect(runner.jobs.single.outputWidth, 8);
+      // Previews render just the grid: one pixel per cell, no gaps/scanlines.
+      final job = runner.jobs.single;
+      expect(
+        (job.outputWidth, job.outputHeight),
+        (kDefaultConfig.gridCols, kDefaultConfig.gridRows),
+      );
+      expect(job.config.gridGapPx, 0);
+      expect(job.config.scanlines, 0);
       runner.complete(0);
       async.flushMicrotasks();
       expect(controller.result, isNotNull);

@@ -9,7 +9,7 @@ import 'package:bitmapper/services/filter_controller.dart';
 import 'package:bitmapper/services/gif_io.dart';
 import 'package:bitmapper/services/image_loader.dart';
 import 'package:bitmapper/services/video_exporter.dart';
-import 'package:bitmapper/widgets/rgb_image_view.dart';
+import 'package:bitmapper/widgets/pixel_grid_view.dart';
 import 'package:bitmapper_core/bitmapper_core.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter/widgets.dart';
@@ -422,12 +422,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
       final filter = read<FilterController>(tester);
-      final shown = tester.widget<RgbImageView>(find.byKey(const Key('preview-image'))).image;
-      expect(identical(shown, filter.result?.output), isTrue);
-      // Rendered to fit the canvas, with the frame's aspect ratio.
-      final out = filter.result!.output;
-      expect(out.width / out.height, closeTo(media.preview!.width / media.preview!.height, 0.01));
-      expect(out.width, lessThanOrEqualTo(filter.viewport!.width));
+      final shown = tester.widget<PixelGridView>(find.byKey(const Key('preview-image'))).grid;
+      expect(identical(shown, filter.result?.grid), isTrue);
+      // The rendered grid has the frame's shape (square cells).
+      final grid = filter.result!.grid;
+      expect(grid.width / grid.height, closeTo(media.preview!.width / media.preview!.height, 0.02));
       expect(media.currentFrame, 20);
 
       gate.complete();

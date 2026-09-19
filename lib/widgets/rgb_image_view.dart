@@ -3,20 +3,21 @@ import 'dart:ui' as ui;
 import 'package:bitmapper_core/bitmapper_core.dart';
 import 'package:flutter/widgets.dart';
 
-/// Displays an [RgbImage] by uploading its pixels straight to a GPU image
-/// (`decodeImageFromPixels`), with no image file format in between: the
-/// image has exactly the size given, and is drawn with nearest-neighbour
-/// sampling so pixel blocks stay crisp: at exactly one image pixel per
-/// screen pixel when it fits, otherwise scaled to fit.
-///
-/// (Wrapping the pixels in a BMP and decoding that with `Image.memory`
-/// rendered partly smeared toward the right and bottom on some Android
-/// devices.)
+/// Displays an [RgbImage] (a photo) fitted to the available space, by
+/// uploading its pixels straight to a GPU image (`decodeImageFromPixels`)
+/// with no image file format in between. Filtered pixel art is shown by
+/// `PixelGridView` instead, which paints cells without any image.
 class RgbImageView extends StatefulWidget {
-  const RgbImageView({super.key, required this.image, this.semanticLabel});
+  const RgbImageView({
+    super.key,
+    required this.image,
+    this.semanticLabel,
+    this.filterQuality = FilterQuality.medium,
+  });
 
   final RgbImage image;
   final String? semanticLabel;
+  final FilterQuality filterQuality;
 
   @override
   State<RgbImageView> createState() => _RgbImageViewState();
@@ -72,30 +73,14 @@ class _RgbImageViewState extends State<RgbImageView> {
 
   @override
   Widget build(BuildContext context) {
-    // Lay out for the latest picture even before its upload finishes.
-    final shown = widget.image;
-    final picture = RawImage(image: _uploaded, fit: BoxFit.fill, filterQuality: FilterQuality.none);
-    final dpr = MediaQuery.devicePixelRatioOf(context);
     return Semantics(
       image: true,
       label: widget.semanticLabel,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          // One image pixel per screen pixel when it fits (previews are
-          // rendered to the canvas size for this): nearest-neighbour scaling
-          // by a non-integer factor would make cells uneven.
-          final w = shown.width / dpr;
-          final h = shown.height / dpr;
-          // Centered, so a parent that forces a size can't stretch it.
-          if (w <= constraints.maxWidth + 0.01 && h <= constraints.maxHeight + 0.01) {
-            return Center(
-              child: SizedBox(width: w, height: h, child: picture),
-            );
-          }
-          return Center(
-            child: AspectRatio(aspectRatio: shown.width / shown.height, child: picture),
-          );
-        },
+      child: Center(
+        child: AspectRatio(
+          aspectRatio: widget.image.width / widget.image.height,
+          child: RawImage(image: _uploaded, fit: BoxFit.fill, filterQuality: widget.filterQuality),
+        ),
       ),
     );
   }

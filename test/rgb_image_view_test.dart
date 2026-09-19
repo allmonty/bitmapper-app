@@ -20,15 +20,15 @@ void main() {
     ),
   );
 
-  testWidgets('uploads the pixels at exactly the image size', (tester) async {
+  testWidgets('uploads the pixels at exactly the image size and fits them', (tester) async {
     final image = gradient(301, 157); // odd sizes on purpose
-    await tester.pumpWidget(host(RgbImageView(image: image)));
+    await tester.pumpWidget(
+      host(SizedBox(width: 301, height: 400, child: RgbImageView(image: image))),
+    );
     final raw = await settle(tester);
     expect(raw.image, isNotNull);
     expect((raw.image!.width, raw.image!.height), (301, 157));
-    expect(raw.filterQuality, FilterQuality.none);
-    // 1:1 with physical pixels at devicePixelRatio 2.
-    expect(tester.getSize(find.byType(RawImage)), const Size(150.5, 78.5));
+    expect(tester.getSize(find.byType(RawImage)), const Size(301, 157));
   });
 
   testWidgets('a newer image replaces the old one', (tester) async {
@@ -44,14 +44,6 @@ void main() {
       host(SizedBox(width: 400, height: 400, child: RgbImageView(image: gradient(300, 100)))),
     );
     await settle(tester);
-    expect(tester.getSize(find.byType(RawImage)), const Size(150, 50));
-  });
-
-  testWidgets('scales down to fit when bigger than the space', (tester) async {
-    await tester.pumpWidget(
-      host(SizedBox(width: 100, height: 100, child: RgbImageView(image: gradient(1000, 500)))),
-    );
-    await settle(tester);
-    expect(tester.getSize(find.byType(RawImage)), const Size(100, 50));
+    expect(tester.getSize(find.byType(RawImage)), const Size(400, 400 / 3));
   });
 }

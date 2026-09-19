@@ -3,10 +3,12 @@ import 'package:provider/provider.dart';
 import 'package:win98_ui/win98_ui.dart';
 
 import '../l10n/generated/app_localizations.dart';
+import '../models/editor_model.dart';
 import '../models/media_model.dart';
 import '../services/filter_controller.dart';
 import 'empty_state.dart';
 import 'frame_scrubber.dart';
+import 'pixel_grid_view.dart';
 import 'rgb_image_view.dart';
 
 /// The sunken canvas: filtered preview with pinch-zoom, and hold-to-compare
@@ -23,18 +25,6 @@ class PreviewPane extends StatefulWidget {
 
 class _PreviewPaneState extends State<PreviewPane> {
   bool _showOriginal = false;
-  Size? _reportedViewport;
-
-  /// Tell the filter how big the canvas is in physical pixels (after this
-  /// frame, since it may start a render), so previews map 1:1 to the screen.
-  void _reportViewport(Size physical) {
-    if (!physical.isFinite || physical == _reportedViewport) return;
-    _reportedViewport = physical;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.read<FilterController>().setViewport(physical);
-    });
-  }
-
   void _setOriginal(bool value) {
     if (_showOriginal != value) setState(() => _showOriginal = value);
   }
@@ -53,8 +43,8 @@ class _PreviewPaneState extends State<PreviewPane> {
           ? const Center(child: SizedBox(width: 200, child: Win98ProgressBar()))
           : EmptyState(onOpen: widget.onOpen, onCamera: widget.onCamera);
     } else {
-      final output = filter.result?.output;
-      final showOriginal = _showOriginal || output == null;
+      final grid = filter.result?.grid;
+      final config = context.watch<EditorModel>().config;
       content = Stack(
         fit: StackFit.expand,
         children: [
@@ -64,13 +54,22 @@ class _PreviewPaneState extends State<PreviewPane> {
             onLongPressCancel: () => _setOriginal(false),
             child: InteractiveViewer(
               maxScale: 8,
-              child: Center(
-                child: RgbImageView(
-                  key: const Key('preview-image'),
-                  image: showOriginal ? preview : output,
-                  semanticLabel: image.name,
-                ),
-              ),
+              // Until the first filtered grid arrives, show the photo.
+              child: grid == null
+                  ? RgbImageView(
+                      key: const Key('preview-image'),
+                      image: preview,
+                      semanticLabel: image.name,
+                    )
+                  : PixelGridView(
+                      key: const Key('preview-image'),
+                      grid: grid,
+                      gapPx: config.gridGapPx,
+                      gapColor: config.gridGapColor,
+                      scanlines: config.scanlines,
+                      original: _showOriginal ? preview : null,
+                      semanticLabel: image.name,
+                    ),
             ),
           ),
           Positioned(
@@ -98,14 +97,7 @@ class _PreviewPaneState extends State<PreviewPane> {
     final canvas = Bevel(
       style: BevelStyle.field,
       color: theme.shadow,
-      child: ClipRect(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            _reportViewport(constraints.biggest * MediaQuery.devicePixelRatioOf(context));
-            return content;
-          },
-        ),
-      ),
+      child: ClipRect(child: content),
     );
     if (!image.isSequence) return canvas;
     return Column(

@@ -6,21 +6,54 @@ import 'package:test/test.dart';
 import 'helpers.dart';
 
 void main() {
-  group('splitSizes (np.array_split semantics)', () {
-    test('front-loads the remainder', () {
-      expect(splitSizes(100, 7), [15, 15, 14, 14, 14, 14, 14]);
+  group('splitSizes', () {
+    test('spreads the remainder evenly instead of front-loading it', () {
+      // np.array_split would give [15, 15, 14, 14, 14, 14, 14].
+      expect(splitSizes(100, 7), [14, 14, 14, 15, 14, 14, 15]);
       expect(splitSizes(10, 5), [2, 2, 2, 2, 2]);
     });
-    test('produces empty trailing parts when n > length', () {
-      expect(splitSizes(3, 5), [1, 1, 1, 0, 0]);
+
+    test('sizes differ by at most 1 and every boundary is within 1 of exact', () {
+      for (final (length, n) in [(1024, 120), (1024, 300), (4000, 120), (768, 97), (5, 3)]) {
+        final sizes = splitSizes(length, n);
+        expect(sizes.reduce((a, b) => a + b), length);
+        expect(sizes.reduce((a, b) => a > b ? a : b) - sizes.reduce((a, b) => a < b ? a : b),
+            lessThanOrEqualTo(1));
+        final starts = splitStarts(sizes);
+        for (var i = 0; i < n; i++) {
+          expect((starts[i] - i * length / n).abs(), lessThan(1), reason: '$length/$n part $i');
+        }
+      }
     });
+
+    test('spreads empty parts when n > length', () {
+      expect(splitSizes(3, 5), [0, 1, 0, 1, 1]);
+    });
+
     test('rejects n < 1', () {
       expect(() => splitSizes(3, 0), throwsArgumentError);
     });
   });
 
-  // 7x5 image with values (i * 3) mod 256; expected values from the Python
-  // reference (grid.downsample).
+  test('no squeeze-then-stretch: features keep their position at any column count', () {
+    // A 1024 px wide image, dark left of x = 768 (three quarters), light right.
+    const w = 1024, h = 8;
+    final img = RgbImage.blank(w, h);
+    for (var y = 0; y < h; y++) {
+      for (var x = 768; x < w; x++) {
+        img.data.fillRange((y * w + x) * 3, (y * w + x) * 3 + 3, 255);
+      }
+    }
+    for (final cols in [60, 97, 120, 200, 300, 512]) {
+      final grid = downsample(img, cols, 1);
+      final firstLight = List.generate(cols, (x) => grid.data[x * 3]).indexWhere((v) => v > 127);
+      // The edge stays at three quarters of the grid (within one cell).
+      expect((firstLight - cols * 0.75).abs(), lessThanOrEqualTo(1), reason: '$cols columns');
+    }
+  });
+
+  // 7x5 image with values (i * 3) mod 256. Blocks are 2, 2, 3 columns and 2, 3
+  // rows (evenly spread); expected values computed independently.
   RgbImage ramp() {
     final data = Uint8List(5 * 7 * 3);
     for (var i = 0; i < data.length; i++) {
@@ -30,14 +63,14 @@ void main() {
   }
 
   group('downsample', () {
-    test('average matches the Python reference on uneven blocks', () {
+    test('average over uneven blocks', () {
       expect(downsample(ramp(), 3, 2).data,
-          [72, 75, 78, 94, 97, 100, 112, 115, 118, 144, 147, 107, 124, 127, 130, 142, 145, 148]);
+          [36, 39, 42, 54, 57, 60, 76, 79, 82, 150, 153, 114, 126, 129, 132, 148, 151, 154]);
     });
 
     test('nearest samples each block center', () {
       expect(downsample(ramp(), 3, 2, mode: BlockSampling.nearest).data,
-          [72, 75, 78, 99, 102, 105, 117, 120, 123, 5, 8, 11, 32, 35, 38, 50, 53, 56]);
+          [72, 75, 78, 90, 93, 96, 108, 111, 114, 198, 201, 204, 216, 219, 222, 234, 237, 240]);
     });
 
     test('evenly divisible blocks average exactly', () {
@@ -85,13 +118,13 @@ void main() {
       expect(out.pixel(3, 3), [100, 110, 120]);
     });
 
-    test('gutters match the Python reference (uneven, gap 1)', () {
+    test('gutters on uneven blocks (columns 2 + 3, gap 1)', () {
       final out = upscale(grid, 5, 4, gapPx: 1, gapColor: [255, 0, 0]);
       expect(out.data, [
-        10, 20, 30, 10, 20, 30, 10, 20, 30, 255, 0, 0, 40, 50, 60, //
-        10, 20, 30, 10, 20, 30, 10, 20, 30, 255, 0, 0, 40, 50, 60, //
+        10, 20, 30, 10, 20, 30, 255, 0, 0, 40, 50, 60, 40, 50, 60, //
+        10, 20, 30, 10, 20, 30, 255, 0, 0, 40, 50, 60, 40, 50, 60, //
         255, 0, 0, 255, 0, 0, 255, 0, 0, 255, 0, 0, 255, 0, 0, //
-        70, 80, 90, 70, 80, 90, 70, 80, 90, 255, 0, 0, 100, 110, 120,
+        70, 80, 90, 70, 80, 90, 255, 0, 0, 100, 110, 120, 100, 110, 120,
       ]);
     });
 

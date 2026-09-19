@@ -2,14 +2,19 @@ import 'dart:typed_data';
 
 import 'image.dart';
 
-/// Sizes of the parts `np.array_split(np.arange(length), n)` would produce:
-/// the first `length % n` parts get `length ~/ n + 1` elements, the rest get
-/// `length ~/ n`. When `n > length` the trailing parts are empty.
+/// Sizes of `n` consecutive parts covering `length`, as even as possible and
+/// evenly spread: part `i` spans `[i * length ~/ n, (i + 1) * length ~/ n)`.
+/// Sizes differ by at most 1, and every boundary is within one unit of its
+/// exact position. When `n > length` some parts are empty.
+///
+/// This deliberately differs from `np.array_split` in the Python reference,
+/// which gives all the extra units to the first parts: that squeezes the
+/// start of an image into its cells and stretches the rest (e.g. 1024 px in
+/// 120 columns: 64 cells of 9 px, then 56 of 8), a visible distortion that
+/// changes with the column count.
 List<int> splitSizes(int length, int n) {
   if (n < 1) throw ArgumentError.value(n, 'n', 'must be >= 1');
-  final base = length ~/ n;
-  final extra = length % n;
-  return List<int>.generate(n, (i) => i < extra ? base + 1 : base);
+  return List<int>.generate(n, (i) => (i + 1) * length ~/ n - i * length ~/ n);
 }
 
 /// Start offsets matching [splitSizes].

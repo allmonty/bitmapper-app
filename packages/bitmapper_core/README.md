@@ -26,11 +26,18 @@ These follow `docs/FLUTTER_MIGRATION.md`:
   so a given seed always gives the same output (§6.4a).
 - **Median cut sorts stably.** NumPy's default argsort isn't stable, so ties
   on the split channel can differ from Python.
+- **Blocks are spread evenly.** When the size doesn't divide evenly, grid
+  blocks differ by at most one pixel and the extra pixels are spread across
+  the image (`splitSizes`). `np.array_split` gives all the extra pixels to
+  the first blocks. That squeezes the start of the image and stretches the
+  rest, a visible distortion that changes with the column count. Python hid
+  it by resizing to a canvas that the default grid divides exactly; without
+  that resize (above), it showed.
 - **API shape.** `output_size` is an argument rather than a config field, and
   colors are packed `0xRRGGBB` ints.
 
-Everything else is intended to be bit-exact: `array_split` block sizes,
-uint8 truncation, float operation order, and round-half-even in `subsample`.
+Everything else is intended to be bit-exact: uint8 truncation, float
+operation order, and round-half-even in `subsample`.
 The tests compare stage outputs byte for byte against values produced by the
 Python code.
 

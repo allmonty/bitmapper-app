@@ -1,6 +1,7 @@
 import 'package:bitmapper/models/editor_model.dart';
 import 'package:bitmapper/screens/home_screen.dart';
 import 'package:bitmapper/services/image_loader.dart';
+import 'package:bitmapper/widgets/pixel_grid_view.dart';
 import 'package:bitmapper/widgets/rgb_image_view.dart';
 import 'package:bitmapper_core/bitmapper_core.dart';
 import 'package:flutter/widgets.dart';
@@ -288,14 +289,18 @@ void main() {
     await pumpApp(tester, TestApp(image: photo()));
     await openPhoto(tester);
     final view = find.byKey(const Key('preview-image'));
-    final filtered = tester.widget<RgbImageView>(view).image;
+    expect(tester.widget<PixelGridView>(view).original, isNull);
+    final gridRect = tester.getRect(view);
     final gesture = await tester.startGesture(tester.getCenter(view));
     await tester.pump(const Duration(milliseconds: 600));
-    expect(identical(tester.widget<RgbImageView>(view).image, filtered), isFalse);
+    expect(tester.widget<PixelGridView>(view).original, isNotNull);
+    expect(find.byType(RgbImageView), findsOneWidget);
     expect(find.text('< Hold to compare'), findsOneWidget);
+    expect(tester.getRect(view), gridRect, reason: 'the original shows in the same place');
     await gesture.up();
     await tester.pump();
-    expect(identical(tester.widget<RgbImageView>(view).image, filtered), isTrue);
+    expect(tester.widget<PixelGridView>(view).original, isNull);
+    expect(find.byType(RgbImageView), findsNothing);
   });
 
   testWidgets('changing a setting re-renders the preview', (tester) async {

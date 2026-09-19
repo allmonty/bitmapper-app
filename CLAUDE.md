@@ -20,7 +20,9 @@ filter, with a Windows 98 UI. Flutter is pinned by asdf in `.tool-versions`
   file per Python module.
   - It must not import Flutter.
   - Numeric contracts from `../bitmapper/docs/FLUTTER_MIGRATION.md` apply:
-    - `splitSizes` follows `np.array_split` semantics.
+    - `splitSizes` spreads uneven block sizes evenly across the image.
+      This deliberately differs from `np.array_split`, which front-loads
+      them and visibly squeezes then stretches the image.
     - Byte conversion truncates (`clampToByte`); never round.
     - Diffusion weights are pre-scaled as `(w*s)/d`.
     - `subsample` rounds half to even.
@@ -94,15 +96,9 @@ filter, with a Windows 98 UI. Flutter is pinned by asdf in `.tool-versions`
   devices the engine's GPU decoder returned images smeared toward the right
   and bottom. Unsupported formats such as HEIC, and images over 64 MP, fall
   back to `decodeWithPlatform`.
-- **Preview display:** `RgbImageView` wraps the pixels in an uncompressed
-  BMP for `Image.memory`, with `FilterQuality.none`.
-
-## Testing notes
-
-- For widget tests, call `usePhoneScreen(tester)` (a 360×780 viewport) and
-  build the app with `TestApp().build()`.
-- The Flutter test font renders every glyph 1em wide, which makes text much
-  wider than the real pixel font. Layouts must tolerate that: menu bars and
-  tabs wrap.
-- Popups (menus, drop-downs) render in the Overlay. To see them in golden
-  screenshots, capture from `WidgetsApp`.
+- **Preview display:** previews render only the quantized grid (one pixel
+  per cell). `PixelGridView` paints the cells as solid rectangles, each the
+  same whole number of screen pixels, with gaps and scanlines drawn on top.
+  No image is resized, since resized preview images came out stretched or
+  smeared on a Galaxy S24 Ultra. Only the "hold to compare" photo is an
+  image (`RgbImageView`, uploaded with `decodeImageFromPixels`).
