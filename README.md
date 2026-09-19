@@ -31,9 +31,11 @@ hold-to-compare, and zoom.
   - Pixel columns from 16 to 512 (rows follow the aspect ratio), block sampling, and grid
     gap with gap color.
   - Contrast, saturation, gamma and scanlines.
-  - Toon (cel) shading: shade bands, stray-pixel cleanup and sprite-style
-    ink outlines.
-- **Presets:** the 19 built-in looks from the Python reference, plus user
+  - Toon (cel) shading: shade bands, stray-pixel cleanup, and sprite-style
+    ink outlines with a choice of edge-finding method (brightness, color,
+    or Sobel — Sobel finds cleaner, less noisy edges on photos) and ink
+    style (darkest color, or a softer half-brightness "shaded" ink).
+- **Presets:** the 27 built-in looks from the Python reference, plus user
   presets saved to `shared_preferences`.
 - **Save as** renders at full resolution, encodes PNG in an isolate, and
   opens the system save dialog (`flutter_file_dialog`). It needs no
@@ -80,4 +82,3 @@ flutter gen-l10n                                # after editing lib/l10n/*.arb
 
 - Android release builds still use the debug signing config from the
   template. Set up a keystore before publishing.
-- The app icon is still the Flutter default.
