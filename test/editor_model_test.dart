@@ -156,6 +156,22 @@ void main() {
       expect(model.config.scanlines, 0.25);
     });
 
+    test('pixel-art presets set their suggested columns', () {
+      model.setColumns(200);
+      final pixelArt = PresetsModel.builtIns.firstWhere((p) => p.id == 'builtin:pixel_art');
+      expect(pixelArt.columns, 64);
+      model.applyPreset(pixelArt);
+      expect(model.columns, 64);
+      expect(model.config.dither, 'none');
+      expect(model.config.fixedPalette, 'pico8');
+      // Still adjustable afterwards.
+      model.setColumns(90);
+      expect(model.columns, 90);
+      // Presets without a suggestion keep the current count.
+      model.applyPreset(PresetsModel.builtIns.firstWhere((p) => p.id == 'builtin:vhs'));
+      expect(model.columns, 90);
+    });
+
     test('user presets restore everything, including columns', () {
       final preset = AppPreset(
         id: 'user:1',

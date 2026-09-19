@@ -8,7 +8,8 @@ void main() {
     expect(listPresets(), [
       'amstrad_cpc', 'arcade_cabinet', 'classic_mac', 'comic_halftone', 'crt_terminal', //
       'dawnbringer', 'endesga_art', 'gameboy_camera', 'gameboy_pocket', 'macpaint',
-      'master_system', 'newspaper', 'pico8_game', 'sepia_photo', 'tic80',
+      'master_system', 'newspaper', 'pico8_game', 'pixel_art', 'pixel_art_earthy',
+      'pixel_art_mono', 'pixel_art_rich', 'pixel_art_soft', 'sepia_photo', 'tic80',
       'vaporwave', 'vhs', 'virtual_boy', 'windows98',
     ]);
   });
@@ -47,5 +48,47 @@ void main() {
 
   test('unknown preset throws', () {
     expect(() => getPreset('nope'), throwsArgumentError);
+  });
+
+  group('pixel-art presets', () {
+    const pixelArt = [
+      'pixel_art',
+      'pixel_art_soft',
+      'pixel_art_rich',
+      'pixel_art_earthy',
+      'pixel_art_mono',
+    ];
+
+    for (final name in pixelArt) {
+      test('$name: flat colors, a fixed palette and a chunky suggested grid', () {
+        final p = getPreset(name);
+        expect(p.dither, 'none');
+        expect(p.paletteMode, PaletteMode.fixed);
+        final cols = presetColumns(name)!;
+        expect(cols, inInclusiveRange(32, 96));
+
+        // At its suggested grid the output uses only palette colors.
+        final r = applyBitmapFilter(
+          randomImage(cols * 2, cols * 2),
+          p.copyWith(gridCols: cols, gridRows: cols),
+        );
+        expect(onlyUsesPalette(r.grid, r.palette), isTrue);
+      });
+    }
+
+    test('columns match the Python reference', () {
+      expect(kPresetColumns, {
+        'pixel_art': 64,
+        'pixel_art_soft': 64,
+        'pixel_art_rich': 80,
+        'pixel_art_earthy': 64,
+        'pixel_art_mono': 48,
+      });
+    });
+
+    test('presets without a suggestion return null; unknown names throw', () {
+      expect(presetColumns('vhs'), isNull);
+      expect(() => presetColumns('nope'), throwsArgumentError);
+    });
   });
 }

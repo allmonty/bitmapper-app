@@ -190,11 +190,15 @@ class EditorModel extends ChangeNotifier {
 
   void resetAdjustments() => _set(_config.copyWith(contrast: 1, saturation: 1, gamma: 1));
 
-  /// Apply a preset. Built-ins only define the look, so the current column
-  /// count is kept; user presets restore it too.
+  /// Apply a preset. Built-ins define the look plus, for pixel-art presets,
+  /// a suggested column count; otherwise the current column count is kept.
+  /// User presets restore everything, columns included.
   void applyPreset(AppPreset preset) {
     var next = preset.config;
-    if (preset.builtIn) next = next.copyWith(gridCols: _config.gridCols);
+    if (preset.builtIn) {
+      final cols = (preset.columns ?? _config.gridCols).clamp(kMinColumns, kMaxColumns);
+      next = next.copyWith(gridCols: cols);
+    }
     if (next.bitDepth < kTrueColorThreshold) {
       _lastPaletteDepth = next.bitDepth.clamp(1, kMaxAutoBitDepth);
     }

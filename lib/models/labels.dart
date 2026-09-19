@@ -74,6 +74,11 @@ const kPresetLabels = <String, String>{
   'tic80': 'TIC-80',
   'virtual_boy': 'Virtual Boy',
   'windows98': 'Windows 98',
+  'pixel_art': 'Pixel Art',
+  'pixel_art_soft': 'Pixel Art Soft',
+  'pixel_art_rich': 'Pixel Art Rich',
+  'pixel_art_earthy': 'Pixel Art Earthy',
+  'pixel_art_mono': 'Pixel Art Mono',
 };
 
 String ditherLabel(String id) => kDitherLabels[id] ?? id;

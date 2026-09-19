@@ -22,6 +22,7 @@ class PresetsModel extends ChangeNotifier {
         name: kPresetLabels[id] ?? id,
         config: getPreset(id),
         builtIn: true,
+        columns: presetColumns(id),
       ),
   ];
 

@@ -8,6 +8,7 @@ class AppPreset {
     required this.name,
     required this.config,
     this.builtIn = false,
+    this.columns,
   });
 
   final String id;
@@ -15,8 +16,17 @@ class AppPreset {
   final BitmapFilterConfig config;
   final bool builtIn;
 
-  AppPreset copyWith({String? name}) =>
-      AppPreset(id: id, name: name ?? this.name, config: config, builtIn: builtIn);
+  /// Pixel columns a built-in preset is designed for (pixel-art presets
+  /// want a chunky grid); null keeps the current column count.
+  final int? columns;
+
+  AppPreset copyWith({String? name}) => AppPreset(
+    id: id,
+    name: name ?? this.name,
+    config: config,
+    builtIn: builtIn,
+    columns: columns,
+  );
 
   Map<String, Object?> toJson() => {'id': id, 'name': name, 'config': config.toJson()};
 

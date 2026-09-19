@@ -1,7 +1,8 @@
 import 'config.dart';
 
 /// Built-in looks, ported from the Python `presets.py`. They set only "look"
-/// fields; grid size stays at the config default (callers override it).
+/// fields; grid size stays at the config default (callers override it, e.g.
+/// with [presetColumns]).
 const Map<String, BitmapFilterConfig> kBuiltInPresets = {
   'arcade_cabinet': BitmapFilterConfig(
     paletteMode: PaletteMode.fixed,
@@ -37,6 +38,45 @@ const Map<String, BitmapFilterConfig> kBuiltInPresets = {
     bitDepth: 4,
     dither: 'none',
     gridGapPx: 1,
+  ),
+  // Pixel-art looks: flat colors (no dithering), curated pixel-art palettes,
+  // a little extra punch, and a suggested chunky grid (kPresetColumns).
+  'pixel_art': BitmapFilterConfig(
+    paletteMode: PaletteMode.fixed,
+    fixedPalette: 'pico8',
+    bitDepth: 4,
+    dither: 'none',
+    contrast: 1.15,
+    saturation: 1.25,
+  ),
+  'pixel_art_earthy': BitmapFilterConfig(
+    paletteMode: PaletteMode.fixed,
+    fixedPalette: 'db16',
+    bitDepth: 4,
+    dither: 'none',
+    contrast: 1.1,
+  ),
+  'pixel_art_mono': BitmapFilterConfig(
+    paletteMode: PaletteMode.fixed,
+    fixedPalette: 'gameboy',
+    bitDepth: 2,
+    dither: 'none',
+    contrast: 1.3,
+  ),
+  'pixel_art_rich': BitmapFilterConfig(
+    paletteMode: PaletteMode.fixed,
+    fixedPalette: 'endesga32',
+    bitDepth: 5,
+    dither: 'none',
+    contrast: 1.1,
+    saturation: 1.15,
+  ),
+  'pixel_art_soft': BitmapFilterConfig(
+    paletteMode: PaletteMode.fixed,
+    fixedPalette: 'sweetie16',
+    bitDepth: 4,
+    dither: 'none',
+    saturation: 1.1,
   ),
   'sepia_photo': BitmapFilterConfig(
     paletteMode: PaletteMode.fixed,
@@ -135,6 +175,25 @@ const Map<String, BitmapFilterConfig> kBuiltInPresets = {
     dither: 'ordered',
   ),
 };
+
+/// Grid width (columns) a preset is designed for. Rows depend on the image's
+/// aspect ratio, so presets suggest columns instead of fixing the grid.
+const Map<String, int> kPresetColumns = {
+  'pixel_art': 64,
+  'pixel_art_soft': 64,
+  'pixel_art_rich': 80,
+  'pixel_art_earthy': 64,
+  'pixel_art_mono': 48,
+};
+
+/// The grid width preset `name` is designed for, or null if it works at any
+/// grid size.
+int? presetColumns(String name) {
+  if (!kBuiltInPresets.containsKey(name)) {
+    throw ArgumentError('unknown preset "$name", available: ${listPresets()}');
+  }
+  return kPresetColumns[name];
+}
 
 /// Built-in preset names, sorted.
 List<String> listPresets() => kBuiltInPresets.keys.toList()..sort();

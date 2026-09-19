@@ -192,6 +192,17 @@ void main() {
     expect(editorOf(tester).config.fixedPalette, 'gameboy');
   });
 
+  testWidgets('the Pixel Art preset switches to its chunky grid', (tester) async {
+    await pumpApp(tester, TestApp(image: photo()));
+    await openPhoto(tester);
+    expect(find.text('120×90 cells'), findsOneWidget);
+    await openMenu(tester, 'Presets', 'Pixel Art');
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pumpAndSettle();
+    expect(editorOf(tester).columns, 64);
+    expect(find.text('64×48 cells'), findsOneWidget);
+  });
+
   testWidgets('saving, renaming and deleting a user preset', (tester) async {
     final app = TestApp();
     await pumpApp(tester, app);
