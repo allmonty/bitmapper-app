@@ -146,7 +146,7 @@ void main() {
       final out = downsample(solidImage(2, 2, [9, 8, 7]), 5, 3);
       expect(out.width, 5);
       expect(out.height, 3);
-      expect(colorsOf(out.data), {0x090807});
+      expect(colorSet(out.data), {0x090807});
     });
 
     test('rejects an empty grid', () {

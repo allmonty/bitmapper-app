@@ -72,7 +72,7 @@ class PaletteTab extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             PaletteSwatches(
-              colors: _packed(subsample(getPalette(config.fixedPalette!), config.nColors)),
+              colors: packedColors(subsample(getPalette(config.fixedPalette!), config.nColors)),
             ),
           ],
           if (mode == PaletteMode.custom)
@@ -99,8 +99,4 @@ class PaletteTab extends StatelessWidget {
       ),
     );
   }
-
-  static List<int> _packed(List<int> rgb) => [
-    for (var i = 0; i < rgb.length; i += 3) (rgb[i] << 16) | (rgb[i + 1] << 8) | rgb[i + 2],
-  ];
 }

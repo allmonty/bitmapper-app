@@ -51,9 +51,5 @@ RgbImage checkerboardImage() => imageFromRows([
     ],
 ]);
 
-Set<int> colorsOf(Uint8List rgb) => {
-  for (var i = 0; i < rgb.length; i += 3) (rgb[i] << 16) | (rgb[i + 1] << 8) | rgb[i + 2],
-};
-
 bool onlyUsesPalette(RgbImage image, Uint8List palette) =>
-    colorsOf(palette).containsAll(colorsOf(image.data));
+    colorSet(palette).containsAll(colorSet(image.data));

@@ -4,6 +4,7 @@
 library;
 
 export 'src/adjustments.dart';
+export 'src/color.dart';
 export 'src/config.dart';
 export 'src/dither.dart';
 export 'src/effects.dart';

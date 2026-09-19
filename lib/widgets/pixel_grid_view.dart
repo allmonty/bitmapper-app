@@ -112,9 +112,9 @@ class PixelGridPainter extends CustomPainter {
 
     for (var y = 0; y < grid.height; y++) {
       var runStart = 0;
-      var runColor = _rgb(data, y * cols * 3);
+      var runColor = packedAt(data, y * cols * 3);
       for (var x = 1; x <= cols; x++) {
-        final color = x < cols ? _rgb(data, (y * cols + x) * 3) : -1;
+        final color = x < cols ? packedAt(data, (y * cols + x) * 3) : -1;
         if (color == runColor) continue;
         paint.color = Color(0xFF000000 | runColor);
         canvas.drawRect(
@@ -150,8 +150,6 @@ class PixelGridPainter extends CustomPainter {
       }
     }
   }
-
-  static int _rgb(List<int> data, int i) => (data[i] << 16) | (data[i + 1] << 8) | data[i + 2];
 
   @override
   bool shouldRepaint(PixelGridPainter old) =>

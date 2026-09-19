@@ -1,10 +1,7 @@
 import 'dart:typed_data';
 
+import 'color.dart';
 import 'image.dart';
-
-/// Rec. 601 luma as `(r * 0.299 + g * 0.587) + b * 0.114`, the same order as
-/// the Python reference, so outline decisions match exactly.
-double luminance(int r, int g, int b) => r * 0.299 + g * 0.587 + b * 0.114;
 
 /// Brightness jump that counts as an edge: 128 at strength 0+, down to 16
 /// at strength 1 (stronger = more edges outlined).

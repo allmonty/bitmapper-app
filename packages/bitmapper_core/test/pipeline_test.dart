@@ -26,7 +26,7 @@ void main() {
           expect(r.output.height, 60);
           expect(r.grid.width, 10);
           expect(r.grid.height, 6);
-          expect(colorsOf(r.grid.data).length, lessThanOrEqualTo(1 << depth));
+          expect(colorSet(r.grid.data).length, lessThanOrEqualTo(1 << depth));
           expect(onlyUsesPalette(r.grid, r.palette), isTrue);
           expect(isBlocky(r.output, 10, 6), isTrue);
         });
@@ -69,7 +69,7 @@ void main() {
       outputWidth: 20,
       outputHeight: 20,
     );
-    expect(colorsOf(r.output.data).difference({0xFF0000, 0x0000FF}), isEmpty);
+    expect(colorSet(r.output.data).difference({0xFF0000, 0x0000FF}), isEmpty);
   });
 
   test('true color passes block colors straight through', () {
@@ -82,7 +82,7 @@ void main() {
     expect(config.isTrueColor, isTrue);
     final r = applyBitmapFilter(src, config);
     expect(r.grid.data, downsample(src, 5, 5).data);
-    expect(r.paletteSize, colorsOf(r.grid.data).length);
+    expect(r.paletteSize, colorSet(r.grid.data).length);
   });
 
   test('nearest and average sampling differ', () {

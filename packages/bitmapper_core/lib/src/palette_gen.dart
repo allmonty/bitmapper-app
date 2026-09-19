@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'color.dart';
 import 'image.dart';
 import 'quantize.dart';
 
@@ -7,13 +8,7 @@ const kPaletteAlgorithms = ['median_cut', 'kmeans'];
 
 /// Unique colors of a flat RGB buffer, sorted lexicographically (like
 /// `np.unique(axis=0)`), as packed `0xRRGGBB` ints.
-List<int> uniqueColors(Uint8List rgb) {
-  final seen = <int>{};
-  for (var i = 0; i < rgb.length; i += 3) {
-    seen.add((rgb[i] << 16) | (rgb[i + 1] << 8) | rgb[i + 2]);
-  }
-  return seen.toList()..sort();
-}
+List<int> uniqueColors(Uint8List rgb) => colorSet(rgb).toList()..sort();
 
 int _ch(int packed, int c) => (packed >> (16 - 8 * c)) & 0xFF;
 

@@ -23,11 +23,11 @@ void main() {
 
       test('single-color image degrades gracefully (padding)', () {
         final pal = gen(solidImage(4, 4, [200, 50, 10]), 4);
-        expect(colorsOf(pal), {0xC8320A});
+        expect(colorSet(pal), {0xC8320A});
       });
 
       test('two-color image recovers both colors', () {
-        expect(colorsOf(gen(checkerboardImage(), 2)), {0x000000, 0xFFFFFF});
+        expect(colorSet(gen(checkerboardImage(), 2)), {0x000000, 0xFFFFFF});
       });
 
       test('rejects n < 1', () {

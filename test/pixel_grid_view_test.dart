@@ -32,9 +32,7 @@ Future<List<int>> rasterize(
     image.dispose();
     return data!.buffer.asUint8List();
   }))!;
-  return [
-    for (var i = 0; i < bytes.length; i += 4) (bytes[i] << 16) | (bytes[i + 1] << 8) | bytes[i + 2],
-  ];
+  return packedColors(bytes, stride: 4);
 }
 
 /// A grid where every cell has a distinct color.
@@ -67,8 +65,7 @@ void main() {
       );
       for (var y = 0; y < rows * cell; y++) {
         for (var x = 0; x < cols * cell; x++) {
-          final c = ((y ~/ cell) * cols + x ~/ cell) * 3;
-          final expected = (grid.data[c] << 16) | (grid.data[c + 1] << 8) | grid.data[c + 2];
+          final expected = packedAt(grid.data, ((y ~/ cell) * cols + x ~/ cell) * 3);
           expect(pixels[y * cols * cell + x], expected, reason: 'pixel ($x, $y)');
         }
       }
@@ -91,9 +88,7 @@ void main() {
     // Same pixels as the engine's upscale with the same gap.
     final expected = upscale(grid, cols * cell, rows * cell, gapPx: 2, gapColor: [0, 255, 0]);
     for (var i = 0; i < pixels.length; i++) {
-      final e =
-          (expected.data[i * 3] << 16) | (expected.data[i * 3 + 1] << 8) | expected.data[i * 3 + 2];
-      expect(pixels[i], e, reason: 'pixel $i');
+      expect(pixels[i], packedAt(expected.data, i * 3), reason: 'pixel $i');
     }
   });
 
@@ -107,7 +102,7 @@ void main() {
     );
     final export = applyScanlines(upscale(grid, 8, 8), 0.5);
     for (var y = 0; y < 8; y++) {
-      final got = pixels[y * 8] >> 16;
+      final got = redOf(pixels[y * 8]);
       expect((got - export.data[y * 8 * 3]).abs(), lessThanOrEqualTo(1), reason: 'row $y');
     }
   });

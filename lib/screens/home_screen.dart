@@ -444,7 +444,7 @@ class _HomeScreenState extends State<HomeScreen> {
       panes.addAll([
         Win98StatusPane(Text(l10n.statusCells(config.gridCols, config.gridRows)), flex: 0),
         if (result != null)
-          Win98StatusPane(Text(l10n.statusColors(_usedColors(result.grid.data))), flex: 0),
+          Win98StatusPane(Text(l10n.statusColors(colorSet(result.grid.data).length)), flex: 0),
         if (ms != null) Win98StatusPane(Text(l10n.statusMs(ms)), flex: 0),
       ]);
     }
@@ -508,12 +508,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-}
-
-int _usedColors(List<int> rgb) {
-  final seen = <int>{};
-  for (var i = 0; i < rgb.length; i += 3) {
-    seen.add((rgb[i] << 16) | (rgb[i + 1] << 8) | rgb[i + 2]);
-  }
-  return seen.length;
 }

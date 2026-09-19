@@ -24,7 +24,7 @@ void main() {
     });
 
     test('contrast 0 collapses to mid gray (127, truncated)', () {
-      expect(colorsOf(adjustContrast(colors, 0).data), {0x7F7F7F});
+      expect(colorSet(adjustContrast(colors, 0).data), {0x7F7F7F});
     });
 
     test('contrast > 1 pushes values away from the middle', () {

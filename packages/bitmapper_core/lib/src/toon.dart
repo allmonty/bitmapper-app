@@ -1,8 +1,9 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'color.dart';
 import 'image.dart';
-import 'outline.dart';
+import 'outline.dart' show applyOutline;
 
 /// Toon (cel) shading stages that run on the grid:
 ///
@@ -60,7 +61,7 @@ const _neighbours = [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1
 /// grid, so the result doesn't depend on scan order. Never adds colors.
 RgbImage despeckle(RgbImage grid) {
   final w = grid.width, h = grid.height, src = grid.data;
-  int packed(int p) => (src[p * 3] << 16) | (src[p * 3 + 1] << 8) | src[p * 3 + 2];
+  int packed(int p) => packedAt(src, p * 3);
   final out = Uint8List.fromList(src);
   for (var y = 0; y < h; y++) {
     for (var x = 0; x < w; x++) {
@@ -90,10 +91,7 @@ RgbImage despeckle(RgbImage grid) {
       for (var k = 1; k < colors.length; k++) {
         if (counts[k] > counts[best]) best = k;
       }
-      final o = (y * w + x) * 3;
-      out[o] = (colors[best] >> 16) & 0xFF;
-      out[o + 1] = (colors[best] >> 8) & 0xFF;
-      out[o + 2] = colors[best] & 0xFF;
+      out.setAll((y * w + x) * 3, unpackRgb(colors[best]));
     }
   }
   return RgbImage(w, h, out);

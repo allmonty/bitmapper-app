@@ -6,11 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers.dart';
 
-Set<int> colorsOf(RgbImage image) => {
-  for (var i = 0; i < image.data.length; i += 3)
-    (image.data[i] << 16) | (image.data[i + 1] << 8) | image.data[i + 2],
-};
-
 void main() {
   test('isGif checks the signature', () {
     expect(isGif(makeGif()), isTrue);
@@ -69,7 +64,7 @@ void main() {
     for (var i = 0; i < 3; i++) {
       expect(back.frames[i].data, outputs[i].data, reason: 'frame $i is bit-exact');
     }
-    expect(colorsOf(back.frames[0]), contains(0x123456), reason: 'gap color kept');
+    expect(colorSet(back.frames[0].data), contains(0x123456), reason: 'gap color kept');
   });
 
   test('frames with more than 256 colors fall back to quantizing', () {
@@ -78,7 +73,7 @@ void main() {
     expect(writer.lossyFrames, 1);
     final back = decodeGif(writer.finish())!;
     expect(back.frameCount, 1);
-    expect(colorsOf(back.frames.single).length, lessThanOrEqualTo(256));
+    expect(colorSet(back.frames.single.data).length, lessThanOrEqualTo(256));
   });
 
   test('toGifFrame is indexed for small palettes', () {

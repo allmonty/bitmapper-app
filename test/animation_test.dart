@@ -216,14 +216,7 @@ void main() {
       expect(back.frameCount, 5);
       expect(back.width, 30);
       expect(back.height, 24);
-      final allColors = back.frames
-          .expand(
-            (f) => {
-              for (var i = 0; i < f.data.length; i += 3)
-                (f.data[i] << 16) | (f.data[i + 1] << 8) | f.data[i + 2],
-            },
-          )
-          .toSet();
+      final allColors = back.frames.expand((f) => colorSet(f.data)).toSet();
       expect(allColors.length, lessThanOrEqualTo(8), reason: 'one 3-bit palette for every frame');
     });
 

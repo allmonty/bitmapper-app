@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'adjustments.dart';
+import 'color.dart';
 import 'config.dart';
 import 'dither.dart';
 import 'effects.dart';
@@ -27,23 +28,13 @@ class FilterResult {
   int get paletteSize => palette.length ~/ 3;
 }
 
-Uint8List _packedToPalette(List<int> packed) {
-  final out = Uint8List(packed.length * 3);
-  for (var i = 0; i < packed.length; i++) {
-    out[i * 3] = (packed[i] >> 16) & 0xFF;
-    out[i * 3 + 1] = (packed[i] >> 8) & 0xFF;
-    out[i * 3 + 2] = packed[i] & 0xFF;
-  }
-  return out;
-}
-
 /// The palette `config` quantizes onto, or `null` for true color.
 Uint8List? resolvePalette(RgbImage grid, BitmapFilterConfig config) {
   switch (config.paletteMode) {
     case PaletteMode.fixed:
       return subsample(getPalette(config.fixedPalette!), config.nColors);
     case PaletteMode.custom:
-      return subsample(_packedToPalette(config.customPalette!), config.nColors);
+      return subsample(paletteFromPacked(config.customPalette!), config.nColors);
     case PaletteMode.auto:
       if (config.bitDepth >= kTrueColorThreshold) return null;
       return generatePalette(grid.data, config.nColors, algorithm: config.paletteAlgorithm);
@@ -97,7 +88,7 @@ FilterResult applyBitmapFilter(
   final Uint8List resolved;
   if (resolvedPalette == null) {
     final unique = uniqueColors(gridColors.data);
-    resolved = _packedToPalette(unique);
+    resolved = paletteFromPacked(unique);
     quantized = gridColors;
   } else {
     resolved = resolvedPalette;
@@ -119,11 +110,7 @@ FilterResult applyBitmapFilter(
     outputWidth ?? source.width,
     outputHeight ?? source.height,
     gapPx: config.gridGapPx,
-    gapColor: [
-      (config.gridGapColor >> 16) & 0xFF,
-      (config.gridGapColor >> 8) & 0xFF,
-      config.gridGapColor & 0xFF,
-    ],
+    gapColor: unpackRgb(config.gridGapColor),
   );
   if (config.scanlines > 0) output = applyScanlines(output, config.scanlines);
   return FilterResult(output: output, grid: quantized, palette: resolved);

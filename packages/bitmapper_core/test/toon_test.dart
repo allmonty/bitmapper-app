@@ -62,7 +62,7 @@ void main() {
         [green, red, green],
         [green, green, green],
       ]);
-      expect(colorsOf(despeckle(grid).data), {0x00FF00});
+      expect(colorSet(despeckle(grid).data), {0x00FF00});
     });
 
     test('cells with a matching neighbour are kept', () {
@@ -85,7 +85,7 @@ void main() {
 
     test('never adds colors; a single cell is unchanged', () {
       final grid = randomImage(12, 12);
-      expect(colorsOf(grid.data).containsAll(colorsOf(despeckle(grid).data)), isTrue);
+      expect(colorSet(grid.data).containsAll(colorSet(despeckle(grid).data)), isTrue);
       final one = imageFromRows([
         [red],
       ]);
@@ -109,7 +109,7 @@ void main() {
     test('shade bands run before the palette is built', () {
       final img = upscale(grayRamp(), 32, 32);
       const config = BitmapFilterConfig(gridCols: 16, gridRows: 16, bitDepth: 4, shadeBands: 2);
-      expect(colorsOf(applyBitmapFilter(img, config).grid.data).length, lessThanOrEqualTo(2));
+      expect(colorSet(applyBitmapFilter(img, config).grid.data).length, lessThanOrEqualTo(2));
     });
 
     test('config JSON round-trips the toon fields', () {

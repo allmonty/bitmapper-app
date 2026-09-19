@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:bitmapper/models/editor_model.dart';
 import 'package:bitmapper/models/media_model.dart';
@@ -18,10 +17,6 @@ import 'package:provider/provider.dart';
 import 'package:win98_ui/win98_ui.dart';
 
 import 'helpers.dart';
-
-Set<int> colorsOf(Uint8List rgba) => {
-  for (var i = 0; i < rgba.length; i += 4) (rgba[i] << 16) | (rgba[i + 1] << 8) | rgba[i + 2],
-};
 
 void main() {
   const pick = LoadedVideo(name: 'clip.mp4', path: '/videos/clip.mp4');
@@ -178,7 +173,7 @@ void main() {
       expect((sink.width, sink.height), (64, 48));
       expect(sink.frames, hasLength(12));
       expect(sink.frames[3].$2, const Duration(microseconds: 100000));
-      final all = sink.frames.expand((f) => colorsOf(f.$1)).toSet();
+      final all = sink.frames.expand((f) => colorSet(f.$1, stride: 4)).toSet();
       expect(all.length, lessThanOrEqualTo(8), reason: 'one 3-bit palette for every frame');
     });
 

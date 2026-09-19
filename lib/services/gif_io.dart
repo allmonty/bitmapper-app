@@ -181,7 +181,7 @@ img.Image toGifFrame(RgbImage frame) {
   final indexOf = <int, int>{};
   final indices = Uint8List(pixels);
   for (var p = 0, i = 0; p < pixels; p++, i += 3) {
-    final packed = (data[i] << 16) | (data[i + 1] << 8) | data[i + 2];
+    final packed = packedAt(data, i);
     var index = indexOf[packed];
     if (index == null) {
       if (indexOf.length == 256) {
@@ -198,9 +198,7 @@ img.Image toGifFrame(RgbImage frame) {
     indices[p] = index;
   }
   final palette = img.PaletteUint8(indexOf.length, 3);
-  indexOf.forEach(
-    (packed, i) => palette.setRgb(i, packed >> 16, (packed >> 8) & 0xFF, packed & 0xFF),
-  );
+  indexOf.forEach((packed, i) => palette.setRgb(i, redOf(packed), greenOf(packed), blueOf(packed)));
   final out = img.Image(width: frame.width, height: frame.height, numChannels: 1, palette: palette);
   out.data!.toUint8List().setAll(0, indices);
   return out;

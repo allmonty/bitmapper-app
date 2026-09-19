@@ -1,11 +1,8 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'color.dart';
 import 'image.dart';
-
-const _lumaR = 0.299;
-const _lumaG = 0.587;
-const _lumaB = 0.114;
 
 /// `(v - 127.5) * amount + 127.5`: >1 increases contrast, <1 flattens, 0 is
 /// flat mid-gray.
@@ -30,7 +27,7 @@ RgbImage adjustSaturation(RgbImage image, double amount) {
   final out = Uint8List(src.length);
   for (var i = 0; i < src.length; i += 3) {
     final r = src[i].toDouble(), g = src[i + 1].toDouble(), b = src[i + 2].toDouble();
-    final luma = r * _lumaR + g * _lumaG + b * _lumaB;
+    final luma = luminance(r, g, b);
     out[i] = clampToByte(luma + (r - luma) * amount);
     out[i + 1] = clampToByte(luma + (g - luma) * amount);
     out[i + 2] = clampToByte(luma + (b - luma) * amount);
