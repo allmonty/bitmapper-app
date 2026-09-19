@@ -133,6 +133,9 @@ void main() {
     expect(editorOf(tester).config.paletteMode, PaletteMode.fixed);
     await tester.tap(find.text('PICO-8 (16)'));
     await tester.pump();
+    // The list is long (27 palettes): scroll to the entry first.
+    await tester.ensureVisible(find.text('Game Boy (4)'));
+    await tester.pump();
     await tester.tap(find.text('Game Boy (4)'));
     await tester.pumpAndSettle();
     expect(editorOf(tester).config.fixedPalette, 'gameboy');

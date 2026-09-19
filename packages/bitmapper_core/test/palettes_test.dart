@@ -19,6 +19,19 @@ void main() {
     'monochrome_green': 4,
     'monochrome_amber': 4,
     'sepia': 32,
+    'cga_palette0': 4,
+    'windows16': 16,
+    'mac16': 16,
+    'gameboy_pocket': 4,
+    'virtualboy': 4,
+    'amstrad_cpc': 27,
+    'master_system': 64,
+    'db16': 16,
+    'sweetie16': 16,
+    'endesga32': 32,
+    'one_bit': 2,
+    'grayscale16': 16,
+    'thermal': 16,
   };
 
   test('lists every palette, sorted', () {
@@ -37,6 +50,16 @@ void main() {
     expect(vga.sublist(0, 6), [0, 0, 0, 0, 0, 51]); // cube, b-minor
     expect(vga.sublist(215 * 3, 216 * 3), [255, 255, 255]);
     expect(vga.sublist(216 * 3, 218 * 3), [0, 0, 0, 6, 6, 6]); // gray ramp
+  });
+
+  test('new palettes match spot values from the Python reference', () {
+    int sum(List<int> p) => p.fold(0, (a, b) => a + b);
+    expect(sum(getPalette('thermal')), 5481);
+    expect(getPalette('thermal').sublist(0, 6), [0, 0, 0, 26, 0, 46]);
+    expect(sum(getPalette('amstrad_cpc')), 10341);
+    expect(sum(getPalette('master_system')), 24480);
+    expect(getPalette('windows16').sublist(0, 6), [0, 0, 0, 128, 0, 0]);
+    expect(getPalette('sweetie16').sublist(0, 6), [26, 28, 44, 93, 39, 93]);
   });
 
   test('getPalette returns a copy', () {

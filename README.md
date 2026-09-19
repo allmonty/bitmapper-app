@@ -23,15 +23,15 @@ hold-to-compare, and zoom.
 - **Live preview** on a background isolate. It is debounced and
   latest-wins, and renders from a copy capped at 1024 px.
 - **Controls:**
-  - Palette: auto (median cut or k-means), 14 fixed palettes, or a custom
+  - Palette: auto (median cut or k-means), 27 fixed palettes, or a custom
     palette edited with a Win98 color dialog.
   - Bit depth: up to 12 bits (4096 colors) in auto mode, then true color;
     up to 8 bits for fixed and custom palettes.
-  - 12 dither methods and dither strength.
+  - 19 dither methods and dither strength.
   - Pixel columns from 16 to 512 (rows follow the aspect ratio), block sampling, and grid
     gap with gap color.
   - Contrast, saturation, gamma, and scanlines.
-- **Presets:** the 8 built-in looks from the Python reference, plus user
+- **Presets:** the 19 built-in looks from the Python reference, plus user
   presets saved to `shared_preferences`.
 - **Save as** renders at full resolution, encodes PNG in an isolate, and
   opens the system save dialog (`flutter_file_dialog`). It needs no

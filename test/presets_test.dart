@@ -1,4 +1,5 @@
 import 'package:bitmapper/models/editor_model.dart';
+import 'package:bitmapper/models/labels.dart';
 import 'package:bitmapper/models/preset.dart';
 import 'package:bitmapper/models/presets_model.dart';
 import 'package:bitmapper/repositories/preset_repository.dart';
@@ -18,8 +19,8 @@ void main() {
       await model.load();
     });
 
-    test('lists user presets before the eight built-ins', () async {
-      expect(PresetsModel.builtIns, hasLength(8));
+    test('lists user presets before the built-ins', () async {
+      expect(PresetsModel.builtIns, hasLength(listPresets().length));
       expect(model.all.every((p) => p.builtIn), isTrue);
       expect(model.userPresets, isEmpty);
       await model.add('Mine', kDefaultConfig);
@@ -99,5 +100,17 @@ void main() {
       expect(loaded.single.name, 'Good');
       expect(loaded.single.config.bitDepth, 3);
     });
+  });
+
+  test('every palette, dither and preset has a display name', () {
+    for (final id in listPalettes()) {
+      expect(kPaletteLabels, contains(id), reason: id);
+    }
+    for (final id in listDitherMethods()) {
+      expect(kDitherLabels, contains(id), reason: id);
+    }
+    for (final id in listPresets()) {
+      expect(kPresetLabels, contains(id), reason: id);
+    }
   });
 }

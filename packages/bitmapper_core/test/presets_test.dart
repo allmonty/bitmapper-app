@@ -4,11 +4,21 @@ import 'package:test/test.dart';
 import 'helpers.dart';
 
 void main() {
-  test('lists the eight Python presets, sorted', () {
+  test('lists the Python presets, sorted', () {
     expect(listPresets(), [
-      'arcade_cabinet', 'crt_terminal', 'gameboy_camera', 'newspaper', //
-      'pico8_game', 'sepia_photo', 'vaporwave', 'vhs',
+      'amstrad_cpc', 'arcade_cabinet', 'classic_mac', 'comic_halftone', 'crt_terminal', //
+      'dawnbringer', 'endesga_art', 'gameboy_camera', 'gameboy_pocket', 'macpaint',
+      'master_system', 'newspaper', 'pico8_game', 'sepia_photo', 'tic80',
+      'vaporwave', 'vhs', 'virtual_boy', 'windows98',
     ]);
+  });
+
+  test('every preset uses palettes and dithers that exist', () {
+    for (final name in listPresets()) {
+      final p = getPreset(name);
+      expect(listDitherMethods(), contains(p.dither), reason: name);
+      if (p.fixedPalette != null) expect(listPalettes(), contains(p.fixedPalette), reason: name);
+    }
   });
 
   for (final name in listPresets()) {

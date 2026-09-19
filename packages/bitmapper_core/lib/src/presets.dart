@@ -52,6 +52,73 @@ const Map<String, BitmapFilterConfig> kBuiltInPresets = {
     saturation: 1.4,
     gamma: 1.2,
   ),
+  'amstrad_cpc': BitmapFilterConfig(
+    paletteMode: PaletteMode.fixed,
+    fixedPalette: 'amstrad_cpc',
+    bitDepth: 5,
+    dither: 'floyd_steinberg',
+    scanlines: 0.2,
+  ),
+  // Bill Atkinson's dither was the Mac's own.
+  'classic_mac': BitmapFilterConfig(
+    paletteMode: PaletteMode.fixed,
+    fixedPalette: 'mac16',
+    bitDepth: 4,
+    dither: 'atkinson',
+  ),
+  'comic_halftone': BitmapFilterConfig(
+    paletteMode: PaletteMode.custom,
+    customPalette: [0xFFFFFF, 0x00FFFF, 0xFF00FF, 0xFFFF00, 0x000000],
+    dither: 'clustered_dot',
+    ditherStrength: 0.5,
+    saturation: 1.3,
+    gamma: 1.2,
+  ),
+  'dawnbringer': BitmapFilterConfig(
+    paletteMode: PaletteMode.fixed,
+    fixedPalette: 'db16',
+    bitDepth: 4,
+    dither: 'floyd_steinberg_serpentine',
+  ),
+  'endesga_art': BitmapFilterConfig(
+    paletteMode: PaletteMode.fixed,
+    fixedPalette: 'endesga32',
+    bitDepth: 5,
+    dither: 'interleaved_gradient_noise',
+    saturation: 1.1,
+  ),
+  'gameboy_pocket': BitmapFilterConfig(
+    paletteMode: PaletteMode.fixed,
+    fixedPalette: 'gameboy_pocket',
+    bitDepth: 2,
+    dither: 'ordered',
+  ),
+  'macpaint': BitmapFilterConfig(
+    paletteMode: PaletteMode.fixed,
+    fixedPalette: 'one_bit',
+    bitDepth: 1,
+    dither: 'atkinson',
+    contrast: 1.1,
+  ),
+  'master_system': BitmapFilterConfig(
+    paletteMode: PaletteMode.fixed,
+    fixedPalette: 'master_system',
+    bitDepth: 6,
+    dither: 'sierra_lite',
+  ),
+  'tic80': BitmapFilterConfig(
+    paletteMode: PaletteMode.fixed,
+    fixedPalette: 'sweetie16',
+    bitDepth: 4,
+    dither: 'interleaved_gradient_noise',
+  ),
+  'virtual_boy': BitmapFilterConfig(
+    paletteMode: PaletteMode.fixed,
+    fixedPalette: 'virtualboy',
+    bitDepth: 2,
+    dither: 'ordered',
+    saturation: 0.0,
+  ),
   'vhs': BitmapFilterConfig(
     paletteMode: PaletteMode.auto,
     bitDepth: 5,
@@ -60,6 +127,12 @@ const Map<String, BitmapFilterConfig> kBuiltInPresets = {
     saturation: 1.3,
     contrast: 0.9,
     scanlines: 0.25,
+  ),
+  'windows98': BitmapFilterConfig(
+    paletteMode: PaletteMode.fixed,
+    fixedPalette: 'windows16',
+    bitDepth: 4,
+    dither: 'ordered',
   ),
 };
 
