@@ -345,5 +345,6 @@
         "type": "int"
       }
     }
-  }
+  },
+  "effectOutlineCloseGaps": "Close small gaps"
 }

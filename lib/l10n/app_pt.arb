@@ -128,5 +128,6 @@
   "effectDespeckle": "Limpar pixels soltos",
   "outlineMethod": "Bordas do contorno",
   "outlineInk": "Tinta do contorno",
-  "effectOutlineThickness": "Espessura da linha: {thickness}"
+  "effectOutlineThickness": "Espessura da linha: {thickness}",
+  "effectOutlineCloseGaps": "Fechar pequenas lacunas"
 }

@@ -93,6 +93,11 @@ class EffectsTab extends StatelessWidget {
                     divisions: kMaxOutlineThickness - kMinOutlineThickness,
                     onChanged: (v) => editor.setOutlineThickness(v.round()),
                   ),
+                  Win98Checkbox(
+                    value: config.outlineCloseGaps,
+                    label: l10n.effectOutlineCloseGaps,
+                    onChanged: editor.setOutlineCloseGaps,
+                  ),
                 ],
               ],
             ),

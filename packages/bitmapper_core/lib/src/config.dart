@@ -55,6 +55,7 @@ class BitmapFilterConfig {
     this.outlineMethod = 'brightness',
     this.outlineInk = 'darkest',
     this.outlineThickness = 1,
+    this.outlineCloseGaps = false,
     this.shadeBands = 0,
     this.despeckle = false,
     this.contrast = 1.0,
@@ -92,6 +93,9 @@ class BitmapFilterConfig {
   /// Line thickness for [outline], in grid cells. See
   /// [kMinOutlineThickness]/[kMaxOutlineThickness].
   final int outlineThickness;
+
+  /// Bridge 1-cell gaps in the [outline] mask before inking.
+  final bool outlineCloseGaps;
 
   /// Toon shading: 0 = off, else 2..8 flat brightness bands.
   final int shadeBands;
@@ -195,6 +199,7 @@ class BitmapFilterConfig {
     String? outlineMethod,
     String? outlineInk,
     int? outlineThickness,
+    bool? outlineCloseGaps,
     int? shadeBands,
     bool? despeckle,
     double? contrast,
@@ -223,6 +228,7 @@ class BitmapFilterConfig {
       outlineMethod: outlineMethod ?? this.outlineMethod,
       outlineInk: outlineInk ?? this.outlineInk,
       outlineThickness: outlineThickness ?? this.outlineThickness,
+      outlineCloseGaps: outlineCloseGaps ?? this.outlineCloseGaps,
       shadeBands: shadeBands ?? this.shadeBands,
       despeckle: despeckle ?? this.despeckle,
       contrast: contrast ?? this.contrast,
@@ -253,6 +259,7 @@ class BitmapFilterConfig {
     'outlineMethod': outlineMethod,
     'outlineInk': outlineInk,
     'outlineThickness': outlineThickness,
+    'outlineCloseGaps': outlineCloseGaps,
     'shadeBands': shadeBands,
     'despeckle': despeckle,
     'contrast': contrast,
@@ -291,6 +298,7 @@ class BitmapFilterConfig {
       outlineMethod: get<String>('outlineMethod') ?? d.outlineMethod,
       outlineInk: get<String>('outlineInk') ?? d.outlineInk,
       outlineThickness: get<int>('outlineThickness') ?? d.outlineThickness,
+      outlineCloseGaps: get<bool>('outlineCloseGaps') ?? d.outlineCloseGaps,
       shadeBands: get<int>('shadeBands') ?? d.shadeBands,
       despeckle: get<bool>('despeckle') ?? d.despeckle,
       contrast: getDouble('contrast') ?? d.contrast,
@@ -326,6 +334,7 @@ class BitmapFilterConfig {
         outlineMethod == other.outlineMethod &&
         outlineInk == other.outlineInk &&
         outlineThickness == other.outlineThickness &&
+        outlineCloseGaps == other.outlineCloseGaps &&
         shadeBands == other.shadeBands &&
         despeckle == other.despeckle &&
         contrast == other.contrast &&
@@ -356,6 +365,7 @@ class BitmapFilterConfig {
     outlineMethod,
     outlineInk,
     outlineThickness,
+    outlineCloseGaps,
     shadeBands,
     despeckle,
     contrast,

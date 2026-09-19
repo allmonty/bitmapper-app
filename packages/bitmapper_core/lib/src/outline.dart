@@ -47,6 +47,12 @@ int darkestColorIndex(Uint8List palette) {
 /// `thickness` (1..3, [kMinOutlineThickness]..[kMaxOutlineThickness]) grows
 /// the line by dilating the edge mask one 4-neighbour step per extra cell;
 /// 1 (the default) is the original one-cell line.
+///
+/// `closeGaps` (default off) bridges 1-cell gaps in the edge mask with a
+/// binary closing (8-neighbour dilate then erode), applied before
+/// `thickness` so a requested thickness stays consistent along the whole
+/// line instead of erosion partially undoing it right where a gap was
+/// bridged.
 RgbImage applyOutline(
   RgbImage grid,
   Uint8List palette,
@@ -55,6 +61,7 @@ RgbImage applyOutline(
   String ink = 'darkest',
   RgbImage? edgeGrid,
   int thickness = 1,
+  bool closeGaps = false,
 }) {
   if (strength < 0 || strength > 1) {
     throw ArgumentError.value(strength, 'strength', 'outline must be between 0 and 1');
@@ -85,6 +92,7 @@ RgbImage applyOutline(
     'sobel' => _sobelMask(edges, threshold),
     _ => _brightnessMask(edges, threshold),
   };
+  if (closeGaps) mask = _closeGaps(mask, w, h);
   for (var i = 1; i < thickness; i++) {
     mask = _dilate4(mask, w, h);
   }
@@ -126,6 +134,59 @@ List<bool> _dilate4(List<bool> mask, int w, int h) {
           (x > 0 && mask[p - 1]) ||
           (y + 1 < h && mask[p + w]) ||
           (y > 0 && mask[p - w]);
+    }
+  }
+  return out;
+}
+
+/// Bridges 1-cell gaps in `mask` with a binary closing: dilate by 1 over
+/// the full 8-neighbourhood (out-of-canvas counts as false, so this never
+/// grows the mask past the grid edge), then erode by 1 over the same
+/// neighbourhood (out-of-canvas counts as true this time, so a line
+/// against the canvas edge isn't eroded away just for being near it).
+List<bool> _closeGaps(List<bool> mask, int w, int h) {
+  final dilated = _dilate8(mask, w, h);
+  return _erode8(dilated, w, h);
+}
+
+bool _at8(List<bool> mask, int w, int h, int x, int y, bool outOfBounds) {
+  if (x < 0 || x >= w || y < 0 || y >= h) return outOfBounds;
+  return mask[y * w + x];
+}
+
+List<bool> _dilate8(List<bool> mask, int w, int h) {
+  final out = List<bool>.filled(w * h, false);
+  for (var y = 0; y < h; y++) {
+    for (var x = 0; x < w; x++) {
+      var any = false;
+      for (var dy = -1; dy <= 1 && !any; dy++) {
+        for (var dx = -1; dx <= 1; dx++) {
+          if (_at8(mask, w, h, x + dx, y + dy, false)) {
+            any = true;
+            break;
+          }
+        }
+      }
+      out[y * w + x] = any;
+    }
+  }
+  return out;
+}
+
+List<bool> _erode8(List<bool> mask, int w, int h) {
+  final out = List<bool>.filled(w * h, false);
+  for (var y = 0; y < h; y++) {
+    for (var x = 0; x < w; x++) {
+      var all = true;
+      for (var dy = -1; dy <= 1 && all; dy++) {
+        for (var dx = -1; dx <= 1; dx++) {
+          if (!_at8(mask, w, h, x + dx, y + dy, true)) {
+            all = false;
+            break;
+          }
+        }
+      }
+      out[y * w + x] = all;
     }
   }
   return out;

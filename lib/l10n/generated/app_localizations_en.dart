@@ -453,4 +453,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String effectOutlineThickness(int thickness) {
     return 'Line thickness: $thickness';
   }
+
+  @override
+  String get effectOutlineCloseGaps => 'Close small gaps';
 }

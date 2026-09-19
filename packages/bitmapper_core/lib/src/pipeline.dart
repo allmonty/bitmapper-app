@@ -120,6 +120,7 @@ FilterResult applyBitmapFilter(
       ink: config.outlineInk,
       edgeGrid: preDither,
       thickness: config.outlineThickness,
+      closeGaps: config.outlineCloseGaps,
     );
   }
   checkCancelled();

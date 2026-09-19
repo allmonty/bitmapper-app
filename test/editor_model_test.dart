@@ -93,6 +93,12 @@ void main() {
     expect(model.config.outlineThickness, 2);
   });
 
+  test('outline close gaps setter', () {
+    expect(model.config.outlineCloseGaps, isFalse);
+    model.setOutlineCloseGaps(true);
+    expect(model.config.outlineCloseGaps, isTrue);
+  });
+
   test('toon setters and validation', () {
     model.setShadeBands(3);
     model.setDespeckle(true);

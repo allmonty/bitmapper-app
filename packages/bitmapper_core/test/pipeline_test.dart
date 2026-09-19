@@ -205,6 +205,7 @@ void main() {
         outlineMethod: 'sobel',
         outlineInk: 'shaded',
         outlineThickness: 2,
+        outlineCloseGaps: true,
         contrast: 1.2,
         saturation: 0.8,
         gamma: 1.7,

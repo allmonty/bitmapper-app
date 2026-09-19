@@ -472,6 +472,144 @@ void main() {
     });
   });
 
+  group('closeGaps', () {
+    test('off (the default) reproduces every prior golden', () {
+      final grid = square();
+      expect(
+        applyOutline(grid, palette, 0.5, closeGaps: false).data,
+        applyOutline(grid, palette, 0.5).data,
+      );
+    });
+
+    /// 7x7, bright everywhere except a dark 3x3 ring (rows/cols 2-4)
+    /// around a bright center cell (3,3): a single-cell gap in an
+    /// otherwise fully-enclosed dark ring.
+    RgbImage ringGrid() {
+      final data = Uint8List(7 * 7 * 3);
+      for (var y = 0; y < 7; y++) {
+        for (var x = 0; x < 7; x++) {
+          final inRingBlock = x >= 2 && x <= 4 && y >= 2 && y <= 4;
+          final isCenter = x == 3 && y == 3;
+          data.setRange(
+            (y * 7 + x) * 3,
+            (y * 7 + x) * 3 + 3,
+            (inRingBlock && !isCenter) ? black : white,
+          );
+        }
+      }
+      return RgbImage(7, 7, data);
+    }
+
+    test('bridges a gap fully enclosed by inked cells', () {
+      final pal = Uint8List.fromList([...white, ...black]);
+      final withoutClose = applyOutline(ringGrid(), pal, 0.5, method: 'brightness');
+      final withClose = applyOutline(ringGrid(), pal, 0.5, method: 'brightness', closeGaps: true);
+      expect(withoutClose.pixel(3, 3), white, reason: 'the ring has a 1-cell gap at its centre');
+      expect(withClose.pixel(3, 3), black, reason: 'closing bridges a fully-enclosed gap');
+    });
+
+    test('matches the Python reference byte for byte', () {
+      final grid = RgbImage(
+        6,
+        5,
+        Uint8List.fromList(List.generate(6 * 5 * 3, (i) => i * 37 % 256)),
+      );
+      final pal = Uint8List.fromList([200, 30, 30, 5, 60, 90, 240, 240, 240, 12, 40, 20]);
+      expect(applyOutline(grid, pal, 0.35, method: 'brightness', closeGaps: true).data, [
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        222,
+        3,
+        40,
+        77,
+        114,
+        151,
+        188,
+        225,
+        6,
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        120,
+        157,
+        194,
+        231,
+        12,
+        49,
+        86,
+        123,
+        160,
+        197,
+        234,
+        15,
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        240,
+        21,
+        58,
+        95,
+        132,
+        169,
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        138,
+        175,
+        212,
+        249,
+        30,
+        67,
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+      ]);
+    });
+  });
+
   test('matches the Python reference byte for byte', () {
     final grid = RgbImage(6, 5, Uint8List.fromList(List.generate(6 * 5 * 3, (i) => i * 37 % 256)));
     final pal = Uint8List.fromList([200, 30, 30, 5, 60, 90, 240, 240, 240, 12, 40, 20]);

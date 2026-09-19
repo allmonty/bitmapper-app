@@ -227,6 +227,14 @@ void main() {
     expect(find.text('Shaded'), findsOneWidget);
     expect(find.text('Line thickness: 2'), findsOneWidget);
     expect(filter.result!.grid.data, isNot(before.data), reason: 'thicker edges got inked');
+
+    final closeGapsCheckbox = find.text('Close small gaps');
+    expect(closeGapsCheckbox, findsOneWidget);
+    await tester.ensureVisible(closeGapsCheckbox);
+    await tester.pumpAndSettle();
+    await tester.tap(closeGapsCheckbox);
+    await tester.pump();
+    expect(editorOf(tester).config.outlineCloseGaps, isTrue);
   });
 
   testWidgets('the Toon controls set shade bands and cleanup', (tester) async {

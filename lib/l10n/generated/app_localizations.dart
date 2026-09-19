@@ -866,6 +866,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Line thickness: {thickness}'**
   String effectOutlineThickness(int thickness);
+
+  /// No description provided for @effectOutlineCloseGaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Close small gaps'**
+  String get effectOutlineCloseGaps;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
