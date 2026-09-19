@@ -26,13 +26,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuOpen => 'Open...';
 
   @override
-  String get menuCamera => 'Take photo...';
+  String get menuCamera => 'Camera...';
 
   @override
   String get menuSave => 'Save as...';
 
   @override
-  String get menuClose => 'Close image';
+  String get menuClose => 'Close';
 
   @override
   String get menuPresets => 'Presets';
@@ -47,13 +47,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuAbout => 'About Bitmapper...';
 
   @override
-  String get emptyTitle => 'Open an image';
+  String get emptyTitle => 'Open a photo or video';
 
   @override
-  String get emptyBody => 'Pick a photo to turn into retro pixel art.';
-
-  @override
-  String get emptyGallery => 'Gallery...';
+  String get emptyBody =>
+      'Pick a photo, GIF or video to turn into retro pixel art.';
 
   @override
   String get emptyCamera => 'Camera...';
@@ -270,7 +268,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorTitle => 'Bitmapper';
 
   @override
-  String get errorLoad => 'Couldn\'t open that image.';
+  String get errorLoad => 'Couldn\'t open that file.';
 
   @override
   String get errorSave => 'Couldn\'t save the image.';
@@ -369,12 +367,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get menuOpenVideo => 'Open video...';
-
-  @override
-  String get emptyVideo => 'Video...';
-
-  @override
   String get exportFormat => 'Save as';
 
   @override
@@ -401,9 +393,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get errorVideo => 'Couldn\'t open that video.';
-
-  @override
   String get exportVideoTitle => 'Saving video';
 
   @override
@@ -421,4 +410,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String statusSavedNoSound(String name) {
     return 'Saved $name (without sound)';
   }
+
+  @override
+  String get emptyOpen => 'Open...';
+
+  @override
+  String get cameraTitle => 'Camera';
+
+  @override
+  String get cameraPrompt => 'Take a photo or record a video?';
+
+  @override
+  String get cameraPhoto => 'Photo';
+
+  @override
+  String get cameraVideo => 'Video';
 }

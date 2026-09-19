@@ -34,19 +34,14 @@ class FakeImageLoader implements ImageLoader {
 
   LoadedMedia? result;
   Object? error;
-  final List<ImageOrigin> calls = [];
+  final List<MediaRequest> calls = [];
 
   @override
-  Future<LoadedMedia?> load(ImageOrigin origin) async {
-    calls.add(origin);
+  Future<LoadedMedia?> load(MediaRequest request) async {
+    calls.add(request);
     if (error != null) throw error!;
     return result;
   }
-
-  PickedVideo? video;
-
-  @override
-  Future<PickedVideo?> pickVideo() async => video;
 }
 
 class FakeImageSaver implements ImageSaver {

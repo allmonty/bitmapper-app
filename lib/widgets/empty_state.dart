@@ -4,18 +4,12 @@ import 'package:win98_ui/win98_ui.dart';
 import '../l10n/generated/app_localizations.dart';
 
 /// Shown in the preview area before an image is loaded: a little
-/// dialog-style panel with Gallery / Camera buttons.
+/// dialog-style panel with Open / Camera buttons.
 class EmptyState extends StatelessWidget {
-  const EmptyState({
-    super.key,
-    required this.onGallery,
-    required this.onCamera,
-    required this.onVideo,
-  });
+  const EmptyState({super.key, required this.onOpen, required this.onCamera});
 
-  final VoidCallback onGallery;
+  final VoidCallback onOpen;
   final VoidCallback onCamera;
-  final VoidCallback onVideo;
 
   @override
   Widget build(BuildContext context) {
@@ -47,13 +41,8 @@ class EmptyState extends StatelessWidget {
                   runSpacing: 8,
                   alignment: WrapAlignment.center,
                   children: [
-                    Win98Button(
-                      isDefault: true,
-                      onPressed: onGallery,
-                      child: Text(l10n.emptyGallery),
-                    ),
+                    Win98Button(isDefault: true, onPressed: onOpen, child: Text(l10n.emptyOpen)),
                     Win98Button(onPressed: onCamera, child: Text(l10n.emptyCamera)),
-                    Win98Button(onPressed: onVideo, child: Text(l10n.emptyVideo)),
                   ],
                 ),
               ],

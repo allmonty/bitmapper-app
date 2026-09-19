@@ -81,34 +81,24 @@ class MediaModel extends ChangeNotifier {
   /// Identifies the loaded sequence (for the preview's palette cache).
   Object? get document => _animation?.frames ?? _videoToken;
 
-  /// Pick and decode a photo or GIF. Returns false if the user cancelled;
-  /// errors propagate so the UI can report them, leaving the current media
-  /// intact.
-  Future<bool> load(ImageOrigin origin) => _loadWith(() async {
-    final loaded = await _loader.load(origin);
-    if (loaded == null) return false;
-    switch (loaded) {
-      case LoadedImage(:final name, :final image):
-        setImage(name, image);
-      case LoadedAnimation(:final name, :final bytes, :final animation):
-        setAnimation(name, bytes, animation);
-    }
-    return true;
-  });
-
-  /// Pick a video and open it for preview.
-  Future<bool> loadVideo() => _loadWith(() async {
-    final picked = await _loader.pickVideo();
-    if (picked == null) return false;
-    await openVideo(picked.name, picked.path);
-    return true;
-  });
-
-  Future<bool> _loadWith(Future<bool> Function() body) async {
+  /// Pick a photo, GIF or video (from the library or the camera) and show
+  /// it. Returns false if the user cancelled; errors propagate so the UI can
+  /// report them, leaving the current media intact.
+  Future<bool> load(MediaRequest request) async {
     _loading = true;
     notifyListeners();
     try {
-      return await body();
+      final loaded = await _loader.load(request);
+      if (loaded == null) return false;
+      switch (loaded) {
+        case LoadedImage(:final name, :final image):
+          setImage(name, image);
+        case LoadedAnimation(:final name, :final bytes, :final animation):
+          setAnimation(name, bytes, animation);
+        case LoadedVideo(:final name, :final path):
+          await openVideo(name, path);
+      }
+      return true;
     } finally {
       _loading = false;
       notifyListeners();

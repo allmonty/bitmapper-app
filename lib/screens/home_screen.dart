@@ -107,22 +107,34 @@ class _HomeScreenState extends State<HomeScreen> {
     };
   }
 
-  Future<void> _open(ImageOrigin origin) async {
+  /// Open media from the library or the camera, then report anything the
+  /// user should know about it (a truncated GIF, video sound that can't be
+  /// kept).
+  Future<void> _open(MediaRequest request) async {
     final l10n = AppLocalizations.of(context);
     try {
-      await _media.load(origin);
+      if (!await _media.load(request) || !mounted) return;
       final animation = _media.animation;
-      if (animation != null && animation.truncated && mounted) {
+      final video = _media.videoInfo;
+      final String? warning;
+      if (animation != null && animation.truncated) {
+        warning = l10n.animationTruncated(animation.frameCount);
+      } else if (video != null && video.hasAudio && !video.audioCompatible) {
+        warning = l10n.audioUnsupported;
+      } else {
+        warning = null;
+      }
+      if (warning != null) {
         await showWin98MessageBox(
           context: context,
           title: l10n.errorTitle,
-          message: l10n.animationTruncated(animation.frameCount),
+          message: warning,
           icon: Win98MessageIconType.warning,
           buttons: [l10n.ok],
         );
       }
     } catch (e) {
-      debugPrint('Image load failed: $e');
+      debugPrint('Open failed: $e');
       if (!mounted) return;
       await showWin98MessageBox(
         context: context,
@@ -134,30 +146,21 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _openVideo() async {
+  /// Ask whether to take a photo or record a video, then open the camera.
+  Future<void> _openCamera() async {
     final l10n = AppLocalizations.of(context);
-    try {
-      final loaded = await _media.loadVideo();
-      final info = _media.videoInfo;
-      if (loaded && info != null && info.hasAudio && !info.audioCompatible && mounted) {
-        await showWin98MessageBox(
-          context: context,
-          title: l10n.errorTitle,
-          message: l10n.audioUnsupported,
-          icon: Win98MessageIconType.warning,
-          buttons: [l10n.ok],
-        );
-      }
-    } catch (e) {
-      debugPrint('Video load failed: $e');
-      if (!mounted) return;
-      await showWin98MessageBox(
-        context: context,
-        title: l10n.errorTitle,
-        message: l10n.errorVideo,
-        icon: Win98MessageIconType.error,
-        buttons: [l10n.ok],
-      );
+    final choice = await showWin98MessageBox(
+      context: context,
+      title: l10n.cameraTitle,
+      message: l10n.cameraPrompt,
+      icon: Win98MessageIconType.question,
+      buttons: [l10n.cameraPhoto, l10n.cameraVideo, l10n.cancel],
+    );
+    switch (choice) {
+      case 0:
+        await _open(MediaRequest.cameraPhoto);
+      case 1:
+        await _open(MediaRequest.cameraVideo);
     }
   }
 
@@ -383,9 +386,8 @@ class _HomeScreenState extends State<HomeScreen> {
         Win98Menu(
           label: l10n.menuFile,
           items: [
-            Win98MenuItem(label: l10n.menuOpen, onSelected: () => _open(ImageOrigin.gallery)),
-            Win98MenuItem(label: l10n.menuCamera, onSelected: () => _open(ImageOrigin.camera)),
-            Win98MenuItem(label: l10n.menuOpenVideo, onSelected: _openVideo),
+            Win98MenuItem(label: l10n.menuOpen, onSelected: () => _open(MediaRequest.library)),
+            Win98MenuItem(label: l10n.menuCamera, onSelected: _openCamera),
             Win98MenuItem(label: l10n.menuSave, onSelected: hasImage && !_saving ? _save : null),
             const Win98MenuDivider(),
             Win98MenuItem(label: l10n.menuClose, onSelected: hasImage ? _media.clear : null),
@@ -466,11 +468,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Win98Tab(label: l10n.tabPresets, builder: (_) => const PresetsTab()),
       ],
     );
-    final preview = PreviewPane(
-      onGallery: () => _open(ImageOrigin.gallery),
-      onCamera: () => _open(ImageOrigin.camera),
-      onVideo: _openVideo,
-    );
+    final preview = PreviewPane(onOpen: () => _open(MediaRequest.library), onCamera: _openCamera);
 
     return Win98Desktop(
       child: SafeArea(

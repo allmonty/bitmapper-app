@@ -26,13 +26,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get menuOpen => 'Abrir...';
 
   @override
-  String get menuCamera => 'Tirar foto...';
+  String get menuCamera => 'Câmera...';
 
   @override
   String get menuSave => 'Salvar como...';
 
   @override
-  String get menuClose => 'Fechar imagem';
+  String get menuClose => 'Fechar';
 
   @override
   String get menuPresets => 'Predefinições';
@@ -47,13 +47,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get menuAbout => 'Sobre o Bitmapper...';
 
   @override
-  String get emptyTitle => 'Abra uma imagem';
+  String get emptyTitle => 'Abra uma foto ou vídeo';
 
   @override
-  String get emptyBody => 'Escolha uma foto para virar pixel art retrô.';
-
-  @override
-  String get emptyGallery => 'Galeria...';
+  String get emptyBody =>
+      'Escolha uma foto, GIF ou vídeo para virar pixel art retrô.';
 
   @override
   String get emptyCamera => 'Câmera...';
@@ -270,7 +268,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get errorTitle => 'Bitmapper';
 
   @override
-  String get errorLoad => 'Não foi possível abrir essa imagem.';
+  String get errorLoad => 'Não foi possível abrir esse arquivo.';
 
   @override
   String get errorSave => 'Não foi possível salvar a imagem.';
@@ -369,12 +367,6 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get menuOpenVideo => 'Abrir vídeo...';
-
-  @override
-  String get emptyVideo => 'Vídeo...';
-
-  @override
   String get exportFormat => 'Salvar como';
 
   @override
@@ -401,9 +393,6 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get errorVideo => 'Não foi possível abrir esse vídeo.';
-
-  @override
   String get exportVideoTitle => 'Salvando vídeo';
 
   @override
@@ -421,4 +410,19 @@ class AppLocalizationsPt extends AppLocalizations {
   String statusSavedNoSound(String name) {
     return '$name salvo (sem som)';
   }
+
+  @override
+  String get emptyOpen => 'Abrir...';
+
+  @override
+  String get cameraTitle => 'Câmera';
+
+  @override
+  String get cameraPrompt => 'Tirar uma foto ou gravar um vídeo?';
+
+  @override
+  String get cameraPhoto => 'Foto';
+
+  @override
+  String get cameraVideo => 'Vídeo';
 }

@@ -5,7 +5,9 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Bitmapper opens photos from your library to turn them into retro pixel art.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Bitmapper uses the camera to take a photo to turn into retro pixel art.</string>
+	<string>Bitmapper uses the camera to take photos and record videos to turn into retro pixel art.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Bitmapper records sound with the videos you take, so it can be kept in the saved video.</string>
 	<key>CFBundleLocalizations</key>
 	<array>
 		<string>en</string>

@@ -81,13 +81,13 @@ void main() {
         result: LoadedImage(name: 'cat.png', image: gradient(2000, 1000)),
       );
       final model = MediaModel(loader);
-      expect(await model.load(ImageOrigin.gallery), isTrue);
+      expect(await model.load(MediaRequest.library), isTrue);
       expect(model.hasImage, isTrue);
       expect(model.name, 'cat.png');
       expect(model.full!.width, 2000);
       expect(model.preview!.width, kPreviewDimension);
       expect(model.loading, isFalse);
-      expect(loader.calls, [ImageOrigin.gallery]);
+      expect(loader.calls, [MediaRequest.library]);
     });
 
     test('cancelling keeps the current image', () async {
@@ -95,15 +95,15 @@ void main() {
         result: LoadedImage(name: 'a', image: gradient(10, 10)),
       );
       final model = MediaModel(loader);
-      await model.load(ImageOrigin.camera);
+      await model.load(MediaRequest.cameraPhoto);
       loader.result = null;
-      expect(await model.load(ImageOrigin.camera), isFalse);
+      expect(await model.load(MediaRequest.cameraPhoto), isFalse);
       expect(model.name, 'a');
     });
 
     test('errors propagate and reset the loading flag', () async {
       final model = MediaModel(FakeImageLoader(error: Exception('bad file')));
-      await expectLater(model.load(ImageOrigin.gallery), throwsException);
+      await expectLater(model.load(MediaRequest.library), throwsException);
       expect(model.loading, isFalse);
       expect(model.hasImage, isFalse);
     });
@@ -113,6 +113,21 @@ void main() {
       model.clear();
       expect(model.hasImage, isFalse);
       expect(model.preview, isNull);
+    });
+  });
+
+  group('isVideoFile', () {
+    test('by extension, case-insensitive', () {
+      for (final name in ['a.mp4', 'b.MOV', 'c.m4v', 'd.3gp', 'e.webm', 'f.mkv']) {
+        expect(isVideoFile(name), isTrue, reason: name);
+      }
+      for (final name in ['a.jpg', 'b.png', 'c.gif', 'd.heic', 'noext', 'mp4']) {
+        expect(isVideoFile(name), isFalse, reason: name);
+      }
+    });
+    test('by MIME type when the name says nothing', () {
+      expect(isVideoFile('picker_123', 'video/quicktime'), isTrue);
+      expect(isVideoFile('picker_123', 'image/jpeg'), isFalse);
     });
   });
 }

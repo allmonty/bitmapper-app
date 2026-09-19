@@ -131,7 +131,7 @@ abstract class AppLocalizations {
   /// No description provided for @menuCamera.
   ///
   /// In en, this message translates to:
-  /// **'Take photo...'**
+  /// **'Camera...'**
   String get menuCamera;
 
   /// No description provided for @menuSave.
@@ -143,7 +143,7 @@ abstract class AppLocalizations {
   /// No description provided for @menuClose.
   ///
   /// In en, this message translates to:
-  /// **'Close image'**
+  /// **'Close'**
   String get menuClose;
 
   /// No description provided for @menuPresets.
@@ -173,20 +173,14 @@ abstract class AppLocalizations {
   /// No description provided for @emptyTitle.
   ///
   /// In en, this message translates to:
-  /// **'Open an image'**
+  /// **'Open a photo or video'**
   String get emptyTitle;
 
   /// No description provided for @emptyBody.
   ///
   /// In en, this message translates to:
-  /// **'Pick a photo to turn into retro pixel art.'**
+  /// **'Pick a photo, GIF or video to turn into retro pixel art.'**
   String get emptyBody;
-
-  /// No description provided for @emptyGallery.
-  ///
-  /// In en, this message translates to:
-  /// **'Gallery...'**
-  String get emptyGallery;
 
   /// No description provided for @emptyCamera.
   ///
@@ -563,7 +557,7 @@ abstract class AppLocalizations {
   /// No description provided for @errorLoad.
   ///
   /// In en, this message translates to:
-  /// **'Couldn\'t open that image.'**
+  /// **'Couldn\'t open that file.'**
   String get errorLoad;
 
   /// No description provided for @errorSave.
@@ -722,18 +716,6 @@ abstract class AppLocalizations {
   /// **'This GIF is long, so only the first {count} frames were loaded.'**
   String animationTruncated(int count);
 
-  /// No description provided for @menuOpenVideo.
-  ///
-  /// In en, this message translates to:
-  /// **'Open video...'**
-  String get menuOpenVideo;
-
-  /// No description provided for @emptyVideo.
-  ///
-  /// In en, this message translates to:
-  /// **'Video...'**
-  String get emptyVideo;
-
   /// No description provided for @exportFormat.
   ///
   /// In en, this message translates to:
@@ -782,12 +764,6 @@ abstract class AppLocalizations {
   /// **'GIF frame rate: {fps} fps'**
   String gifFrameRate(int fps);
 
-  /// No description provided for @errorVideo.
-  ///
-  /// In en, this message translates to:
-  /// **'Couldn\'t open that video.'**
-  String get errorVideo;
-
   /// No description provided for @exportVideoTitle.
   ///
   /// In en, this message translates to:
@@ -817,6 +793,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Saved {name} (without sound)'**
   String statusSavedNoSound(String name);
+
+  /// No description provided for @emptyOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open...'**
+  String get emptyOpen;
+
+  /// No description provided for @cameraTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get cameraTitle;
+
+  /// No description provided for @cameraPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a photo or record a video?'**
+  String get cameraPrompt;
+
+  /// No description provided for @cameraPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo'**
+  String get cameraPhoto;
+
+  /// No description provided for @cameraVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Video'**
+  String get cameraVideo;
 }
 
 class _AppLocalizationsDelegate

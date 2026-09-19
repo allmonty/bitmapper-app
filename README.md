@@ -17,8 +17,9 @@ hold-to-compare, and zoom.
 
 ## Features
 
-- **Open images** from the gallery or camera (`image_picker`). Images are
-  capped at 4096 px on the long edge.
+- **Open** a photo, GIF or video from the library (a single picker), or use
+  the **Camera** to take a photo or record a video (`image_picker`). Photos
+  are capped at 4096 px on the long edge.
 - **Live preview** on a background isolate. It is debounced and
   latest-wins, and renders from a copy capped at 1024 px.
 - **Controls:**
@@ -49,7 +50,7 @@ hold-to-compare, and zoom.
   - Export runs on a worker isolate, with progress and a Cancel button.
     Frames of up to 256 colors are written exactly; deeper palettes are
     reduced by the GIF encoder.
-- **Videos:** open a video from the library, scrub it, and save it as an
+- **Videos:** open or record a video, scrub it, and save it as an
   MP4 (H.264, with the sound copied through) or an animated GIF.
   - The palette strategies and noise options are the same as for GIFs.
   - MP4 resolution can be the original, 720p or 480p.

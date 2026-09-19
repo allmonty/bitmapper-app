@@ -24,13 +24,13 @@ Set<int> colorsOf(Uint8List rgba) => {
 };
 
 void main() {
-  const pick = PickedVideo(name: 'clip.mp4', path: '/videos/clip.mp4');
+  const pick = LoadedVideo(name: 'clip.mp4', path: '/videos/clip.mp4');
 
   group('MediaModel with video', () {
     test('opens at preview size and shows the first frame', () async {
       final io = FakeVideoIO(width: 2000, height: 1000, frameCount: 90);
-      final model = MediaModel(FakeImageLoader()..video = pick, videoIO: io);
-      expect(await model.loadVideo(), isTrue);
+      final model = MediaModel(FakeImageLoader(result: pick), videoIO: io);
+      expect(await model.load(MediaRequest.library), isTrue);
       expect(model.kind, MediaKind.video);
       expect(model.isSequence, isTrue);
       expect(io.opened.single, ('/videos/clip.mp4', 1024));
@@ -43,23 +43,23 @@ void main() {
     test('cancelling the picker keeps the current media', () async {
       final model = MediaModel(FakeImageLoader(), videoIO: FakeVideoIO());
       model.setImage('a.png', gradient(8, 8));
-      expect(await model.loadVideo(), isFalse);
+      expect(await model.load(MediaRequest.library), isFalse);
       expect(model.kind, MediaKind.still);
     });
 
     test('an unreadable video throws and keeps the current media', () async {
       final io = FakeVideoIO()..openError = Exception('bad codec');
-      final model = MediaModel(FakeImageLoader()..video = pick, videoIO: io);
+      final model = MediaModel(FakeImageLoader(result: pick), videoIO: io);
       model.setImage('a.png', gradient(8, 8));
-      await expectLater(model.loadVideo(), throwsException);
+      await expectLater(model.load(MediaRequest.library), throwsException);
       expect(model.kind, MediaKind.still);
       expect(model.loading, isFalse);
     });
 
     test('scrubbing fetches frames; the latest request wins', () async {
       final io = FakeVideoIO(frameCount: 60);
-      final model = MediaModel(FakeImageLoader()..video = pick, videoIO: io);
-      await model.loadVideo();
+      final model = MediaModel(FakeImageLoader(result: pick), videoIO: io);
+      await model.load(MediaRequest.library);
       model.setFrame(10);
       model.setFrame(20);
       model.setFrame(30); // 20 is superseded before it starts
@@ -72,8 +72,8 @@ void main() {
 
     test('a failed frame doesn\'t block the next request, and can be retried', () async {
       final io = FakeVideoIO(frameCount: 60);
-      final model = MediaModel(FakeImageLoader()..video = pick, videoIO: io);
-      await model.loadVideo();
+      final model = MediaModel(FakeImageLoader(result: pick), videoIO: io);
+      await model.load(MediaRequest.library);
       io.beforeFrameAt = (t) async {
         if (t == model.frameTime(10)) throw Exception('decoder hiccup');
       };
@@ -105,8 +105,8 @@ void main() {
     test('a frame that never arrives times out instead of blocking scrubbing', () {
       fakeAsync((async) {
         final io = FakeVideoIO(frameCount: 60);
-        final model = MediaModel(FakeImageLoader()..video = pick, videoIO: io);
-        model.loadVideo();
+        final model = MediaModel(FakeImageLoader(result: pick), videoIO: io);
+        model.load(MediaRequest.library);
         async.flushMicrotasks();
         final never = Completer<void>();
         io.beforeFrameAt = (t) => t == model.frameTime(5) ? never.future : Future.value();
@@ -120,8 +120,8 @@ void main() {
 
     test('palette samples are decoded once per count and cached', () async {
       final io = FakeVideoIO(frameCount: 30);
-      final model = MediaModel(FakeImageLoader()..video = pick, videoIO: io);
-      await model.loadVideo();
+      final model = MediaModel(FakeImageLoader(result: pick), videoIO: io);
+      await model.load(MediaRequest.library);
       expect(model.paletteSamples(4), isNull);
       expect(model.sampling, isTrue);
       await pumpEventQueue();
@@ -134,8 +134,8 @@ void main() {
 
     test('loading something else closes the video', () async {
       final io = FakeVideoIO();
-      final model = MediaModel(FakeImageLoader()..video = pick, videoIO: io);
-      await model.loadVideo();
+      final model = MediaModel(FakeImageLoader(result: pick), videoIO: io);
+      await model.load(MediaRequest.library);
       model.setImage('a.png', gradient(8, 8));
       expect(model.isVideo, isFalse);
       expect(model.videoPath, isNull);
@@ -281,10 +281,10 @@ void main() {
 
     Future<TestApp> openVideo(WidgetTester tester) async {
       usePhoneScreen(tester);
-      final app = TestApp()..loader.video = pick;
+      final app = TestApp()..loader.result = pick;
       await tester.pumpWidget(app.build());
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Video...'));
+      await tester.tap(find.text('Open...'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
       await tester.pumpAndSettle();
@@ -311,11 +311,11 @@ void main() {
       tester,
     ) async {
       usePhoneScreen(tester);
-      final app = TestApp()..loader.video = pick;
+      final app = TestApp()..loader.result = pick;
       app.videoIO.audioCompatible = false;
       await tester.pumpWidget(app.build());
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Video...'));
+      await tester.tap(find.text('Open...'));
       await tester.pumpAndSettle();
       expect(find.textContaining("can't be copied into an MP4"), findsOneWidget);
       await tester.tap(find.text('OK'));
@@ -344,27 +344,31 @@ void main() {
       expect(find.text('Animated GIF (no sound)'), findsOneWidget);
     });
 
-    testWidgets('File > Open video uses the video picker', (tester) async {
+    testWidgets('File > Open... opens a video picked from the library', (tester) async {
       usePhoneScreen(tester);
-      final app = TestApp()..loader.video = pick;
+      final app = TestApp()..loader.result = pick;
       await tester.pumpWidget(app.build());
       await tester.pumpAndSettle();
       await tester.tap(find.text('File'));
       await tester.pump();
-      await tester.tap(find.text('Open video...'));
+      await tester.tap(
+        find.descendant(of: find.byType(Win98MenuPanel), matching: find.text('Open...')),
+      );
       await tester.pumpAndSettle();
-      expect(app.videoIO.opened, isNotEmpty);
+      expect(app.loader.calls, [MediaRequest.library]);
+      expect(app.videoIO.opened.single.$1, '/videos/clip.mp4');
+      expect(find.text('Bitmapper - clip.mp4'), findsOneWidget);
     });
 
     testWidgets('a bad video shows a message box', (tester) async {
       usePhoneScreen(tester);
-      final app = TestApp()..loader.video = pick;
+      final app = TestApp()..loader.result = pick;
       app.videoIO.openError = Exception('bad codec');
       await tester.pumpWidget(app.build());
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Video...'));
+      await tester.tap(find.text('Open...'));
       await tester.pumpAndSettle();
-      expect(find.text("Couldn't open that video."), findsOneWidget);
+      expect(find.text("Couldn't open that file."), findsOneWidget);
     });
 
     testWidgets('Save as writes an MP4 and hands the file to the save dialog', (tester) async {

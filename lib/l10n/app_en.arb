@@ -12,16 +12,15 @@
   "untitled": "(untitled)",
   "menuFile": "File",
   "menuOpen": "Open...",
-  "menuCamera": "Take photo...",
+  "menuCamera": "Camera...",
   "menuSave": "Save as...",
-  "menuClose": "Close image",
+  "menuClose": "Close",
   "menuPresets": "Presets",
   "menuSavePreset": "Save current...",
   "menuHelp": "Help",
   "menuAbout": "About Bitmapper...",
-  "emptyTitle": "Open an image",
-  "emptyBody": "Pick a photo to turn into retro pixel art.",
-  "emptyGallery": "Gallery...",
+  "emptyTitle": "Open a photo or video",
+  "emptyBody": "Pick a photo, GIF or video to turn into retro pixel art.",
   "emptyCamera": "Camera...",
   "holdToCompare": "Hold to compare",
   "tabPalette": "Palette",
@@ -188,7 +187,7 @@
   "savingTitle": "Saving",
   "savingBody": "Rendering the full-size image...",
   "errorTitle": "Bitmapper",
-  "errorLoad": "Couldn't open that image.",
+  "errorLoad": "Couldn't open that file.",
   "errorSave": "Couldn't save the image.",
   "errorFilter": "Couldn't apply the filter.",
   "aboutTitle": "About Bitmapper",
@@ -286,8 +285,6 @@
       }
     }
   },
-  "menuOpenVideo": "Open video...",
-  "emptyVideo": "Video...",
   "exportFormat": "Save as",
   "formatMp4": "MP4 video (with sound)",
   "formatGif": "Animated GIF (no sound)",
@@ -303,7 +300,6 @@
       }
     }
   },
-  "errorVideo": "Couldn't open that video.",
   "exportVideoTitle": "Saving video",
   "statusSampling": "Sampling frames...",
   "audioUnsupported": "This video's sound uses a format that can't be copied into an MP4, so saved videos will be silent. The picture is not affected.",
@@ -315,5 +311,10 @@
         "type": "String"
       }
     }
-  }
+  },
+  "emptyOpen": "Open...",
+  "cameraTitle": "Camera",
+  "cameraPrompt": "Take a photo or record a video?",
+  "cameraPhoto": "Photo",
+  "cameraVideo": "Video"
 }

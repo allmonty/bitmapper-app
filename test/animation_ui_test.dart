@@ -25,7 +25,7 @@ void main() {
     final app = TestApp(image: clip());
     await tester.pumpWidget(app.build());
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Gallery...'));
+    await tester.tap(find.text('Open...'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
     await tester.pumpAndSettle();
@@ -47,7 +47,7 @@ void main() {
       ).build(),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Gallery...'));
+    await tester.tap(find.text('Open...'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Frame '), findsNothing);
     expect(find.text('Animation'), findsNothing);

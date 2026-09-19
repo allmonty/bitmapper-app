@@ -21,7 +21,7 @@ void main() {
   group('MediaModel with animations', () {
     test('loads an animation and scrubs frames', () async {
       final model = MediaModel(FakeImageLoader(result: loadedGif(n: 4)));
-      await model.load(ImageOrigin.gallery);
+      await model.load(MediaRequest.library);
       expect(model.kind, MediaKind.animation);
       expect(model.isAnimation, isTrue);
       expect(model.frameCount, 4);
@@ -42,10 +42,10 @@ void main() {
     test('loading a still after an animation resets it', () async {
       final loader = FakeImageLoader(result: loadedGif());
       final model = MediaModel(loader);
-      await model.load(ImageOrigin.gallery);
+      await model.load(MediaRequest.library);
       model.setFrame(2);
       loader.result = LoadedImage(name: 'a.png', image: gradient(10, 10));
-      await model.load(ImageOrigin.gallery);
+      await model.load(MediaRequest.library);
       expect(model.kind, MediaKind.still);
       expect(model.animation, isNull);
       expect(model.animationBytes, isNull);

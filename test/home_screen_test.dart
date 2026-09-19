@@ -28,7 +28,7 @@ void main() {
 
   /// Load the fake photo and let the debounced preview render.
   Future<void> openPhoto(WidgetTester tester) async {
-    await tester.tap(find.text('Gallery...'));
+    await tester.tap(find.text('Open...'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
     await tester.pumpAndSettle();
@@ -37,14 +37,15 @@ void main() {
   Future<void> openMenu(WidgetTester tester, String menu, String item) async {
     await tester.tap(find.text(menu).first); // the menu bar precedes the tabs
     await tester.pump();
-    await tester.tap(find.text(item));
+    // Scoped to the open menu: items like "Open..." also label buttons.
+    await tester.tap(find.descendant(of: find.byType(Win98MenuPanel), matching: find.text(item)));
     await tester.pump();
   }
 
   testWidgets('shows the empty state before an image is loaded', (tester) async {
     await pumpApp(tester, TestApp());
     expect(find.text('Bitmapper - (untitled)'), findsOneWidget);
-    expect(find.text('Open an image'), findsOneWidget);
+    expect(find.text('Open a photo or video'), findsOneWidget);
     expect(find.text('No image'), findsOneWidget);
     expect(find.byKey(const Key('preview-image')), findsNothing);
     expect(find.text('Palette'), findsOneWidget);
@@ -55,7 +56,7 @@ void main() {
     await pumpApp(tester, app);
     await openPhoto(tester);
 
-    expect(app.loader.calls, [ImageOrigin.gallery]);
+    expect(app.loader.calls, [MediaRequest.library]);
     expect(find.text('Bitmapper - photo.jpg'), findsOneWidget);
     expect(find.byKey(const Key('preview-image')), findsOneWidget);
     expect(find.text('120×90 cells'), findsOneWidget);
@@ -64,24 +65,62 @@ void main() {
     expect(find.text('Ready'), findsOneWidget);
   });
 
-  testWidgets('camera button uses the camera origin', (tester) async {
+  testWidgets('Open... picks from the library (photos and videos)', (tester) async {
     final app = TestApp(image: photo());
     await pumpApp(tester, app);
-    await tester.tap(find.text('Camera...'));
+    await tester.tap(find.text('Open...'));
     await tester.pumpAndSettle();
-    expect(app.loader.calls, [ImageOrigin.camera]);
+    expect(app.loader.calls, [MediaRequest.library]);
+  });
+
+  group('Camera...', () {
+    Future<TestApp> chooseInCamera(WidgetTester tester, String? choice) async {
+      final app = TestApp(image: photo());
+      await pumpApp(tester, app);
+      await tester.tap(find.text('Camera...'));
+      await tester.pumpAndSettle();
+      expect(find.text('Take a photo or record a video?'), findsOneWidget);
+      await tester.tap(find.text(choice ?? 'Cancel'));
+      await tester.pumpAndSettle();
+      return app;
+    }
+
+    testWidgets('Photo takes a picture', (tester) async {
+      final app = await chooseInCamera(tester, 'Photo');
+      expect(app.loader.calls, [MediaRequest.cameraPhoto]);
+    });
+
+    testWidgets('Video records a video', (tester) async {
+      final app = await chooseInCamera(tester, 'Video');
+      expect(app.loader.calls, [MediaRequest.cameraVideo]);
+    });
+
+    testWidgets('Cancel opens nothing', (tester) async {
+      final app = await chooseInCamera(tester, null);
+      expect(app.loader.calls, isEmpty);
+      expect(find.text('Open a photo or video'), findsOneWidget);
+    });
+
+    testWidgets('is in the File menu too', (tester) async {
+      final app = TestApp(image: photo());
+      await pumpApp(tester, app);
+      await openMenu(tester, 'File', 'Camera...');
+      await tester.pumpAndSettle();
+      expect(find.text('Take a photo or record a video?'), findsOneWidget);
+      expect(app.loader.calls, isEmpty);
+    });
   });
 
   testWidgets('a load error shows a message box', (tester) async {
     final app = TestApp()..loader.error = Exception('corrupt');
     await pumpApp(tester, app);
-    await tester.tap(find.text('Gallery...'));
+    await tester.tap(find.text('Open...'));
     await tester.pumpAndSettle();
-    expect(find.text("Couldn't open that image."), findsOneWidget);
+    expect(find.text("Couldn't open that file."), findsOneWidget);
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
-    expect(find.text("Couldn't open that image."), findsNothing);
-    expect(find.text('Open an image'), findsOneWidget);
+    expect(find.text("Couldn't open that file."), findsNothing);
+    expect(find.text('Open a photo or video'), findsOneWidget);
   });
 
   testWidgets('switching to a fixed palette and picking one updates the config', (tester) async {
@@ -241,7 +280,7 @@ void main() {
     await openPhoto(tester);
     await tester.tap(find.bySemanticsLabel('Close'));
     await tester.pumpAndSettle();
-    expect(find.text('Open an image'), findsOneWidget);
+    expect(find.text('Open a photo or video'), findsOneWidget);
     expect(find.text('Bitmapper - (untitled)'), findsOneWidget);
   });
 
@@ -284,7 +323,7 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(TestApp().build());
     await tester.pumpAndSettle();
-    final empty = tester.getRect(find.text('Open an image'));
+    final empty = tester.getRect(find.text('Open a photo or video'));
     final tabs = tester.getRect(find.text('Palette'));
     expect(tabs.left, greaterThan(empty.right));
   });
@@ -292,7 +331,7 @@ void main() {
   testWidgets('is localized in Portuguese', (tester) async {
     await pumpApp(tester, TestApp(), locale: const Locale('pt'));
     expect(find.text('Arquivo'), findsOneWidget);
-    expect(find.text('Abra uma imagem'), findsOneWidget);
+    expect(find.text('Abra uma foto ou vídeo'), findsOneWidget);
     expect(find.text('Paleta'), findsOneWidget);
   });
 }
