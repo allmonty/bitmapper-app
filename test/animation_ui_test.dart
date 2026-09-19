@@ -100,6 +100,17 @@ void main() {
     expect(read<EditorModel>(tester).gifSize, const GifSizeOriginal());
   });
 
+  testWidgets('Animation tab shows and updates the frame-skip label', (tester) async {
+    await openClip(tester);
+    await tester.tap(find.text('Animation'));
+    await tester.pumpAndSettle();
+    expect(find.text('Skip frames: off'), findsOneWidget);
+    read<EditorModel>(tester).setFrameSkip(3);
+    await tester.pump();
+    expect(find.text('Skip frames: 3'), findsOneWidget);
+    expect(find.text('Skip frames: off'), findsNothing);
+  });
+
   testWidgets('Save as exports every frame to an animated GIF', (tester) async {
     final app = await openClip(tester);
     await tester.tap(find.text('File'));

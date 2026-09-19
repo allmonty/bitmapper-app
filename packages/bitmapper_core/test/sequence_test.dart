@@ -124,16 +124,35 @@ void main() {
     });
   });
 
+  group('rendersFrame', () {
+    test('0 (off) renders every frame', () {
+      final config = base.copyWith(frameSkip: 0);
+      for (var i = 0; i < 10; i++) {
+        expect(rendersFrame(config, i), isTrue, reason: 'frame $i');
+      }
+    });
+
+    test('N renders every (N + 1)th frame, starting at 0', () {
+      final config = base.copyWith(frameSkip: 2);
+      expect(
+        [for (var i = 0; i < 9; i++) rendersFrame(config, i)],
+        [true, false, false, true, false, false, true, false, false],
+      );
+    });
+  });
+
   group('config', () {
     test('sequence fields default for stills and round-trip through JSON', () {
       const d = BitmapFilterConfig();
       expect(d.paletteStrategy, PaletteStrategy.sampled);
       expect(d.paletteSamples, 8);
       expect(d.animateNoise, isFalse);
+      expect(d.frameSkip, 0);
       final c = d.copyWith(
         paletteStrategy: PaletteStrategy.firstFrame,
         paletteSamples: 5,
         animateNoise: true,
+        frameSkip: 3,
       );
       expect(BitmapFilterConfig.fromJson(c.toJson()), c);
       expect(c, isNot(d));
@@ -142,6 +161,11 @@ void main() {
     test('rejects out-of-range sample counts', () {
       expect(const BitmapFilterConfig(paletteSamples: 1).validate, throwsArgumentError);
       expect(const BitmapFilterConfig(paletteSamples: 33).validate, throwsArgumentError);
+    });
+
+    test('rejects an out-of-range frame skip', () {
+      expect(const BitmapFilterConfig(frameSkip: -1).validate, throwsArgumentError);
+      expect(const BitmapFilterConfig(frameSkip: 9).validate, throwsArgumentError);
     });
   });
 }

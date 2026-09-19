@@ -70,18 +70,22 @@ GifExportResult exportGif(
   );
 
   final writer = GifWriter(loopCount: animation.loopCount);
+  RgbImage? held;
   for (var i = 0; i < frames.length; i++) {
     if (isCancelled != null && isCancelled()) throw const ExportCancelled();
-    final result = applyBitmapFilter(
-      frames[i],
-      config,
-      outputWidth: width,
-      outputHeight: height,
-      palette: palette,
-      seed: frameSeed(config, i),
-      isCancelled: isCancelled,
-    );
-    writer.addFrame(result.output, animation.durationsMs[i]);
+    if (held == null || rendersFrame(config, i)) {
+      final result = applyBitmapFilter(
+        frames[i],
+        config,
+        outputWidth: width,
+        outputHeight: height,
+        palette: palette,
+        seed: frameSeed(config, i),
+        isCancelled: isCancelled,
+      );
+      held = result.output;
+    }
+    writer.addFrame(held, animation.durationsMs[i]);
     onProgress?.call(i + 1, frames.length);
   }
   return GifExportResult(

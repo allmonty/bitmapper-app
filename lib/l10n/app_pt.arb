@@ -90,6 +90,8 @@
   "paletteSamples": "Amostras: {count} quadros",
   "strategyOnlyAuto": "Só se aplica a paletas automáticas.",
   "animateNoise": "Animar ruído aleatório",
+  "frameSkip": "Pular quadros: {count}",
+  "frameSkipOff": "Pular quadros: desligado",
   "gifSize": "Tamanho do GIF",
   "gifOriginal": "Tamanho original ({width}×{height})",
   "gifPerCell": "Pixels por célula",

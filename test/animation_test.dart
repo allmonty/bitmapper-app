@@ -64,16 +64,23 @@ void main() {
   });
 
   group('EditorModel animation settings', () {
-    test('strategy, samples, noise and GIF size', () {
+    test('strategy, samples, noise, frame skip and GIF size', () {
       final editor = EditorModel();
       editor.setPaletteStrategy(PaletteStrategy.perFrame);
       editor.setPaletteSamples(100);
       editor.setAnimateNoise(true);
+      editor.setFrameSkip(3);
       editor.setGifSize(const GifSizeOriginal());
       expect(editor.config.paletteStrategy, PaletteStrategy.perFrame);
       expect(editor.config.paletteSamples, kMaxPaletteSamples);
       expect(editor.config.animateNoise, isTrue);
+      expect(editor.config.frameSkip, 3);
       expect(editor.gifSize, const GifSizeOriginal());
+
+      editor.setFrameSkip(100);
+      expect(editor.config.frameSkip, kMaxFrameSkip);
+      editor.setFrameSkip(-5);
+      expect(editor.config.frameSkip, kMinFrameSkip);
     });
 
     test('animation-friendly settings are offered, not forced', () {
@@ -218,6 +225,29 @@ void main() {
       expect(back.height, 24);
       final allColors = back.frames.expand((f) => colorSet(f.data)).toSet();
       expect(allColors.length, lessThanOrEqualTo(8), reason: 'one 3-bit palette for every frame');
+    });
+
+    test('frameSkip holds a rendered frame for the skipped ones', () {
+      final skipConfig = config.copyWith(frameSkip: 2);
+      final result = exportGif(
+        GifExportJob(gifBytes: gif, config: skipConfig, size: const GifSizePerCell(3)),
+      );
+      expect(
+        result.frames,
+        5,
+        reason: 'still one output frame per source frame, same as without frameSkip',
+      );
+      final back = decodeGif(result.bytes)!;
+      expect(back.frameCount, 5);
+      // Frame 0 is rendered; 1 and 2 hold its pixels (frameSkip: 2 means
+      // render, then hold for 2 more). Frame 3 is rendered fresh; 4 holds it.
+      expect(back.frames[1].data, back.frames[0].data);
+      expect(back.frames[2].data, back.frames[0].data);
+      expect(back.frames[4].data, back.frames[3].data);
+      expect(back.frames[3].data, isNot(back.frames[0].data), reason: 'distinct source frames');
+      // Total (and per-frame) duration is unaffected: each output entry
+      // still carries its own source frame's original delay.
+      expect(back.durationsMs, decodeGif(gif)!.durationsMs);
     });
 
     test('original size keeps the source dimensions', () {

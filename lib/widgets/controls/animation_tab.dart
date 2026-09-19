@@ -12,7 +12,7 @@ import '../../services/video_exporter.dart';
 import 'labeled_slider.dart';
 
 /// Settings that only matter for animations: how one palette is shared
-/// across frames, noise animation, and the GIF export size.
+/// across frames, noise animation, frame skip, and the GIF export size.
 class AnimationTab extends StatelessWidget {
   const AnimationTab({super.key});
 
@@ -77,6 +77,14 @@ class AnimationTab extends StatelessWidget {
               label: l10n.animateNoise,
               onChanged: editor.setAnimateNoise,
             ),
+          LabeledSlider(
+            label: config.frameSkip == 0 ? l10n.frameSkipOff : l10n.frameSkip(config.frameSkip),
+            value: config.frameSkip.toDouble(),
+            min: kMinFrameSkip.toDouble(),
+            max: kMaxFrameSkip.toDouble(),
+            divisions: kMaxFrameSkip - kMinFrameSkip,
+            onChanged: (v) => editor.setFrameSkip(v.round()),
+          ),
           kControlGap,
           if (media.isVideo) ...[
             Win98GroupBox(

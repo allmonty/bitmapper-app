@@ -178,6 +178,33 @@ void main() {
       expect(all.length, lessThanOrEqualTo(8), reason: 'one 3-bit palette for every frame');
     });
 
+    test('frameSkip holds a rendered frame for the skipped ones; pts unaffected', () async {
+      final io = FakeVideoIO(width: 64, height: 48, frameCount: 9);
+      final result = await exportVideo(
+        VideoExportJob(
+          inputPath: '/in.mp4',
+          outputPath: '/o.mp4',
+          config: config.copyWith(frameSkip: 2),
+          paletteFrames: [],
+          format: VideoFormat.mp4,
+        ),
+        io,
+      );
+      expect(result.frames, 9, reason: 'same output frame count as without frameSkip');
+      final sink = io.sinks.single;
+      expect(sink.frames, hasLength(9));
+      // Frame 0 is rendered; 1 and 2 hold its pixels (frameSkip: 2 means
+      // render, then hold for 2 more). Frame 3 is rendered fresh; 4 holds it.
+      expect(sink.frames[1].$1, sink.frames[0].$1);
+      expect(sink.frames[2].$1, sink.frames[0].$1);
+      expect(sink.frames[4].$1, sink.frames[3].$1);
+      expect(sink.frames[3].$1, isNot(sink.frames[0].$1), reason: 'distinct source frames');
+      // pts still increments per original frame slot, unaffected by holding.
+      for (var i = 0; i < 9; i++) {
+        expect(sink.frames[i].$2, Duration(microseconds: (i * 1000000 / io.frameRate).round()));
+      }
+    });
+
     test('MP4 with sound the MP4 can\'t hold: saved silent and reported', () async {
       final io = FakeVideoIO(frameCount: 3, audioCompatible: false);
       final result = await exportVideo(
@@ -268,6 +295,31 @@ void main() {
       expect(back.frameCount, 10);
       expect((back.width, back.height), (32, 24));
       expect(back.durationsMs.toSet(), {100});
+    });
+
+    test('GIF: frameSkip applies to the fps-reduced frames, not the source', () async {
+      final io = FakeVideoIO(frameCount: 30, frameRate: 30); // 1 second
+      final result = await exportVideo(
+        VideoExportJob(
+          inputPath: '/in.mp4',
+          outputPath: '/unused.mp4',
+          config: config.copyWith(frameSkip: 1),
+          paletteFrames: [],
+          format: VideoFormat.gif,
+          gifSize: const GifSizePerCell(2),
+          gifFrameRate: 10,
+        ),
+        io,
+      );
+      final back = decodeGif(result.gifBytes!)!;
+      // Still 10 GIF frames (fps reduction unaffected by frameSkip)...
+      expect(result.frames, 10);
+      expect(back.frameCount, 10);
+      // ...but every other one holds the previous frame's pixels.
+      for (var i = 1; i < 10; i += 2) {
+        expect(back.frames[i].data, back.frames[i - 1].data);
+      }
+      expect(back.frames[2].data, isNot(back.frames[0].data), reason: 'distinct source frames');
     });
   });
 

@@ -180,6 +180,8 @@ class EditorModel extends ChangeNotifier {
   void setPaletteSamples(int n) =>
       _set(_config.copyWith(paletteSamples: n.clamp(kMinPaletteSamples, kMaxPaletteSamples)));
   void setAnimateNoise(bool on) => _set(_config.copyWith(animateNoise: on));
+  void setFrameSkip(int n) =>
+      _set(_config.copyWith(frameSkip: n.clamp(kMinFrameSkip, kMaxFrameSkip)));
 
   /// Settings that stay stable from frame to frame: one palette sampled
   /// across the animation, and ordered dithering (error diffusion shimmers).

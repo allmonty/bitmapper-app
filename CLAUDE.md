@@ -83,8 +83,14 @@ filter, with a Windows 98 UI. Flutter is pinned by asdf in `.tool-versions`
     a `ReceivePort`, and cancel kills the isolate.
   - `exportGif` is the pure core of the export; tests call it directly.
   - Engine: `sequence.dart` provides `paletteSourceFrames`,
-    `sequencePalette` and `frameSeed`. `applyBitmapFilter` takes an optional
-    `palette` and `seed`.
+    `sequencePalette`, `frameSeed` and `rendersFrame`. `applyBitmapFilter`
+    takes an optional `palette` and `seed`.
+  - `frameSkip` (0 = off) makes export hold a rendered frame's pixels for
+    `frameSkip` more source frames — a stepped, lower-frame-rate look —
+    while every export loop (`exportGif`, both `exportVideo` branches)
+    still writes one output entry per source frame with that frame's own
+    timing, so total duration and (for video) audio sync are unaffected.
+    Export only: the live preview always renders the exact scrubbed frame.
   - Export uses `configFor(preview size)`, so the grid matches the preview,
     rendered at full source size.
 - **`packages/video_frames`** is a standalone plugin with no app

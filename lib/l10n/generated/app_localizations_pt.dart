@@ -315,6 +315,14 @@ class AppLocalizationsPt extends AppLocalizations {
   String get animateNoise => 'Animar ruído aleatório';
 
   @override
+  String frameSkip(int count) {
+    return 'Pular quadros: $count';
+  }
+
+  @override
+  String get frameSkipOff => 'Pular quadros: desligado';
+
+  @override
   String get gifSize => 'Tamanho do GIF';
 
   @override

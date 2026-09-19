@@ -315,6 +315,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get animateNoise => 'Animate random noise';
 
   @override
+  String frameSkip(int count) {
+    return 'Skip frames: $count';
+  }
+
+  @override
+  String get frameSkipOff => 'Skip frames: off';
+
+  @override
   String get gifSize => 'GIF size';
 
   @override

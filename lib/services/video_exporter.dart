@@ -117,21 +117,25 @@ Future<VideoExportResult> exportVideo(
         audioSourcePath: info.hasAudio ? job.inputPath : null,
       );
       var index = 0;
+      Uint8List? held;
       try {
         while (true) {
           checkCancelled();
           final frame = await source.nextFrame();
           if (frame == null) break;
-          final result = applyBitmapFilter(
-            RgbImage.fromRgba(frame.width, frame.height, frame.rgba),
-            config,
-            outputWidth: sink.width,
-            outputHeight: sink.height,
-            palette: palette,
-            seed: frameSeed(config, index),
-            isCancelled: isCancelled,
-          );
-          await sink.addFrame(result.output.toRgba(), frame.pts);
+          if (held == null || rendersFrame(config, index)) {
+            final result = applyBitmapFilter(
+              RgbImage.fromRgba(frame.width, frame.height, frame.rgba),
+              config,
+              outputWidth: sink.width,
+              outputHeight: sink.height,
+              palette: palette,
+              seed: frameSeed(config, index),
+              isCancelled: isCancelled,
+            );
+            held = result.output.toRgba();
+          }
+          await sink.addFrame(held, frame.pts);
           index++;
           onProgress?.call(math.min(index, total), total);
         }
@@ -162,6 +166,7 @@ Future<VideoExportResult> exportVideo(
     final writer = GifWriter();
     var next = Duration.zero;
     var index = 0;
+    RgbImage? held;
     while (true) {
       checkCancelled();
       final frame = await source.nextFrame();
@@ -171,16 +176,21 @@ Future<VideoExportResult> exportVideo(
       while (next <= frame.pts) {
         next += step;
       }
-      final result = applyBitmapFilter(
-        RgbImage.fromRgba(frame.width, frame.height, frame.rgba),
-        config,
-        outputWidth: w,
-        outputHeight: h,
-        palette: palette,
-        seed: frameSeed(config, frameIndex),
-        isCancelled: isCancelled,
-      );
-      writer.addFrame(result.output, step.inMilliseconds);
+      // frameSkip applies to the already fps-reduced GIF frames, not the
+      // video's native frame rate.
+      if (held == null || rendersFrame(config, writer.frameCount)) {
+        final result = applyBitmapFilter(
+          RgbImage.fromRgba(frame.width, frame.height, frame.rgba),
+          config,
+          outputWidth: w,
+          outputHeight: h,
+          palette: palette,
+          seed: frameSeed(config, frameIndex),
+          isCancelled: isCancelled,
+        );
+        held = result.output;
+      }
+      writer.addFrame(held, step.inMilliseconds);
       onProgress?.call(math.min(writer.frameCount, total), total);
     }
     return VideoExportResult(

@@ -225,6 +225,15 @@
   },
   "strategyOnlyAuto": "Only applies to auto palettes.",
   "animateNoise": "Animate random noise",
+  "frameSkip": "Skip frames: {count}",
+  "@frameSkip": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "frameSkipOff": "Skip frames: off",
   "gifSize": "GIF size",
   "gifOriginal": "Original size ({width}×{height})",
   "@gifOriginal": {

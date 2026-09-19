@@ -29,14 +29,18 @@ enum PaletteStrategy {
 const kMinPaletteSamples = 2;
 const kMaxPaletteSamples = 32;
 
+/// `frameSkip` range, in source frames held per rendered frame.
+const kMinFrameSkip = 0;
+const kMaxFrameSkip = 8;
+
 /// Every knob of the filter.
 /// - The output size is an argument of `applyBitmapFilter` instead of a
 ///   config field (preview and export render the same config at different
 ///   sizes);
 /// - colors (custom palette, gap color) are packed `0xRRGGBB` ints;
 /// - `randomSeed` makes `random` dither deterministic;
-/// - `paletteStrategy`, `paletteSamples` and `animateNoise` only matter for
-///   animations (see `sequence.dart`).
+/// - `paletteStrategy`, `paletteSamples`, `animateNoise` and `frameSkip`
+///   only matter for animations (see `sequence.dart`).
 class BitmapFilterConfig {
   const BitmapFilterConfig({
     this.gridCols = 200,
@@ -66,6 +70,7 @@ class BitmapFilterConfig {
     this.paletteStrategy = PaletteStrategy.sampled,
     this.paletteSamples = 8,
     this.animateNoise = false,
+    this.frameSkip = 0,
   });
 
   final int gridCols;
@@ -113,6 +118,13 @@ class BitmapFilterConfig {
   /// Give `random` dither a different seed per frame (moving noise) instead
   /// of the same noise on every frame.
   final bool animateNoise;
+
+  /// Render one frame, then hold it for `frameSkip` more source frames
+  /// before rendering again — a stepped, lower-frame-rate look. 0 renders
+  /// every frame. Export only: total duration (and, for video, audio sync)
+  /// is unaffected, since a held frame's slot still gets its own output
+  /// entry, just with reused pixels. See `sequence.dart`'s `rendersFrame`.
+  final int frameSkip;
 
   /// Color budget: `2 ^ bitDepth`.
   int get nColors => 1 << bitDepth;
@@ -174,6 +186,11 @@ class BitmapFilterConfig {
         'paletteSamples must be between $kMinPaletteSamples and $kMaxPaletteSamples, got $paletteSamples',
       );
     }
+    if (frameSkip < kMinFrameSkip || frameSkip > kMaxFrameSkip) {
+      throw ArgumentError(
+        'frameSkip must be between $kMinFrameSkip and $kMaxFrameSkip, got $frameSkip',
+      );
+    }
     if (paletteMode == PaletteMode.fixed && (fixedPalette == null || fixedPalette!.isEmpty)) {
       throw ArgumentError('fixedPalette must be set when paletteMode is fixed');
     }
@@ -210,6 +227,7 @@ class BitmapFilterConfig {
     PaletteStrategy? paletteStrategy,
     int? paletteSamples,
     bool? animateNoise,
+    int? frameSkip,
   }) {
     return BitmapFilterConfig(
       gridCols: gridCols ?? this.gridCols,
@@ -239,6 +257,7 @@ class BitmapFilterConfig {
       paletteStrategy: paletteStrategy ?? this.paletteStrategy,
       paletteSamples: paletteSamples ?? this.paletteSamples,
       animateNoise: animateNoise ?? this.animateNoise,
+      frameSkip: frameSkip ?? this.frameSkip,
     );
   }
 
@@ -270,6 +289,7 @@ class BitmapFilterConfig {
     'paletteStrategy': paletteStrategy.name,
     'paletteSamples': paletteSamples,
     'animateNoise': animateNoise,
+    'frameSkip': frameSkip,
   };
 
   /// Missing keys fall back to defaults, so older saved presets keep loading.
@@ -311,6 +331,7 @@ class BitmapFilterConfig {
           d.paletteStrategy,
       paletteSamples: get<int>('paletteSamples') ?? d.paletteSamples,
       animateNoise: get<bool>('animateNoise') ?? d.animateNoise,
+      frameSkip: get<int>('frameSkip') ?? d.frameSkip,
     );
   }
 
@@ -344,7 +365,8 @@ class BitmapFilterConfig {
         randomSeed == other.randomSeed &&
         paletteStrategy == other.paletteStrategy &&
         paletteSamples == other.paletteSamples &&
-        animateNoise == other.animateNoise;
+        animateNoise == other.animateNoise &&
+        frameSkip == other.frameSkip;
   }
 
   @override
@@ -376,6 +398,7 @@ class BitmapFilterConfig {
     paletteStrategy,
     paletteSamples,
     animateNoise,
+    frameSkip,
   ]);
 
   @override

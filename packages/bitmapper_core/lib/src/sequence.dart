@@ -72,3 +72,11 @@ Uint8List? sequencePalette(List<RgbImage> frames, BitmapFilterConfig config) {
 /// frame (static noise) unless `animateNoise` is on.
 int frameSeed(BitmapFilterConfig config, int frameIndex) =>
     config.animateNoise ? config.randomSeed + frameIndex : config.randomSeed;
+
+/// Whether output frame `index` (0-based, in the exported sequence) should
+/// be freshly rendered, per `config.frameSkip`. Frames in between hold the
+/// most recently rendered frame's pixels — export loops still write one
+/// output entry per index either way, so total duration (and, for video,
+/// audio sync) is unaffected; only which frames get their own
+/// `applyBitmapFilter` call changes.
+bool rendersFrame(BitmapFilterConfig config, int index) => index % (config.frameSkip + 1) == 0;

@@ -633,6 +633,18 @@ abstract class AppLocalizations {
   /// **'Animate random noise'**
   String get animateNoise;
 
+  /// No description provided for @frameSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip frames: {count}'**
+  String frameSkip(int count);
+
+  /// No description provided for @frameSkipOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip frames: off'**
+  String get frameSkipOff;
+
   /// No description provided for @gifSize.
   ///
   /// In en, this message translates to:
