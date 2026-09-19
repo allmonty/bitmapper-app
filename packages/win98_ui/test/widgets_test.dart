@@ -273,6 +273,49 @@ void main() {
       expect(find.text('Two'), findsNothing);
       expect(changed, isFalse);
     });
+
+    testWidgets('Next/Previous step through the options, wrapping at the ends', (tester) async {
+      var value = 'a';
+      await tester.pumpHarness(
+        StatefulBuilder(
+          builder: (context, setState) => Win98Dropdown<String>(
+            value: value,
+            items: const [
+              Win98DropdownItem(value: 'a', label: 'A'),
+              Win98DropdownItem(value: 'b', label: 'B'),
+              Win98DropdownItem(value: 'c', label: 'C'),
+            ],
+            onChanged: (v) => setState(() => value = v),
+          ),
+        ),
+      );
+      await tester.tap(find.bySemanticsLabel('Next option'));
+      await tester.pump();
+      expect(value, 'b');
+      await tester.tap(find.bySemanticsLabel('Next option'));
+      await tester.pump();
+      expect(value, 'c');
+      await tester.tap(find.bySemanticsLabel('Next option'));
+      await tester.pump();
+      expect(value, 'a', reason: 'wraps past the last item');
+      await tester.tap(find.bySemanticsLabel('Previous option'));
+      await tester.pump();
+      expect(value, 'c', reason: 'wraps before the first item');
+    });
+
+    testWidgets('Next/Previous are disabled with one item, or when disabled', (tester) async {
+      await tester.pumpHarness(
+        const Win98Dropdown<int>(
+          value: 1,
+          items: [Win98DropdownItem(value: 1, label: 'Only')],
+          onChanged: null,
+        ),
+      );
+      final next = tester.widget<Win98Button>(
+        find.ancestor(of: find.bySemanticsLabel('Next option'), matching: find.byType(Win98Button)),
+      );
+      expect(next.enabled, isFalse);
+    });
   });
 
   testWidgets('a drop-down near the bottom opens upward and stays on screen', (tester) async {

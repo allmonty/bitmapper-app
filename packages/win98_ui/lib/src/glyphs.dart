@@ -81,6 +81,7 @@ abstract final class Win98Glyphs {
   static const arrowDown = ['#######', '.#####.', '..###..', '...#...'];
   static const arrowUp = ['...#...', '..###..', '.#####.', '#######'];
   static const arrowRight = ['#...', '##..', '###.', '####', '###.', '##..', '#...'];
+  static const arrowLeft = ['...#', '..##', '.###', '####', '.###', '..##', '...#'];
   static const check = [
     '......#',
     '.....##',
