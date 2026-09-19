@@ -215,6 +215,17 @@ class MediaModel extends ChangeNotifier {
     return null;
   }
 
+  /// The video frames the shared palette is built from for `config` (none
+  /// for per-frame or non-auto palettes), or null while they're decoded.
+  List<RgbImage>? paletteFramesFor(BitmapFilterConfig config) {
+    if (!needsSequencePalette(config)) return const [];
+    return switch (config.paletteStrategy) {
+      PaletteStrategy.perFrame => const [],
+      PaletteStrategy.firstFrame => paletteSamples(1),
+      PaletteStrategy.sampled => paletteSamples(config.paletteSamples),
+    };
+  }
+
   Future<void> _fetchSamples(int count) async {
     final source = _video;
     if (source == null) return;

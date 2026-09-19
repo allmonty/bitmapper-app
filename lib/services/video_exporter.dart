@@ -305,3 +305,10 @@ Future<void> _videoWorker((SendPort, VideoExportJob) args) async {
 /// A fresh temporary path for an MP4 export.
 String tempVideoPath(DateTime now) =>
     '${Directory.systemTemp.path}/bitmapper_export_${now.microsecondsSinceEpoch}.mp4';
+
+/// Delete a temporary file, ignoring errors.
+void deleteQuietly(String path) {
+  try {
+    File(path).deleteSync();
+  } catch (_) {}
+}

@@ -45,15 +45,20 @@ filter, with a Windows 98 UI. Flutter is pinned by asdf in `.tool-versions`
     shade bands (`toon.dart`) → palette → dither → despeckle (`toon.dart`)
     → outline (`outline.dart`) → upscale (+ gap) → scanlines.
   - `outline.dart` mirrors `dither.dart`'s "many interchangeable methods"
-    shape: `applyOutline(grid, palette, strength, {method, ink, edgeGrid})`
-    with `method` in `kOutlineMethods` (`brightness`, `color`, `sobel` —
-    sobel finds diagonal/gradual edges the others miss and is the preset
-    default) and `ink` in `kOutlineInks` (`darkest`, `shaded`). `edgeGrid`
-    is optional and only used by the pipeline: edges are detected on it
-    (defaulting to `grid` itself) but ink always paints onto `grid`, so the
-    pipeline can pass the grid quantized *before* dithering as `edgeGrid` —
-    otherwise a dither pattern's color noise in flat regions gets read as
-    real edges.
+    shape: `applyOutline(grid, palette, strength, {method, ink, edgeGrid,
+    thickness, closeGaps})` with `method` in `kOutlineMethods`
+    (`brightness`, `color`, `sobel` — sobel finds diagonal/gradual edges the
+    others miss and is the preset default) and `ink` in `kOutlineInks`
+    (`darkest`, `shaded`). `edgeGrid` is optional and only used by the
+    pipeline: edges are detected on it (defaulting to `grid` itself) but ink
+    always paints onto `grid`, so the pipeline can pass the grid quantized
+    *before* dithering as `edgeGrid` — otherwise a dither pattern's color
+    noise in flat regions gets read as real edges. `thickness` (1-3,
+    default 1) dilates the edge mask by one 4-neighbour step per extra
+    cell; `closeGaps` (default off) bridges 1-cell gaps with a binary
+    closing (8-neighbour dilate then erode), applied before `thickness`.
+    Both are opt-in, so default output is unchanged from before they
+    existed.
 - **`packages/win98_ui`** depends only on `flutter/widgets.dart` (no
   Material) so it can be reused elsewhere. Keep it free of app code. Every
   control is built on `Bevel`/`BevelPainter`.
@@ -126,22 +131,13 @@ filter, with a Windows 98 UI. Flutter is pinned by asdf in `.tool-versions`
   No image is resized, since resized preview images came out stretched or
   smeared on a Galaxy S24 Ultra. Only the "hold to compare" photo is an
   image (`RgbImageView`, uploaded with `decodeImageFromPixels`).
-
-## Pending cleanup work
-
-A "clean code, DRY, easy to read" refactor round is in progress (requested
-after the toon/outline/palette/preset/dither feature additions). Done so
-far: reformatting to one shared `page_width: 100`, and `color.dart`'s shared
-color/luma helpers (above). Still open, each as its own commit with tests:
-
-- **Split `lib/screens/home_screen.dart`** (~510 lines): pull out a menu-bar
-  widget, a status-bar widget, and the save/export flows (e.g. an
-  `ExportActions`-style class). Move `deleteQuietly` into `lib/services/`.
-- **Python (`../bitmapper`):**
-  - `adjustments.adjust_saturation` uses `img @ _LUMA_WEIGHTS` (a BLAS
-    matmul); switch to the explicit `(r*0.299 + g*0.587) + b*0.114` order
-    that `toon.py`/`outline.py`'s `_luminance` already use, ideally sharing
-    one helper (e.g. a `bitmapper/color.py`) that all three import, mirroring
-    Dart's `color.dart`.
-  - `toon.despeckle`'s tie-break, `max(order, key=lambda c: (counts[c],
-    -order.index(c)))`, would read more clearly as an explicit loop.
+- **`lib/screens/home_screen.dart`** stays small on purpose: lifecycle,
+  `_rerender`, opening media and the About box. The menu bar and status bar
+  are `AppMenuBar`/`AppStatusBar` (`lib/widgets/`), thin wrappers around
+  `win98_ui`'s `Win98MenuBar`/`Win98StatusBar` that read their own state
+  from Provider. The save/export flows live in `ExportActions`
+  (`lib/services/export_actions.dart`), constructed once with `isSaving`/
+  `setSaving`/`setMessage` callbacks into `HomeScreen`'s state; its methods
+  take `BuildContext` per call (not captured) since they can run across
+  awaits. `deleteQuietly` lives in `lib/services/video_exporter.dart`, next
+  to `tempVideoPath` (the temp file it cleans up).

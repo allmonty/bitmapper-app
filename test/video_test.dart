@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:bitmapper/models/editor_model.dart';
 import 'package:bitmapper/models/media_model.dart';
@@ -438,6 +439,20 @@ void main() {
       await tester.pumpAndSettle();
       expect(read<MediaModel>(tester).currentFrame, 29);
       expect(find.text('Frame 30 / 30'), findsOneWidget);
+    });
+  });
+
+  group('deleteQuietly', () {
+    test('deletes an existing file', () async {
+      final file = File('${Directory.systemTemp.path}/bitmapper_delete_quietly_test.tmp');
+      await file.writeAsString('x');
+      expect(file.existsSync(), isTrue);
+      deleteQuietly(file.path);
+      expect(file.existsSync(), isFalse);
+    });
+
+    test('does not throw on a missing file', () {
+      expect(() => deleteQuietly('/no/such/file'), returnsNormally);
     });
   });
 }
