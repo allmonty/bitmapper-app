@@ -448,4 +448,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get outlineInk => 'Outline ink';
+
+  @override
+  String effectOutlineThickness(int thickness) {
+    return 'Line thickness: $thickness';
+  }
 }

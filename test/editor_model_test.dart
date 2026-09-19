@@ -84,6 +84,15 @@ void main() {
     expect(model.config.outlineInk, 'shaded');
   });
 
+  test('outline thickness setter and validation', () {
+    expect(model.config.outlineThickness, 1);
+    model.setOutlineThickness(2);
+    expect(model.config.outlineThickness, 2);
+    expect(() => model.setOutlineThickness(0), throwsArgumentError);
+    expect(() => model.setOutlineThickness(4), throwsArgumentError);
+    expect(model.config.outlineThickness, 2);
+  });
+
   test('toon setters and validation', () {
     model.setShadeBands(3);
     model.setDespeckle(true);

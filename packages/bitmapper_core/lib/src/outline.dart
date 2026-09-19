@@ -11,6 +11,10 @@ const kOutlineMethods = ['brightness', 'color', 'sobel'];
 /// Ways to pick the ink color. Mirrors `bitmapper.outline.list_inks()`.
 const kOutlineInks = ['darkest', 'shaded'];
 
+/// Line thickness range, in grid cells. 1 is the original one-cell line.
+const kMinOutlineThickness = 1;
+const kMaxOutlineThickness = 3;
+
 /// Brightness (or color) jump that counts as an edge: 128 at strength 0+,
 /// down to 16 at strength 1 (stronger = more edges outlined).
 double outlineThreshold(double strength) => 128.0 - 112.0 * strength;
@@ -39,6 +43,10 @@ int darkestColorIndex(Uint8List palette) {
 /// dithering as `edgeGrid`, so a dither pattern's color noise in flat
 /// regions isn't mistaken for real edges, while the ink color/placement
 /// still reflects the actually rendered pixels.
+///
+/// `thickness` (1..3, [kMinOutlineThickness]..[kMaxOutlineThickness]) grows
+/// the line by dilating the edge mask one 4-neighbour step per extra cell;
+/// 1 (the default) is the original one-cell line.
 RgbImage applyOutline(
   RgbImage grid,
   Uint8List palette,
@@ -46,6 +54,7 @@ RgbImage applyOutline(
   String method = 'brightness',
   String ink = 'darkest',
   RgbImage? edgeGrid,
+  int thickness = 1,
 }) {
   if (strength < 0 || strength > 1) {
     throw ArgumentError.value(strength, 'strength', 'outline must be between 0 and 1');
@@ -56,6 +65,13 @@ RgbImage applyOutline(
   if (!kOutlineInks.contains(ink)) {
     throw ArgumentError.value(ink, 'ink', 'invalid outline ink');
   }
+  if (thickness < kMinOutlineThickness || thickness > kMaxOutlineThickness) {
+    throw ArgumentError.value(
+      thickness,
+      'thickness',
+      'must be $kMinOutlineThickness..$kMaxOutlineThickness',
+    );
+  }
   if (strength == 0 || grid.pixelCount == 0) return grid;
   final edges = edgeGrid ?? grid;
   if (edges.width != grid.width || edges.height != grid.height) {
@@ -64,11 +80,14 @@ RgbImage applyOutline(
 
   final w = grid.width, h = grid.height, src = grid.data;
   final threshold = outlineThreshold(strength);
-  final mask = switch (method) {
+  var mask = switch (method) {
     'color' => _colorMask(edges, threshold),
     'sobel' => _sobelMask(edges, threshold),
     _ => _brightnessMask(edges, threshold),
   };
+  for (var i = 1; i < thickness; i++) {
+    mask = _dilate4(mask, w, h);
+  }
 
   final out = Uint8List.fromList(src);
   if (ink == 'darkest') {
@@ -91,6 +110,25 @@ RgbImage applyOutline(
     }
   }
   return RgbImage(w, h, out);
+}
+
+/// Grows `mask` by one cell in each of the 4 cardinal directions (a plus
+/// shape per step), which tapers more gracefully than 8-neighbour dilation
+/// when applied repeatedly for [applyOutline]'s `thickness`.
+List<bool> _dilate4(List<bool> mask, int w, int h) {
+  final out = List<bool>.from(mask);
+  for (var y = 0; y < h; y++) {
+    for (var x = 0; x < w; x++) {
+      final p = y * w + x;
+      if (mask[p]) continue;
+      out[p] =
+          (x + 1 < w && mask[p + 1]) ||
+          (x > 0 && mask[p - 1]) ||
+          (y + 1 < h && mask[p + w]) ||
+          (y > 0 && mask[p - w]);
+    }
+  }
+  return out;
 }
 
 Float64List _luminanceGrid(RgbImage grid) {

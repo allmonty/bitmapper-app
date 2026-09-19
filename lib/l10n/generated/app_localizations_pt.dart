@@ -449,4 +449,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get outlineInk => 'Tinta do contorno';
+
+  @override
+  String effectOutlineThickness(int thickness) {
+    return 'Espessura da linha: $thickness';
+  }
 }

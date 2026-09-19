@@ -119,6 +119,7 @@ FilterResult applyBitmapFilter(
       method: config.outlineMethod,
       ink: config.outlineInk,
       edgeGrid: preDither,
+      thickness: config.outlineThickness,
     );
   }
   checkCancelled();

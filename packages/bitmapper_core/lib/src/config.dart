@@ -54,6 +54,7 @@ class BitmapFilterConfig {
     this.outline = 0.0,
     this.outlineMethod = 'brightness',
     this.outlineInk = 'darkest',
+    this.outlineThickness = 1,
     this.shadeBands = 0,
     this.despeckle = false,
     this.contrast = 1.0,
@@ -87,6 +88,10 @@ class BitmapFilterConfig {
 
   /// How the ink color is picked for [outline]. See [kOutlineInks].
   final String outlineInk;
+
+  /// Line thickness for [outline], in grid cells. See
+  /// [kMinOutlineThickness]/[kMaxOutlineThickness].
+  final int outlineThickness;
 
   /// Toon shading: 0 = off, else 2..8 flat brightness bands.
   final int shadeBands;
@@ -140,6 +145,12 @@ class BitmapFilterConfig {
     if (!kOutlineInks.contains(outlineInk)) {
       throw ArgumentError('invalid outlineInk: "$outlineInk"');
     }
+    if (outlineThickness < kMinOutlineThickness || outlineThickness > kMaxOutlineThickness) {
+      throw ArgumentError(
+        'outlineThickness must be between $kMinOutlineThickness and '
+        '$kMaxOutlineThickness, got $outlineThickness',
+      );
+    }
     if (shadeBands != 0 && (shadeBands < kMinShadeBands || shadeBands > kMaxShadeBands)) {
       throw ArgumentError(
         'shadeBands must be 0 or $kMinShadeBands..$kMaxShadeBands, got $shadeBands',
@@ -183,6 +194,7 @@ class BitmapFilterConfig {
     double? outline,
     String? outlineMethod,
     String? outlineInk,
+    int? outlineThickness,
     int? shadeBands,
     bool? despeckle,
     double? contrast,
@@ -210,6 +222,7 @@ class BitmapFilterConfig {
       outline: outline ?? this.outline,
       outlineMethod: outlineMethod ?? this.outlineMethod,
       outlineInk: outlineInk ?? this.outlineInk,
+      outlineThickness: outlineThickness ?? this.outlineThickness,
       shadeBands: shadeBands ?? this.shadeBands,
       despeckle: despeckle ?? this.despeckle,
       contrast: contrast ?? this.contrast,
@@ -239,6 +252,7 @@ class BitmapFilterConfig {
     'outline': outline,
     'outlineMethod': outlineMethod,
     'outlineInk': outlineInk,
+    'outlineThickness': outlineThickness,
     'shadeBands': shadeBands,
     'despeckle': despeckle,
     'contrast': contrast,
@@ -276,6 +290,7 @@ class BitmapFilterConfig {
       outline: getDouble('outline') ?? d.outline,
       outlineMethod: get<String>('outlineMethod') ?? d.outlineMethod,
       outlineInk: get<String>('outlineInk') ?? d.outlineInk,
+      outlineThickness: get<int>('outlineThickness') ?? d.outlineThickness,
       shadeBands: get<int>('shadeBands') ?? d.shadeBands,
       despeckle: get<bool>('despeckle') ?? d.despeckle,
       contrast: getDouble('contrast') ?? d.contrast,
@@ -310,6 +325,7 @@ class BitmapFilterConfig {
         outline == other.outline &&
         outlineMethod == other.outlineMethod &&
         outlineInk == other.outlineInk &&
+        outlineThickness == other.outlineThickness &&
         shadeBands == other.shadeBands &&
         despeckle == other.despeckle &&
         contrast == other.contrast &&
@@ -339,6 +355,7 @@ class BitmapFilterConfig {
     outline,
     outlineMethod,
     outlineInk,
+    outlineThickness,
     shadeBands,
     despeckle,
     contrast,

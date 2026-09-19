@@ -337,5 +337,13 @@
     }
   },
   "outlineMethod": "Outline edges",
-  "outlineInk": "Outline ink"
+  "outlineInk": "Outline ink",
+  "effectOutlineThickness": "Line thickness: {thickness}",
+  "@effectOutlineThickness": {
+    "placeholders": {
+      "thickness": {
+        "type": "int"
+      }
+    }
+  }
 }

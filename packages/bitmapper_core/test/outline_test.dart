@@ -72,6 +72,13 @@ void main() {
     expect(const BitmapFilterConfig(outlineInk: 'nonsense').validate, throwsArgumentError);
   });
 
+  test('rejects an out-of-range thickness', () {
+    for (final thickness in [0, 4]) {
+      expect(() => applyOutline(square(), palette, 0.5, thickness: thickness), throwsArgumentError);
+      expect(BitmapFilterConfig(outlineThickness: thickness).validate, throwsArgumentError);
+    }
+  });
+
   test('lists the methods and inks', () {
     expect(kOutlineMethods, ['brightness', 'color', 'sobel']);
     expect(kOutlineInks, ['darkest', 'shaded']);
@@ -236,6 +243,232 @@ void main() {
       // Empirically ~35-40% fewer across several dither methods; leave
       // headroom so the test isn't brittle to small algorithm tweaks.
       expect(cleanCount, lessThan((noisyCount * 0.75).round()));
+    });
+  });
+
+  group('thickness', () {
+    test('1 (the default) reproduces the one-cell-thick line', () {
+      expect(
+        applyOutline(square(), palette, 0.5, thickness: 1).data,
+        applyOutline(square(), palette, 0.5).data,
+      );
+    });
+
+    test('grows the line by one cell per step, tapering diagonally', () {
+      // A single inked cell in the middle of an otherwise-uninked field:
+      // thickness 2 should grow it to a plus shape (4-neighbours), and
+      // thickness 3 should reach the diagonals too (dilated twice).
+      final grid = imageFromRows([
+        for (var y = 0; y < 5; y++)
+          [for (var x = 0; x < 5; x++) (x == 2 && y == 2) ? black : white],
+      ]);
+      final pal = Uint8List.fromList([...white, ...black]);
+      bool isBlack(RgbImage out, int x, int y) => out.pixel(x, y)[0] == 0;
+
+      final t1 = applyOutline(grid, pal, 0.5, thickness: 1);
+      expect(isBlack(t1, 1, 2), isFalse);
+      expect(isBlack(t1, 2, 2), isTrue);
+
+      final t2 = applyOutline(grid, pal, 0.5, thickness: 2);
+      expect(isBlack(t2, 1, 2), isTrue, reason: 'plus shape: left neighbour');
+      expect(isBlack(t2, 2, 1), isTrue, reason: 'plus shape: top neighbour');
+      expect(isBlack(t2, 1, 1), isFalse, reason: 'not yet reached diagonally');
+
+      final t3 = applyOutline(grid, pal, 0.5, thickness: 3);
+      expect(isBlack(t3, 1, 1), isTrue, reason: 'diagonal, reached after 2 dilation steps');
+    });
+
+    test('matches the Python reference byte for byte', () {
+      final grid = RgbImage(
+        6,
+        5,
+        Uint8List.fromList(List.generate(6 * 5 * 3, (i) => i * 37 % 256)),
+      );
+      final pal = Uint8List.fromList([200, 30, 30, 5, 60, 90, 240, 240, 240, 12, 40, 20]);
+      expect(applyOutline(grid, pal, 0.35, method: 'sobel', thickness: 2).data, [
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        222,
+        3,
+        40,
+        77,
+        114,
+        151,
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        9,
+        46,
+        83,
+        120,
+        157,
+        194,
+        231,
+        12,
+        49,
+        86,
+        123,
+        160,
+        12,
+        40,
+        20,
+        52,
+        89,
+        126,
+        163,
+        200,
+        237,
+        18,
+        55,
+        92,
+        129,
+        166,
+        203,
+        240,
+        21,
+        58,
+        95,
+        132,
+        169,
+        206,
+        243,
+        24,
+        61,
+        98,
+        135,
+        172,
+        209,
+        246,
+        27,
+        64,
+        101,
+        138,
+        175,
+        212,
+        249,
+        30,
+        67,
+        104,
+        141,
+        178,
+        215,
+        252,
+        33,
+        70,
+        107,
+        144,
+        181,
+        218,
+        255,
+        36,
+        73,
+        110,
+        147,
+        184,
+        221,
+      ]);
+      expect(applyOutline(grid, pal, 0.35, method: 'sobel', thickness: 3).data, [
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        120,
+        157,
+        194,
+        231,
+        12,
+        49,
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        12,
+        40,
+        20,
+        163,
+        200,
+        237,
+        18,
+        55,
+        92,
+        129,
+        166,
+        203,
+        240,
+        21,
+        58,
+        12,
+        40,
+        20,
+        206,
+        243,
+        24,
+        61,
+        98,
+        135,
+        172,
+        209,
+        246,
+        27,
+        64,
+        101,
+        138,
+        175,
+        212,
+        249,
+        30,
+        67,
+        104,
+        141,
+        178,
+        215,
+        252,
+        33,
+        70,
+        107,
+        144,
+        181,
+        218,
+        255,
+        36,
+        73,
+        110,
+        147,
+        184,
+        221,
+      ]);
     });
   });
 

@@ -860,6 +860,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Outline ink'**
   String get outlineInk;
+
+  /// No description provided for @effectOutlineThickness.
+  ///
+  /// In en, this message translates to:
+  /// **'Line thickness: {thickness}'**
+  String effectOutlineThickness(int thickness);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

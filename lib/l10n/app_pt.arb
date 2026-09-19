@@ -127,5 +127,6 @@
   "effectShadeBandsOff": "Faixas de sombra: desligado",
   "effectDespeckle": "Limpar pixels soltos",
   "outlineMethod": "Bordas do contorno",
-  "outlineInk": "Tinta do contorno"
+  "outlineInk": "Tinta do contorno",
+  "effectOutlineThickness": "Espessura da linha: {thickness}"
 }
