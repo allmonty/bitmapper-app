@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import 'bevel.dart';
 import 'popup.dart';
+import 'scroll.dart';
 import 'theme.dart';
 
 /// An entry of a [Win98Menu].
@@ -28,9 +29,14 @@ class Win98MenuDivider extends Win98MenuEntry {
 
 /// A top-level menu ("File", "Edit", ...).
 class Win98Menu {
-  const Win98Menu({required this.label, required this.items});
+  const Win98Menu({required this.label, required this.items, this.maxHeight});
   final String label;
   final List<Win98MenuEntry> items;
+
+  /// Caps the drop-down panel's height and adds a scrollbar once its items
+  /// overflow it, instead of the panel growing to fit them all. `null` (the
+  /// default) never scrolls.
+  final double? maxHeight;
 }
 
 /// The menu bar under a window's title bar.
@@ -82,7 +88,8 @@ class _MenuBarButton extends StatelessWidget {
           ),
         ),
       ),
-      popupBuilder: (context, close) => Win98MenuPanel(items: menu.items, onDismiss: close),
+      popupBuilder: (context, close) =>
+          Win98MenuPanel(items: menu.items, onDismiss: close, maxHeight: menu.maxHeight),
     );
   }
 }
@@ -90,36 +97,40 @@ class _MenuBarButton extends StatelessWidget {
 /// The raised drop-down panel listing menu entries. Also usable on its own,
 /// e.g. as a context menu.
 class Win98MenuPanel extends StatelessWidget {
-  const Win98MenuPanel({super.key, required this.items, required this.onDismiss});
+  const Win98MenuPanel({super.key, required this.items, required this.onDismiss, this.maxHeight});
 
   final List<Win98MenuEntry> items;
 
   /// Called before an item's callback, to close the panel.
   final VoidCallback onDismiss;
 
+  /// Caps the panel's height and adds a scrollbar once its items overflow
+  /// it. `null` (the default) never scrolls, sizing to fit all items.
+  final double? maxHeight;
+
   @override
   Widget build(BuildContext context) {
+    final column = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final entry in items)
+          switch (entry) {
+            Win98MenuItem() => _MenuItemRow(item: entry, onDismiss: onDismiss),
+            Win98MenuDivider() => const _MenuDividerRow(),
+          },
+      ],
+    );
+    final maxHeight = this.maxHeight;
+    final body = maxHeight == null
+        ? SingleChildScrollView(child: IntrinsicWidth(child: column))
+        : ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxHeight),
+            child: IntrinsicWidth(child: Win98ScrollView(child: column)),
+          );
     return ConstrainedBox(
       constraints: const BoxConstraints(minWidth: 180),
-      child: Bevel(
-        style: BevelStyle.window,
-        padding: const EdgeInsets.all(1),
-        child: SingleChildScrollView(
-          child: IntrinsicWidth(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (final entry in items)
-                  switch (entry) {
-                    Win98MenuItem() => _MenuItemRow(item: entry, onDismiss: onDismiss),
-                    Win98MenuDivider() => const _MenuDividerRow(),
-                  },
-              ],
-            ),
-          ),
-        ),
-      ),
+      child: Bevel(style: BevelStyle.window, padding: const EdgeInsets.all(1), child: body),
     );
   }
 }

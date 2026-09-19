@@ -50,6 +50,9 @@ class AppMenuBar extends StatelessWidget {
         ),
         Win98Menu(
           label: l10n.menuPresets,
+          // Built-ins alone are well past two dozen; capped and scrollable
+          // instead of the panel covering most of the window.
+          maxHeight: 400,
           items: [
             for (final p in presets.all)
               Win98MenuItem(label: p.name, onSelected: () => editor.applyPreset(p)),

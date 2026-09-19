@@ -369,6 +369,52 @@ void main() {
       expect(opened, 1);
       expect(find.text('Open...'), findsNothing);
     });
+
+    testWidgets('without maxHeight, a long menu sizes to fit every item', (tester) async {
+      await tester.pumpHarness(
+        Win98MenuBar(
+          menus: [
+            Win98Menu(
+              label: 'Presets',
+              items: [for (var i = 0; i < 30; i++) Win98MenuItem(label: 'Preset $i')],
+            ),
+          ],
+        ),
+        size: const Size(360, 600),
+      );
+      await tester.tap(find.text('Presets'));
+      await tester.pump();
+      expect(find.text('Preset 0'), findsOneWidget);
+      expect(find.text('Preset 29'), findsOneWidget);
+      expect(find.byType(Win98Scrollbar), findsNothing);
+    });
+
+    testWidgets('with maxHeight, a long menu is capped and scrollable', (tester) async {
+      await tester.pumpHarness(
+        Win98MenuBar(
+          menus: [
+            Win98Menu(
+              label: 'Presets',
+              maxHeight: 120,
+              items: [for (var i = 0; i < 30; i++) Win98MenuItem(label: 'Preset $i')],
+            ),
+          ],
+        ),
+        size: const Size(360, 600),
+      );
+      await tester.tap(find.text('Presets'));
+      await tester.pump();
+      // The panel doesn't grow past maxHeight (plus its own bevel chrome,
+      // a few pixels of border/padding around the capped content)...
+      final panel = tester.getRect(find.byType(Win98MenuPanel));
+      expect(panel.height, lessThanOrEqualTo(140));
+      // ...so the scrollable content lays out past the visible panel (it's
+      // there, just off-screen until scrolled to), reachable via a
+      // scrollbar.
+      expect(find.text('Preset 0'), findsOneWidget);
+      expect(tester.getRect(find.text('Preset 29')).top, greaterThan(panel.bottom));
+      expect(find.byType(Win98Scrollbar), findsOneWidget);
+    });
   });
 
   group('Win98TabView', () {

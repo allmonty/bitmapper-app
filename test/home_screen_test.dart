@@ -40,7 +40,12 @@ void main() {
     await tester.tap(find.text(menu).first); // the menu bar precedes the tabs
     await tester.pump();
     // Scoped to the open menu: items like "Open..." also label buttons.
-    await tester.tap(find.descendant(of: find.byType(Win98MenuPanel), matching: find.text(item)));
+    final target = find.descendant(of: find.byType(Win98MenuPanel), matching: find.text(item));
+    // Long menus (e.g. Presets) are height-capped and scrollable, so the
+    // item may be laid out below the visible panel.
+    await tester.ensureVisible(target);
+    await tester.pump();
+    await tester.tap(target);
     await tester.pump();
   }
 
