@@ -39,6 +39,6 @@ Set<int> colorSet(List<int> bytes, {int stride = 3}) => {
   for (var i = 0; i + 2 < bytes.length; i += stride) packedAt(bytes, i),
 };
 
-/// Rec. 601 luma as `(r * 0.299 + g * 0.587) + b * 0.114`, in the same
-/// operation order as the Python reference so results match exactly.
+/// Rec. 601 luma as `(r * 0.299 + g * 0.587) + b * 0.114`, in that exact
+/// operation order (every caller relies on this term order matching).
 double luminance(num r, num g, num b) => r * 0.299 + g * 0.587 + b * 0.114;

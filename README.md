@@ -1,9 +1,7 @@
 # Bitmapper
 
-A retro pixel-art photo filter for Android and iOS, with a Windows 98 UI.
-It's a Flutter port of the Python [`bitmapper`](../bitmapper), plus the app
-features from [ColorTrix](../colortrix): opening images, presets, saving,
-hold-to-compare, and zoom.
+A retro pixel-art photo filter for Android and iOS, with a Windows 98 UI:
+opening images, presets, saving, hold-to-compare, and zoom.
 
 ## Layout
 
@@ -13,7 +11,7 @@ hold-to-compare, and zoom.
 | `packages/bitmapper_core/` | Filter engine, pure Dart ([README](packages/bitmapper_core/README.md)) |
 | `packages/win98_ui/` | Reusable Windows 98 widget kit ([README](packages/win98_ui/README.md)) |
 | `packages/video_frames/` | Reusable plugin that decodes video to RGBA and encodes MP4s ([README](packages/video_frames/README.md)) |
-| `tool/gen_palettes.py` | Regenerates the palette table from the Python reference |
+| `tool/gen_palettes.py` | Regenerates the palette table from `tool/palette_source.py` |
 
 ## Features
 
@@ -35,8 +33,8 @@ hold-to-compare, and zoom.
     ink outlines with a choice of edge-finding method (brightness, color,
     or Sobel — Sobel finds cleaner, less noisy edges on photos) and ink
     style (darkest color, or a softer half-brightness "shaded" ink).
-- **Presets:** the 27 built-in looks from the Python reference, plus user
-  presets saved to `shared_preferences`.
+- **Presets:** 27 built-in looks, plus user presets saved to
+  `shared_preferences`.
 - **Save as** renders at full resolution, encodes PNG in an isolate, and
   opens the system save dialog (`flutter_file_dialog`). It needs no
   permissions.

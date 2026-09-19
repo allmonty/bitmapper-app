@@ -1,9 +1,6 @@
 import 'dart:typed_data';
 
 /// An 8-bit RGB image stored row-major as `(y * width + x) * 3 + channel`.
-///
-/// This is the Dart counterpart of the Python reference's `(H, W, 3)` uint8
-/// NumPy arrays.
 class RgbImage {
   RgbImage(this.width, this.height, this.data)
     : assert(width >= 0 && height >= 0),
@@ -15,8 +12,7 @@ class RgbImage {
   /// A black image of the given size.
   RgbImage.blank(this.width, this.height) : data = Uint8List(width * height * 3);
 
-  /// Build an RGB image from RGBA bytes, dropping alpha (no compositing),
-  /// matching the Python pipeline's `image[:, :, :3]`.
+  /// Build an RGB image from RGBA bytes, dropping alpha (no compositing).
   factory RgbImage.fromRgba(int width, int height, Uint8List rgba) {
     if (rgba.length != width * height * 4) {
       throw ArgumentError('expected ${width * height * 4} RGBA bytes, got ${rgba.length}');

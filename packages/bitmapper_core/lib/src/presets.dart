@@ -1,8 +1,7 @@
 import 'config.dart';
 
-/// Built-in looks, ported from the Python `presets.py`. They set only "look"
-/// fields; grid size stays at the config default (callers override it, e.g.
-/// with [presetColumns]).
+/// Built-in looks. They set only "look" fields; grid size stays at the
+/// config default (callers override it, e.g. with [presetColumns]).
 const Map<String, BitmapFilterConfig> kBuiltInPresets = {
   'arcade_cabinet': BitmapFilterConfig(
     paletteMode: PaletteMode.fixed,

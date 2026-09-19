@@ -29,9 +29,10 @@ enum PaletteStrategy {
 const kMinPaletteSamples = 2;
 const kMaxPaletteSamples = 32;
 
-/// Every knob of the filter. Mirrors the Python `BitmapFilterConfig`, except:
-/// - `output_size` is an argument of `applyBitmapFilter` instead (preview
-///   and export render the same config at different sizes);
+/// Every knob of the filter.
+/// - The output size is an argument of `applyBitmapFilter` instead of a
+///   config field (preview and export render the same config at different
+///   sizes);
 /// - colors (custom palette, gap color) are packed `0xRRGGBB` ints;
 /// - `randomSeed` makes `random` dither deterministic;
 /// - `paletteStrategy`, `paletteSamples` and `animateNoise` only matter for

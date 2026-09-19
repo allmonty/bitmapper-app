@@ -62,12 +62,14 @@ Uint8List _padPalette(List<List<int>> colors, int nColors) {
 /// so results are fully deterministic.
 Uint8List medianCut(Uint8List rgb, int nColors) {
   if (nColors < 1) throw ArgumentError.value(nColors, 'nColors', 'must be >= 1');
-  // Python re-sorts the whole bucket list by priority (stable) on every
-  // pass and splits the last one. Keeping the list sorted and inserting the
-  // two halves with an upper-bound search gives the identical order, since
-  // the halves were appended after every existing bucket; priorities are
-  // computed once per bucket. On the final pass Python appends the halves
-  // without sorting again, and palette order matters for ties, so do too.
+  // Equivalent to re-sorting the whole bucket list by priority (stable) on
+  // every pass and splitting the last one, but keeping the list sorted and
+  // inserting the two new buckets with an upper-bound search reaches the
+  // same order in less work: priorities are computed once per bucket, and
+  // a new bucket goes after every existing one of equal priority, matching
+  // where a stable full re-sort would place it. The final split's two
+  // halves are appended without re-sorting, since palette order matters
+  // for ties.
   final buckets = <List<int>>[uniqueColors(rgb)];
   final priorities = <double>[_bucketPriority(buckets.first)];
 

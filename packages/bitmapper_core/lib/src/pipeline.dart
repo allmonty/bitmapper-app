@@ -46,10 +46,10 @@ Uint8List? resolvePalette(RgbImage grid, BitmapFilterConfig config) {
 ///
 /// Stages: adjustments → downsample to the grid → palette → dither →
 /// despeckle → outline → upscale (+ gap) → scanlines, with shade bands
-/// right after the downsample. Unlike the Python reference there is no
-/// Lanczos resize to the output canvas first: the source is downsampled to
-/// the grid directly and `outputWidth x outputHeight` only governs the final
-/// upscale (migration doc §6.1). Defaults to the source size.
+/// right after the downsample. There is no resize to the output canvas
+/// first: the source is downsampled to the grid directly and
+/// `outputWidth x outputHeight` only governs the final upscale. Defaults to
+/// the source size.
 ///
 /// For animations, pass a precomputed `palette` (see `sequencePalette`) to
 /// reuse one palette across frames instead of resolving it per frame, and a

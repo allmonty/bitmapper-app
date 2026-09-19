@@ -19,7 +19,7 @@ const kMaxShadeBands = 8;
 /// Snap each cell's luminance to the centre of one of `bands` equal bands,
 /// rescaling its RGB so the hue is kept. `bands` 0 is off.
 ///
-/// Per cell, in the Python reference's operation order:
+/// Per cell, in this exact operation order:
 /// `band = min(bands - 1, floor(luma * bands / 256))`,
 /// `target = (band + 0.5) * 255 / bands`, then `factor = target / luma`,
 /// capped so no channel would exceed 255 (`min(factor, 255 / maxChannel)`,

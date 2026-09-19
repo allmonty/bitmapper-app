@@ -132,8 +132,8 @@ RgbImage errorDiffusion(
   for (var i = 0; i < img.length; i++) {
     img[i] = image.data[i].toDouble();
   }
-  // Fold divisor and strength into each tap once, as `(w * s) / d` — the
-  // same operation order as the Python reference (migration doc §6.6).
+  // Fold divisor and strength into each tap once, as `(w * s) / d`, in
+  // that exact operation order.
   final taps = kernel.taps;
   final scaled = Float64List(taps.length);
   for (var t = 0; t < taps.length; t++) {
@@ -256,8 +256,8 @@ RgbImage interleavedGradientNoise(RgbImage image, Uint8List palette, {double str
       return outer - outer.floorToDouble() - 0.5;
     }, strength);
 
-/// Add `threshold(x, y) * step * strength` (shared by all channels, in the
-/// Python reference's operation order), clamp as floats, then quantize.
+/// Add `threshold(x, y) * step * strength` (shared by all channels, in that
+/// exact operation order), clamp as floats, then quantize.
 RgbImage _perturbAndQuantize(
   RgbImage image,
   Uint8List palette,

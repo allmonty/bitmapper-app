@@ -1,11 +1,10 @@
 # bitmapper_core
 
-Pure-Dart port of the Python `bitmapper` reference (`../../../bitmapper`):
-adjustments → downsample to a grid → shade bands (toon) → palette (fixed /
-custom / median cut / k-means) → dither (19 methods) → despeckle → outline
-(ink on edges, several methods) → upscale with optional gutters → scanlines.
-It has no Flutter dependency, so it runs in `Isolate.run` and tests with
-`dart test`.
+Pure-Dart retro pixel-art filter engine: adjustments → downsample to a grid
+→ shade bands (toon) → palette (fixed / custom / median cut / k-means) →
+dither (19 methods) → despeckle → outline (ink on edges, several methods) →
+upscale with optional gutters → scanlines. It has no Flutter dependency, so
+it runs in `Isolate.run` and tests with `dart test`.
 
 ```dart
 final result = applyBitmapFilter(
@@ -16,37 +15,37 @@ final result = applyBitmapFilter(
 );
 ```
 
-## Differences from the Python reference
+## Numeric design notes
 
-These follow `docs/FLUTTER_MIGRATION.md`:
+A few deliberate choices worth knowing before touching the math:
 
 - **No canvas resize.** The source is downsampled straight to the grid, and
-  the output size only affects the final upscale (§6.1).
+  the output size only affects the final upscale.
 - **Deterministic k-means init.** Evenly spaced entries of the sorted unique
-  colors instead of PCG64 sampling (§6.4b).
+  colors, rather than random sampling, so a run is reproducible.
 - **`random` dither uses xorshift128+.** It's seeded from `config.randomSeed`,
-  so a given seed always gives the same output (§6.4a).
-- **Median cut sorts stably.** NumPy's default argsort isn't stable, so ties
-  on the split channel can differ from Python.
+  so a given seed always gives the same output.
+- **Median cut sorts stably**, so ties on the split channel resolve the same
+  way every run.
 - **Blocks are spread evenly.** When the size doesn't divide evenly, grid
   blocks differ by at most one pixel and the extra pixels are spread across
-  the image (`splitSizes`). `np.array_split` gives all the extra pixels to
-  the first blocks. That squeezes the start of the image and stretches the
-  rest, a visible distortion that changes with the column count. Python hid
-  it by resizing to a canvas that the default grid divides exactly; without
-  that resize (above), it showed.
-- **API shape.** `output_size` is an argument rather than a config field, and
-  colors are packed `0xRRGGBB` ints.
+  the image (`splitSizes`), rather than all front-loaded onto the first
+  blocks — front-loading squeezes the start of the image and stretches the
+  rest, a visible distortion that changes with the column count.
+- **API shape.** `outputWidth`/`outputHeight` are arguments to
+  `applyBitmapFilter` rather than config fields, and colors are packed
+  `0xRRGGBB` ints.
 
-Everything else is intended to be bit-exact: uint8 truncation, float
-operation order, and round-half-even in `subsample`.
-The tests compare stage outputs byte for byte against values produced by the
-Python code.
+Everything else is bit-exact by design: uint8 truncation, a fixed float
+operation order, and round-half-even in `subsample`. Several tests assert
+exact byte arrays for fixed inputs as a regression guard on that — if one
+fails, a stage's numeric behavior changed; treat that as a deliberate,
+reviewed decision and update the expected array in the same change.
 
 ## Toon shading and outlines
 
-`toon.dart` (ported from Python's `toon.py`) runs on the quantized grid,
-after palette/dither and before outline:
+`toon.dart` runs on the quantized grid, after palette/dither and before
+outline:
 
 - `applyShadeBands(grid, bands)`: `bands` 0 is off, else 2-8 flat brightness
   bands, flattening luma toward each band's mid-point brightness.
@@ -54,10 +53,9 @@ after palette/dither and before outline:
   neighbours with the most common neighbour color (reads the original grid,
   so scan order doesn't matter; ties go to the first-seen neighbour).
 
-`outline.dart` (ported from `outline.py`) inks edges on the quantized grid
-with a fixed palette color, choosing edges and ink the way `dither.dart`
-chooses a dither method — via a string parameter checked against a `List`
-of registered names:
+`outline.dart` inks edges on the quantized grid with a fixed palette color,
+choosing edges and ink the way `dither.dart` chooses a dither method — via a
+string parameter checked against a `List` of registered names:
 
 - `applyOutline(grid, palette, strength, method, ink)`. `strength` (0-1)
   sets `outlineThreshold`; `kOutlineMethods` are `brightness` (4-neighbour
@@ -80,8 +78,8 @@ export and palette tab, import it rather than re-implementing:
 - `packedColors`/`colorSet`: every pixel of a flat RGB(A) buffer as packed
   colors, in order or deduplicated (`stride: 4` skips the alpha byte).
 - `paletteFromPacked`: packed colors back to a flat RGB `Uint8List` palette.
-- `luminance(r, g, b)`: Rec. 601 luma as `(r*0.299 + g*0.587) + b*0.114`, in
-  the same operation order as Python's `_luminance` so results match exactly.
+- `luminance(r, g, b)`: Rec. 601 luma, computed as
+  `(r*0.299 + g*0.587) + b*0.114` in that exact order.
 
 ## Palettes
 
@@ -98,7 +96,7 @@ dart compile exe tool/benchmark.dart -o /tmp/bench && /tmp/bench
 ```
 
 On a 1200×1200 source with a 150×150 grid, the full pipeline takes about
-25 ms (AOT, Apple Silicon). The Python reference takes about 240 ms.
+25 ms (AOT, Apple Silicon).
 
 Large palettes stay fast because of two optimizations. Tests check that
 both give exactly the same output as the straightforward versions:

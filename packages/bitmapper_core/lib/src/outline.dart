@@ -4,11 +4,10 @@ import 'color.dart';
 import 'image.dart';
 import 'quantize.dart';
 
-/// Ways to find the edges to ink. Mirrors the Python
-/// `bitmapper.outline.list_methods()`.
+/// Ways to find the edges to ink.
 const kOutlineMethods = ['brightness', 'color', 'sobel'];
 
-/// Ways to pick the ink color. Mirrors `bitmapper.outline.list_inks()`.
+/// Ways to pick the ink color.
 const kOutlineInks = ['darkest', 'shaded'];
 
 /// Line thickness range, in grid cells. 1 is the original one-cell line.

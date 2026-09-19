@@ -1,6 +1,5 @@
-/// Retro pixel-art ("bitmap") image filter: a pure-Dart port of the Python
-/// `bitmapper` reference implementation. No Flutter dependency, so it runs
-/// in `Isolate.run` and tests with plain `dart test`.
+/// Retro pixel-art ("bitmap") image filter engine. No Flutter dependency,
+/// so it runs in `Isolate.run` and tests with plain `dart test`.
 library;
 
 export 'src/adjustments.dart';
