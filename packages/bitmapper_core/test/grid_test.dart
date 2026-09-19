@@ -17,8 +17,10 @@ void main() {
       for (final (length, n) in [(1024, 120), (1024, 300), (4000, 120), (768, 97), (5, 3)]) {
         final sizes = splitSizes(length, n);
         expect(sizes.reduce((a, b) => a + b), length);
-        expect(sizes.reduce((a, b) => a > b ? a : b) - sizes.reduce((a, b) => a < b ? a : b),
-            lessThanOrEqualTo(1));
+        expect(
+          sizes.reduce((a, b) => a > b ? a : b) - sizes.reduce((a, b) => a < b ? a : b),
+          lessThanOrEqualTo(1),
+        );
         final starts = splitStarts(sizes);
         for (var i = 0; i < n; i++) {
           expect((starts[i] - i * length / n).abs(), lessThan(1), reason: '$length/$n part $i');
@@ -64,19 +66,65 @@ void main() {
 
   group('downsample', () {
     test('average over uneven blocks', () {
-      expect(downsample(ramp(), 3, 2).data,
-          [36, 39, 42, 54, 57, 60, 76, 79, 82, 150, 153, 114, 126, 129, 132, 148, 151, 154]);
+      expect(downsample(ramp(), 3, 2).data, [
+        36,
+        39,
+        42,
+        54,
+        57,
+        60,
+        76,
+        79,
+        82,
+        150,
+        153,
+        114,
+        126,
+        129,
+        132,
+        148,
+        151,
+        154,
+      ]);
     });
 
     test('nearest samples each block center', () {
-      expect(downsample(ramp(), 3, 2, mode: BlockSampling.nearest).data,
-          [72, 75, 78, 90, 93, 96, 108, 111, 114, 198, 201, 204, 216, 219, 222, 234, 237, 240]);
+      expect(downsample(ramp(), 3, 2, mode: BlockSampling.nearest).data, [
+        72,
+        75,
+        78,
+        90,
+        93,
+        96,
+        108,
+        111,
+        114,
+        198,
+        201,
+        204,
+        216,
+        219,
+        222,
+        234,
+        237,
+        240,
+      ]);
     });
 
     test('evenly divisible blocks average exactly', () {
       final img = imageFromRows([
-        [[0, 0, 0], [10, 20, 30], [100, 100, 100], [100, 100, 100]],
-        [[20, 40, 60], [10, 20, 30], [100, 100, 100], [100, 100, 100]],
+        [
+          [0, 0, 0],
+          [10, 20, 30],
+          [100, 100, 100],
+          [100, 100, 100],
+        ],
+        [
+          [20, 40, 60],
+          [10, 20, 30],
+          [100, 100, 100],
+          [100, 100, 100],
+        ],
       ]);
       final out = downsample(img, 2, 1);
       expect(out.width, 2);
@@ -86,7 +134,10 @@ void main() {
 
     test('average truncates instead of rounding', () {
       final img = imageFromRows([
-        [[0, 0, 0], [1, 1, 1]],
+        [
+          [0, 0, 0],
+          [1, 1, 1],
+        ],
       ]);
       expect(downsample(img, 1, 1).data, [0, 0, 0]);
     });
@@ -105,8 +156,14 @@ void main() {
 
   group('upscale', () {
     final grid = imageFromRows([
-      [[10, 20, 30], [40, 50, 60]],
-      [[70, 80, 90], [100, 110, 120]],
+      [
+        [10, 20, 30],
+        [40, 50, 60],
+      ],
+      [
+        [70, 80, 90],
+        [100, 110, 120],
+      ],
     ]);
 
     test('replicates cells into blocks', () {

@@ -16,7 +16,11 @@ void main() {
       for (final method in listDitherMethods()) {
         test('bit depth $depth, $method', () {
           final config = BitmapFilterConfig(
-              gridCols: 10, gridRows: 6, bitDepth: depth, dither: method);
+            gridCols: 10,
+            gridRows: 6,
+            bitDepth: depth,
+            dither: method,
+          );
           final r = applyBitmapFilter(src, config, outputWidth: 80, outputHeight: 60);
           expect(r.output.width, 80);
           expect(r.output.height, 60);
@@ -37,24 +41,44 @@ void main() {
   });
 
   test('fixed palette is subsampled to the bit depth', () {
-    final r = applyBitmapFilter(src,
-        const BitmapFilterConfig(
-            gridCols: 10, gridRows: 10, paletteMode: PaletteMode.fixed, fixedPalette: 'pico8', bitDepth: 2),
-        outputWidth: 20, outputHeight: 20);
+    final r = applyBitmapFilter(
+      src,
+      const BitmapFilterConfig(
+        gridCols: 10,
+        gridRows: 10,
+        paletteMode: PaletteMode.fixed,
+        fixedPalette: 'pico8',
+        bitDepth: 2,
+      ),
+      outputWidth: 20,
+      outputHeight: 20,
+    );
     expect(r.paletteSize, 4);
     expect(onlyUsesPalette(r.output, subsample(getPalette('pico8'), 4)), isTrue);
   });
 
   test('custom palette is honoured', () {
-    final r = applyBitmapFilter(src,
-        const BitmapFilterConfig(
-            gridCols: 10, gridRows: 10, paletteMode: PaletteMode.custom, customPalette: [0xFF0000, 0x0000FF]),
-        outputWidth: 20, outputHeight: 20);
+    final r = applyBitmapFilter(
+      src,
+      const BitmapFilterConfig(
+        gridCols: 10,
+        gridRows: 10,
+        paletteMode: PaletteMode.custom,
+        customPalette: [0xFF0000, 0x0000FF],
+      ),
+      outputWidth: 20,
+      outputHeight: 20,
+    );
     expect(colorsOf(r.output.data).difference({0xFF0000, 0x0000FF}), isEmpty);
   });
 
   test('true color passes block colors straight through', () {
-    const config = BitmapFilterConfig(gridCols: 5, gridRows: 5, bitDepth: 16, dither: 'floyd_steinberg');
+    const config = BitmapFilterConfig(
+      gridCols: 5,
+      gridRows: 5,
+      bitDepth: 16,
+      dither: 'floyd_steinberg',
+    );
     expect(config.isTrueColor, isTrue);
     final r = applyBitmapFilter(src, config);
     expect(r.grid.data, downsample(src, 5, 5).data);
@@ -80,17 +104,26 @@ void main() {
   test('scanlines and grid gap are applied to the canvas', () {
     final white = solidImage(10, 10, [255, 255, 255]);
     final r = applyBitmapFilter(
-        white,
-        const BitmapFilterConfig(
-            gridCols: 2, gridRows: 2, bitDepth: 16, scanlines: 1.0, gridGapPx: 2, gridGapColor: 0x00FF00));
+      white,
+      const BitmapFilterConfig(
+        gridCols: 2,
+        gridRows: 2,
+        bitDepth: 16,
+        scanlines: 1.0,
+        gridGapPx: 2,
+        gridGapColor: 0x00FF00,
+      ),
+    );
     expect(r.output.pixel(0, 0), [255, 255, 255]);
     expect(r.output.pixel(0, 1), [0, 0, 0]); // odd row blacked out
     expect(r.output.pixel(4, 0), [0, 255, 0]); // gutter
   });
 
   test('adjustments run before downsampling', () {
-    final r = applyBitmapFilter(solidImage(4, 4, [200, 50, 10]),
-        const BitmapFilterConfig(gridCols: 1, gridRows: 1, bitDepth: 16, saturation: 0));
+    final r = applyBitmapFilter(
+      solidImage(4, 4, [200, 50, 10]),
+      const BitmapFilterConfig(gridCols: 1, gridRows: 1, bitDepth: 16, saturation: 0),
+    );
     final p = r.grid.pixel(0, 0);
     expect(p[0], p[1]);
     expect(p[1], p[2]);
@@ -98,8 +131,11 @@ void main() {
 
   test('cancellation aborts the run', () {
     expect(
-      () => applyBitmapFilter(src, const BitmapFilterConfig(gridCols: 10, gridRows: 10),
-          isCancelled: () => true),
+      () => applyBitmapFilter(
+        src,
+        const BitmapFilterConfig(gridCols: 10, gridRows: 10),
+        isCancelled: () => true,
+      ),
       throwsA(isA<FilterCancelled>()),
     );
   });
@@ -140,9 +176,12 @@ void main() {
 
     test('unknown fixed palette name fails at run time', () {
       expect(
-          () => applyBitmapFilter(src,
-              const BitmapFilterConfig(paletteMode: PaletteMode.fixed, fixedPalette: 'nope')),
-          throwsArgumentError);
+        () => applyBitmapFilter(
+          src,
+          const BitmapFilterConfig(paletteMode: PaletteMode.fixed, fixedPalette: 'nope'),
+        ),
+        throwsArgumentError,
+      );
     });
   });
 

@@ -48,8 +48,12 @@ Uint8List? sequencePalette(List<RgbImage> frames, BitmapFilterConfig config) {
   final grids = [
     for (final frame in frames)
       downsample(
-        applyAdjustments(frame,
-            contrast: config.contrast, saturation: config.saturation, gamma: config.gamma),
+        applyAdjustments(
+          frame,
+          contrast: config.contrast,
+          saturation: config.saturation,
+          gamma: config.gamma,
+        ),
         config.gridCols,
         config.gridRows,
         mode: config.blockSampling,

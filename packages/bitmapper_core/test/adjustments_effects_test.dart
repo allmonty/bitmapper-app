@@ -5,7 +5,12 @@ import 'helpers.dart';
 
 void main() {
   final colors = imageFromRows([
-    [[200, 50, 10], [30, 160, 90], [250, 250, 250], [0, 0, 0]],
+    [
+      [200, 50, 10],
+      [30, 160, 90],
+      [250, 250, 250],
+      [0, 0, 0],
+    ],
   ]);
 
   group('adjustments', () {
@@ -48,7 +53,10 @@ void main() {
       expect(adjustGamma(gray, 2).pixel(0, 0)[0], greaterThan(128));
       expect(adjustGamma(gray, 0.5).pixel(0, 0)[0], lessThan(128));
       final ends = imageFromRows([
-        [[0, 0, 0], [255, 255, 255]],
+        [
+          [0, 0, 0],
+          [255, 255, 255],
+        ],
       ]);
       expect(adjustGamma(ends, 2.2).data, ends.data);
     });

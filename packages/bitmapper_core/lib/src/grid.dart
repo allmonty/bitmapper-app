@@ -35,8 +35,12 @@ enum BlockSampling { average, nearest }
 /// [BlockSampling.average] is a box-filter mean of each block (computed as
 /// `sum / rowCount / colCount`, in that order, then truncated);
 /// [BlockSampling.nearest] samples each block's center pixel.
-RgbImage downsample(RgbImage image, int cols, int rows,
-    {BlockSampling mode = BlockSampling.average}) {
+RgbImage downsample(
+  RgbImage image,
+  int cols,
+  int rows, {
+  BlockSampling mode = BlockSampling.average,
+}) {
   if (cols < 1 || rows < 1) {
     throw ArgumentError('grid size must be >= 1, got ${cols}x$rows');
   }
@@ -114,8 +118,13 @@ RgbImage downsample(RgbImage image, int cols, int rows,
 /// Replicate each grid cell up to `outWidth x outHeight`, nearest-neighbor
 /// style. When `gapPx > 0`, a gutter in `gapColor` is drawn on every interior
 /// block boundary (never on the canvas edge).
-RgbImage upscale(RgbImage grid, int outWidth, int outHeight,
-    {int gapPx = 0, List<int> gapColor = const [0, 0, 0]}) {
+RgbImage upscale(
+  RgbImage grid,
+  int outWidth,
+  int outHeight, {
+  int gapPx = 0,
+  List<int> gapColor = const [0, 0, 0],
+}) {
   if (gapPx < 0) throw ArgumentError.value(gapPx, 'gapPx', 'must be >= 0');
   final rowRepeats = splitSizes(outHeight, grid.height);
   final colRepeats = splitSizes(outWidth, grid.width);

@@ -6,6 +6,7 @@ Usage (from the repo root, with the bitmapper venv):
     ../bitmapper/.venv/bin/python tool/gen_palettes.py [path/to/bitmapper]
 """
 
+import subprocess
 import sys
 from pathlib import Path
 
@@ -33,6 +34,8 @@ def main() -> None:
         lines.append("  ],")
     lines.append("};")
     OUT.write_text("\n".join(lines) + "\n")
+    # Format like the rest of the code (page width from analysis_options).
+    subprocess.run(["dart", "format", str(OUT)], check=True, capture_output=True)
     print(f"wrote {OUT} ({len(_PALETTES)} palettes)")
 
 

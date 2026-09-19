@@ -45,14 +45,15 @@ RgbImage gradientImage() {
 }
 
 RgbImage checkerboardImage() => imageFromRows([
-      for (var y = 0; y < 8; y++)
-        [for (var x = 0; x < 8; x++) (x + y).isEven ? [0, 0, 0] : [255, 255, 255]],
-    ]);
+  for (var y = 0; y < 8; y++)
+    [
+      for (var x = 0; x < 8; x++) (x + y).isEven ? [0, 0, 0] : [255, 255, 255],
+    ],
+]);
 
 Set<int> colorsOf(Uint8List rgb) => {
-      for (var i = 0; i < rgb.length; i += 3)
-        (rgb[i] << 16) | (rgb[i + 1] << 8) | rgb[i + 2],
-    };
+  for (var i = 0; i < rgb.length; i += 3) (rgb[i] << 16) | (rgb[i + 1] << 8) | rgb[i + 2],
+};
 
 bool onlyUsesPalette(RgbImage image, Uint8List palette) =>
     colorsOf(palette).containsAll(colorsOf(image.data));

@@ -59,8 +59,12 @@ RgbImage adjustGamma(RgbImage image, double gamma) {
 
 /// Contrast, then saturation, then gamma. Each step is skipped at 1.0 and
 /// truncates to bytes before the next one runs.
-RgbImage applyAdjustments(RgbImage image,
-    {double contrast = 1.0, double saturation = 1.0, double gamma = 1.0}) {
+RgbImage applyAdjustments(
+  RgbImage image, {
+  double contrast = 1.0,
+  double saturation = 1.0,
+  double gamma = 1.0,
+}) {
   var out = image;
   if (contrast != 1.0) out = adjustContrast(out, contrast);
   if (saturation != 1.0) out = adjustSaturation(out, saturation);

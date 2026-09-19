@@ -114,8 +114,17 @@ void main() {
     test('linspaceIndices differs from naive rounding at halves', () {
       // linspace(0, 5, 3) = [0, 2.5, 5] -> NumPy picks index 2, not 3.
       expect(linspaceIndices(6, 3), [0, 2, 5]);
-      expect(subsample(Uint8List.fromList(List.generate(18, (i) => i)), 3),
-          [0, 1, 2, 6, 7, 8, 15, 16, 17]);
+      expect(subsample(Uint8List.fromList(List.generate(18, (i) => i)), 3), [
+        0,
+        1,
+        2,
+        6,
+        7,
+        8,
+        15,
+        16,
+        17,
+      ]);
     });
   });
 }

@@ -28,3 +28,7 @@ include: package:lints/recommended.yaml
 
 # For additional information about configuring this file, see
 # https://dart.dev/guides/language/analysis-options
+
+# Shared by every Dart package in this repo, so `dart format .` is stable.
+formatter:
+  page_width: 100

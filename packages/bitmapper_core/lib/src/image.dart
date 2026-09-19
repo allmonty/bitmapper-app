@@ -6,20 +6,20 @@ import 'dart:typed_data';
 /// NumPy arrays.
 class RgbImage {
   RgbImage(this.width, this.height, this.data)
-      : assert(width >= 0 && height >= 0),
-        assert(data.length == width * height * 3,
-            'expected ${width * height * 3} bytes, got ${data.length}');
+    : assert(width >= 0 && height >= 0),
+      assert(
+        data.length == width * height * 3,
+        'expected ${width * height * 3} bytes, got ${data.length}',
+      );
 
   /// A black image of the given size.
-  RgbImage.blank(this.width, this.height)
-      : data = Uint8List(width * height * 3);
+  RgbImage.blank(this.width, this.height) : data = Uint8List(width * height * 3);
 
   /// Build an RGB image from RGBA bytes, dropping alpha (no compositing),
   /// matching the Python pipeline's `image[:, :, :3]`.
   factory RgbImage.fromRgba(int width, int height, Uint8List rgba) {
     if (rgba.length != width * height * 4) {
-      throw ArgumentError(
-          'expected ${width * height * 4} RGBA bytes, got ${rgba.length}');
+      throw ArgumentError('expected ${width * height * 4} RGBA bytes, got ${rgba.length}');
     }
     final out = Uint8List(width * height * 3);
     for (var i = 0, j = 0; j < out.length; i += 4, j += 3) {

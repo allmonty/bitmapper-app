@@ -50,8 +50,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get emptyTitle => 'Open a photo or video';
 
   @override
-  String get emptyBody =>
-      'Pick a photo, GIF or video to turn into retro pixel art.';
+  String get emptyBody => 'Pick a photo, GIF or video to turn into retro pixel art.';
 
   @override
   String get emptyCamera => 'Camera...';
@@ -403,8 +402,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'This video\'s sound uses a format that can\'t be copied into an MP4, so saved videos will be silent. The picture is not affected.';
 
   @override
-  String get audioUnsupportedShort =>
-      'This video\'s sound can\'t be kept; the MP4 will be silent.';
+  String get audioUnsupportedShort => 'This video\'s sound can\'t be kept; the MP4 will be silent.';
 
   @override
   String statusSavedNoSound(String name) {

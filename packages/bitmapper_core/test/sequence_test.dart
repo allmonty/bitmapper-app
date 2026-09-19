@@ -9,13 +9,22 @@ void main() {
   // A short "animation": the same scene with its brightness drifting, so
   // per-frame palettes differ.
   List<RgbImage> frames(int n) => [
-        for (var f = 0; f < n; f++)
-          RgbImage(24, 18, Uint8List.fromList([
-            for (final v in randomImage(24, 18, seed: 5).data) (v * (0.5 + f / (2 * n))).toInt(),
-          ])),
-      ];
+    for (var f = 0; f < n; f++)
+      RgbImage(
+        24,
+        18,
+        Uint8List.fromList([
+          for (final v in randomImage(24, 18, seed: 5).data) (v * (0.5 + f / (2 * n))).toInt(),
+        ]),
+      ),
+  ];
 
-  const base = BitmapFilterConfig(gridCols: 12, gridRows: 9, bitDepth: 3, dither: 'floyd_steinberg');
+  const base = BitmapFilterConfig(
+    gridCols: 12,
+    gridRows: 9,
+    bitDepth: 3,
+    dither: 'floyd_steinberg',
+  );
 
   group('sampleIndices', () {
     test('spreads samples and keeps first and last', () {
@@ -32,15 +41,26 @@ void main() {
 
   group('paletteSourceFrames', () {
     test('per strategy', () {
-      expect(paletteSourceFrames(base.copyWith(paletteStrategy: PaletteStrategy.perFrame), 20), isEmpty);
-      expect(paletteSourceFrames(base.copyWith(paletteStrategy: PaletteStrategy.firstFrame), 20), [0]);
       expect(
-        paletteSourceFrames(base.copyWith(paletteStrategy: PaletteStrategy.sampled, paletteSamples: 3), 21),
+        paletteSourceFrames(base.copyWith(paletteStrategy: PaletteStrategy.perFrame), 20),
+        isEmpty,
+      );
+      expect(paletteSourceFrames(base.copyWith(paletteStrategy: PaletteStrategy.firstFrame), 20), [
+        0,
+      ]);
+      expect(
+        paletteSourceFrames(
+          base.copyWith(paletteStrategy: PaletteStrategy.sampled, paletteSamples: 3),
+          21,
+        ),
         [0, 10, 20],
       );
     });
     test('none needed for fixed palettes or true color', () {
-      expect(paletteSourceFrames(base.copyWith(paletteMode: PaletteMode.fixed, fixedPalette: 'cga'), 20), isEmpty);
+      expect(
+        paletteSourceFrames(base.copyWith(paletteMode: PaletteMode.fixed, fixedPalette: 'cga'), 20),
+        isEmpty,
+      );
       expect(paletteSourceFrames(base.copyWith(bitDepth: 24), 20), isEmpty);
     });
   });
@@ -76,7 +96,10 @@ void main() {
 
   test('sequencePalette is null for fixed palettes and true color', () {
     final clip = frames(2);
-    expect(sequencePalette(clip, base.copyWith(paletteMode: PaletteMode.fixed, fixedPalette: 'cga')), isNull);
+    expect(
+      sequencePalette(clip, base.copyWith(paletteMode: PaletteMode.fixed, fixedPalette: 'cga')),
+      isNull,
+    );
     expect(sequencePalette(clip, base.copyWith(bitDepth: 16)), isNull);
     expect(sequencePalette(const [], base), isNull);
   });
@@ -107,7 +130,11 @@ void main() {
       expect(d.paletteStrategy, PaletteStrategy.sampled);
       expect(d.paletteSamples, 8);
       expect(d.animateNoise, isFalse);
-      final c = d.copyWith(paletteStrategy: PaletteStrategy.firstFrame, paletteSamples: 5, animateNoise: true);
+      final c = d.copyWith(
+        paletteStrategy: PaletteStrategy.firstFrame,
+        paletteSamples: 5,
+        animateNoise: true,
+      );
       expect(BitmapFilterConfig.fromJson(c.toJson()), c);
       expect(c, isNot(d));
     });

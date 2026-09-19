@@ -98,8 +98,7 @@ class BitmapFilterConfig {
   /// Color budget: `2 ^ bitDepth`.
   int get nColors => 1 << bitDepth;
 
-  bool get isTrueColor =>
-      paletteMode == PaletteMode.auto && bitDepth >= kTrueColorThreshold;
+  bool get isTrueColor => paletteMode == PaletteMode.auto && bitDepth >= kTrueColorThreshold;
 
   /// Throws [ArgumentError] describing the first invalid field.
   void validate() {
@@ -108,7 +107,8 @@ class BitmapFilterConfig {
     }
     if (bitDepth < kMinBitDepth || bitDepth > kMaxBitDepth) {
       throw ArgumentError(
-          'bitDepth must be between $kMinBitDepth and $kMaxBitDepth, got $bitDepth');
+        'bitDepth must be between $kMinBitDepth and $kMaxBitDepth, got $bitDepth',
+      );
     }
     if (!kPaletteAlgorithms.contains(paletteAlgorithm)) {
       throw ArgumentError('invalid paletteAlgorithm: "$paletteAlgorithm"');
@@ -127,7 +127,8 @@ class BitmapFilterConfig {
     }
     if (shadeBands != 0 && (shadeBands < kMinShadeBands || shadeBands > kMaxShadeBands)) {
       throw ArgumentError(
-          'shadeBands must be 0 or $kMinShadeBands..$kMaxShadeBands, got $shadeBands');
+        'shadeBands must be 0 or $kMinShadeBands..$kMaxShadeBands, got $shadeBands',
+      );
     }
     if (gridGapPx < 0) {
       throw ArgumentError('gridGapPx must be >= 0, got $gridGapPx');
@@ -139,14 +140,13 @@ class BitmapFilterConfig {
     if (gamma <= 0) throw ArgumentError('gamma must be > 0, got $gamma');
     if (paletteSamples < kMinPaletteSamples || paletteSamples > kMaxPaletteSamples) {
       throw ArgumentError(
-          'paletteSamples must be between $kMinPaletteSamples and $kMaxPaletteSamples, got $paletteSamples');
+        'paletteSamples must be between $kMinPaletteSamples and $kMaxPaletteSamples, got $paletteSamples',
+      );
     }
-    if (paletteMode == PaletteMode.fixed &&
-        (fixedPalette == null || fixedPalette!.isEmpty)) {
+    if (paletteMode == PaletteMode.fixed && (fixedPalette == null || fixedPalette!.isEmpty)) {
       throw ArgumentError('fixedPalette must be set when paletteMode is fixed');
     }
-    if (paletteMode == PaletteMode.custom &&
-        (customPalette == null || customPalette!.isEmpty)) {
+    if (paletteMode == PaletteMode.custom && (customPalette == null || customPalette!.isEmpty)) {
       throw ArgumentError('customPalette must be set when paletteMode is custom');
     }
   }
@@ -204,30 +204,30 @@ class BitmapFilterConfig {
   }
 
   Map<String, Object?> toJson() => {
-        'gridCols': gridCols,
-        'gridRows': gridRows,
-        'bitDepth': bitDepth,
-        'blockSampling': blockSampling.name,
-        'paletteMode': paletteMode.name,
-        'paletteAlgorithm': paletteAlgorithm,
-        'fixedPalette': fixedPalette,
-        'customPalette': customPalette,
-        'dither': dither,
-        'ditherStrength': ditherStrength,
-        'scanlines': scanlines,
-        'gridGapPx': gridGapPx,
-        'gridGapColor': gridGapColor,
-        'outline': outline,
-        'shadeBands': shadeBands,
-        'despeckle': despeckle,
-        'contrast': contrast,
-        'saturation': saturation,
-        'gamma': gamma,
-        'randomSeed': randomSeed,
-        'paletteStrategy': paletteStrategy.name,
-        'paletteSamples': paletteSamples,
-        'animateNoise': animateNoise,
-      };
+    'gridCols': gridCols,
+    'gridRows': gridRows,
+    'bitDepth': bitDepth,
+    'blockSampling': blockSampling.name,
+    'paletteMode': paletteMode.name,
+    'paletteAlgorithm': paletteAlgorithm,
+    'fixedPalette': fixedPalette,
+    'customPalette': customPalette,
+    'dither': dither,
+    'ditherStrength': ditherStrength,
+    'scanlines': scanlines,
+    'gridGapPx': gridGapPx,
+    'gridGapColor': gridGapColor,
+    'outline': outline,
+    'shadeBands': shadeBands,
+    'despeckle': despeckle,
+    'contrast': contrast,
+    'saturation': saturation,
+    'gamma': gamma,
+    'randomSeed': randomSeed,
+    'paletteStrategy': paletteStrategy.name,
+    'paletteSamples': paletteSamples,
+    'animateNoise': animateNoise,
+  };
 
   /// Missing keys fall back to defaults, so older saved presets keep loading.
   factory BitmapFilterConfig.fromJson(Map<String, Object?> json) {
@@ -238,13 +238,11 @@ class BitmapFilterConfig {
       gridCols: get<int>('gridCols') ?? d.gridCols,
       gridRows: get<int>('gridRows') ?? d.gridRows,
       bitDepth: get<int>('bitDepth') ?? d.bitDepth,
-      blockSampling: BlockSampling.values
-              .where((e) => e.name == json['blockSampling'])
-              .firstOrNull ??
+      blockSampling:
+          BlockSampling.values.where((e) => e.name == json['blockSampling']).firstOrNull ??
           d.blockSampling,
-      paletteMode: PaletteMode.values
-              .where((e) => e.name == json['paletteMode'])
-              .firstOrNull ??
+      paletteMode:
+          PaletteMode.values.where((e) => e.name == json['paletteMode']).firstOrNull ??
           d.paletteMode,
       paletteAlgorithm: get<String>('paletteAlgorithm') ?? d.paletteAlgorithm,
       fixedPalette: get<String>('fixedPalette'),
@@ -261,9 +259,8 @@ class BitmapFilterConfig {
       saturation: getDouble('saturation') ?? d.saturation,
       gamma: getDouble('gamma') ?? d.gamma,
       randomSeed: get<int>('randomSeed') ?? d.randomSeed,
-      paletteStrategy: PaletteStrategy.values
-              .where((e) => e.name == json['paletteStrategy'])
-              .firstOrNull ??
+      paletteStrategy:
+          PaletteStrategy.values.where((e) => e.name == json['paletteStrategy']).firstOrNull ??
           d.paletteStrategy,
       paletteSamples: get<int>('paletteSamples') ?? d.paletteSamples,
       animateNoise: get<bool>('animateNoise') ?? d.animateNoise,
@@ -301,30 +298,30 @@ class BitmapFilterConfig {
 
   @override
   int get hashCode => Object.hashAll([
-        gridCols,
-        gridRows,
-        bitDepth,
-        blockSampling,
-        paletteMode,
-        paletteAlgorithm,
-        fixedPalette,
-        customPalette == null ? null : Object.hashAll(customPalette!),
-        dither,
-        ditherStrength,
-        scanlines,
-        gridGapPx,
-        gridGapColor,
-        outline,
-        shadeBands,
-        despeckle,
-        contrast,
-        saturation,
-        gamma,
-        randomSeed,
-        paletteStrategy,
-        paletteSamples,
-        animateNoise,
-      ]);
+    gridCols,
+    gridRows,
+    bitDepth,
+    blockSampling,
+    paletteMode,
+    paletteAlgorithm,
+    fixedPalette,
+    customPalette == null ? null : Object.hashAll(customPalette!),
+    dither,
+    ditherStrength,
+    scanlines,
+    gridGapPx,
+    gridGapColor,
+    outline,
+    shadeBands,
+    despeckle,
+    contrast,
+    saturation,
+    gamma,
+    randomSeed,
+    paletteStrategy,
+    paletteSamples,
+    animateNoise,
+  ]);
 
   @override
   String toString() => 'BitmapFilterConfig(${toJson()})';

@@ -9,8 +9,7 @@ List<String> listPalettes() => kPaletteData.keys.toList()..sort();
 Uint8List getPalette(String name) {
   final data = kPaletteData[name];
   if (data == null) {
-    throw ArgumentError(
-        'unknown fixed palette "$name", available: ${listPalettes()}');
+    throw ArgumentError('unknown fixed palette "$name", available: ${listPalettes()}');
   }
   return Uint8List.fromList(data);
 }
@@ -34,8 +33,7 @@ List<int> linspaceIndices(int length, int n) {
   if (n == 1) return [0];
   final stop = (length - 1).toDouble();
   final step = stop / (n - 1);
-  return List<int>.generate(
-      n, (i) => i == n - 1 ? length - 1 : roundHalfEven(i * step));
+  return List<int>.generate(n, (i) => i == n - 1 ? length - 1 : roundHalfEven(i * step));
 }
 
 /// Pick `nColors` evenly-spaced entries from `palette` (keeping the first and

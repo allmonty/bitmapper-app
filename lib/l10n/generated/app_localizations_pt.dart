@@ -50,8 +50,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get emptyTitle => 'Abra uma foto ou vídeo';
 
   @override
-  String get emptyBody =>
-      'Escolha uma foto, GIF ou vídeo para virar pixel art retrô.';
+  String get emptyBody => 'Escolha uma foto, GIF ou vídeo para virar pixel art retrô.';
 
   @override
   String get emptyCamera => 'Câmera...';

@@ -6,8 +6,7 @@ import 'image.dart';
 /// black), simulating CRT scanlines.
 RgbImage applyScanlines(RgbImage image, double strength) {
   if (strength < 0 || strength > 1) {
-    throw ArgumentError.value(
-        strength, 'strength', 'scanlines must be between 0 and 1');
+    throw ArgumentError.value(strength, 'strength', 'scanlines must be between 0 and 1');
   }
   if (strength == 0) return image;
   final out = Uint8List.fromList(image.data);

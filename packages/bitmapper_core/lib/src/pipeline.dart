@@ -46,8 +46,7 @@ Uint8List? resolvePalette(RgbImage grid, BitmapFilterConfig config) {
       return subsample(_packedToPalette(config.customPalette!), config.nColors);
     case PaletteMode.auto:
       if (config.bitDepth >= kTrueColorThreshold) return null;
-      return generatePalette(grid.data, config.nColors,
-          algorithm: config.paletteAlgorithm);
+      return generatePalette(grid.data, config.nColors, algorithm: config.paletteAlgorithm);
   }
 }
 
@@ -80,12 +79,15 @@ FilterResult applyBitmapFilter(
     if (isCancelled != null && isCancelled()) throw const FilterCancelled();
   }
 
-  final adjusted = applyAdjustments(source,
-      contrast: config.contrast, saturation: config.saturation, gamma: config.gamma);
+  final adjusted = applyAdjustments(
+    source,
+    contrast: config.contrast,
+    saturation: config.saturation,
+    gamma: config.gamma,
+  );
   checkCancelled();
   final gridColors = applyShadeBands(
-    downsample(adjusted, config.gridCols, config.gridRows,
-      mode: config.blockSampling),
+    downsample(adjusted, config.gridCols, config.gridRows, mode: config.blockSampling),
     config.shadeBands,
   );
   checkCancelled();
@@ -99,10 +101,14 @@ FilterResult applyBitmapFilter(
     quantized = gridColors;
   } else {
     resolved = resolvedPalette;
-    quantized = applyDither(gridColors, resolvedPalette, config.dither,
-        strength: config.ditherStrength,
-        seed: seed ?? config.randomSeed,
-        isCancelled: isCancelled);
+    quantized = applyDither(
+      gridColors,
+      resolvedPalette,
+      config.dither,
+      strength: config.ditherStrength,
+      seed: seed ?? config.randomSeed,
+      isCancelled: isCancelled,
+    );
   }
   if (config.despeckle) quantized = despeckle(quantized);
   if (config.outline > 0) quantized = applyOutline(quantized, resolved, config.outline);
