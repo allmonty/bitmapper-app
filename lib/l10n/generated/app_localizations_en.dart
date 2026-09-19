@@ -442,4 +442,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get effectDespeckle => 'Clean up stray pixels';
+
+  @override
+  String get outlineMethod => 'Outline edges';
+
+  @override
+  String get outlineInk => 'Outline ink';
 }

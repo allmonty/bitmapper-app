@@ -168,6 +168,8 @@ class EditorModel extends ChangeNotifier {
   void setGamma(double v) => _set(_config.copyWith(gamma: v));
   void setScanlines(double v) => _set(_config.copyWith(scanlines: v));
   void setOutline(double v) => _set(_config.copyWith(outline: v));
+  void setOutlineMethod(String method) => _set(_config.copyWith(outlineMethod: method));
+  void setOutlineInk(String ink) => _set(_config.copyWith(outlineInk: ink));
   void setShadeBands(int bands) => _set(_config.copyWith(shadeBands: bands));
   void setDespeckle(bool on) => _set(_config.copyWith(despeckle: on));
 

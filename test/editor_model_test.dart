@@ -71,6 +71,19 @@ void main() {
     expect(model.config.outline, 0.4);
   });
 
+  test('outline method and ink setters and validation', () {
+    expect(model.config.outlineMethod, 'brightness');
+    expect(model.config.outlineInk, 'darkest');
+    model.setOutlineMethod('sobel');
+    model.setOutlineInk('shaded');
+    expect(model.config.outlineMethod, 'sobel');
+    expect(model.config.outlineInk, 'shaded');
+    expect(() => model.setOutlineMethod('nonsense'), throwsArgumentError);
+    expect(() => model.setOutlineInk('nonsense'), throwsArgumentError);
+    expect(model.config.outlineMethod, 'sobel');
+    expect(model.config.outlineInk, 'shaded');
+  });
+
   test('toon setters and validation', () {
     model.setShadeBands(3);
     model.setDespeckle(true);

@@ -84,5 +84,15 @@ const kPresetLabels = <String, String>{
   'toon_pastel': 'Toon Pastel',
 };
 
+const kOutlineMethodLabels = <String, String>{
+  'brightness': 'Brightness',
+  'color': 'Color',
+  'sobel': 'Sobel (best for photos)',
+};
+
+const kOutlineInkLabels = <String, String>{'darkest': 'Darkest color', 'shaded': 'Shaded'};
+
 String ditherLabel(String id) => kDitherLabels[id] ?? id;
 String paletteLabel(String id) => kPaletteLabels[id] ?? id;
+String outlineMethodLabel(String id) => kOutlineMethodLabels[id] ?? id;
+String outlineInkLabel(String id) => kOutlineInkLabels[id] ?? id;

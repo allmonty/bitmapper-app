@@ -443,4 +443,10 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get effectDespeckle => 'Limpar pixels soltos';
+
+  @override
+  String get outlineMethod => 'Bordas do contorno';
+
+  @override
+  String get outlineInk => 'Tinta do contorno';
 }

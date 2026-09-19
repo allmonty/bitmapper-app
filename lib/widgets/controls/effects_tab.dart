@@ -5,6 +5,7 @@ import 'package:win98_ui/win98_ui.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../../models/editor_model.dart';
+import '../../models/labels.dart';
 import 'labeled_slider.dart';
 
 /// Scanlines, plus the toon (cel shading) group: shade bands, stray-pixel
@@ -60,6 +61,30 @@ class EffectsTab extends StatelessWidget {
                   divisions: 20,
                   onChanged: editor.setOutline,
                 ),
+                if (config.outline > 0) ...[
+                  kControlGap,
+                  Text(l10n.outlineMethod),
+                  Win98Dropdown<String>(
+                    semanticLabel: l10n.outlineMethod,
+                    value: config.outlineMethod,
+                    items: [
+                      for (final m in kOutlineMethods)
+                        Win98DropdownItem(value: m, label: outlineMethodLabel(m)),
+                    ],
+                    onChanged: editor.setOutlineMethod,
+                  ),
+                  kControlGap,
+                  Text(l10n.outlineInk),
+                  Win98Dropdown<String>(
+                    semanticLabel: l10n.outlineInk,
+                    value: config.outlineInk,
+                    items: [
+                      for (final k in kOutlineInks)
+                        Win98DropdownItem(value: k, label: outlineInkLabel(k)),
+                    ],
+                    onChanged: editor.setOutlineInk,
+                  ),
+                ],
               ],
             ),
           ),

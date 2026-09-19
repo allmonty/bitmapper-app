@@ -213,6 +213,15 @@ void main() {
     expect(editorOf(tester).config.outline, 1.0);
     expect(find.text('Outline: 100%'), findsOneWidget);
     expect(filter.result!.grid.data, isNot(before.data), reason: 'edges got inked');
+
+    // Turning the outline on reveals the method and ink drop-downs.
+    expect(find.text('Brightness'), findsOneWidget);
+    expect(find.text('Darkest color'), findsOneWidget);
+    editorOf(tester).setOutlineMethod('sobel');
+    editorOf(tester).setOutlineInk('shaded');
+    await tester.pumpAndSettle();
+    expect(find.text('Sobel (best for photos)'), findsOneWidget);
+    expect(find.text('Shaded'), findsOneWidget);
   });
 
   testWidgets('the Toon controls set shade bands and cleanup', (tester) async {

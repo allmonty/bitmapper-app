@@ -80,6 +80,7 @@ const Map<String, BitmapFilterConfig> kBuiltInPresets = {
     contrast: 1.15,
     saturation: 1.25,
     outline: 0.4,
+    outlineMethod: 'sobel',
   ),
   'pixel_art_soft': BitmapFilterConfig(
     paletteMode: PaletteMode.fixed,
@@ -104,6 +105,7 @@ const Map<String, BitmapFilterConfig> kBuiltInPresets = {
     shadeBands: 3,
     despeckle: true,
     outline: 0.5,
+    outlineMethod: 'sobel',
   ),
   'toon_pastel': BitmapFilterConfig(
     paletteMode: PaletteMode.fixed,
@@ -114,6 +116,7 @@ const Map<String, BitmapFilterConfig> kBuiltInPresets = {
     shadeBands: 4,
     despeckle: true,
     outline: 0.5,
+    outlineMethod: 'sobel',
   ),
   'vaporwave': BitmapFilterConfig(
     paletteMode: PaletteMode.custom,

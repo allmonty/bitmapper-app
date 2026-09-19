@@ -102,7 +102,15 @@ FilterResult applyBitmapFilter(
     );
   }
   if (config.despeckle) quantized = despeckle(quantized);
-  if (config.outline > 0) quantized = applyOutline(quantized, resolved, config.outline);
+  if (config.outline > 0) {
+    quantized = applyOutline(
+      quantized,
+      resolved,
+      config.outline,
+      config.outlineMethod,
+      config.outlineInk,
+    );
+  }
   checkCancelled();
 
   var output = upscale(

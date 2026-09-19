@@ -848,6 +848,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clean up stray pixels'**
   String get effectDespeckle;
+
+  /// No description provided for @outlineMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Outline edges'**
+  String get outlineMethod;
+
+  /// No description provided for @outlineInk.
+  ///
+  /// In en, this message translates to:
+  /// **'Outline ink'**
+  String get outlineInk;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

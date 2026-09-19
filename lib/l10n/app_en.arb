@@ -335,5 +335,7 @@
         "type": "int"
       }
     }
-  }
+  },
+  "outlineMethod": "Outline edges",
+  "outlineInk": "Outline ink"
 }

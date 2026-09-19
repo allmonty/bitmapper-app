@@ -1,5 +1,6 @@
 import 'dither.dart';
 import 'grid.dart';
+import 'outline.dart';
 import 'palette_gen.dart';
 import 'toon.dart';
 
@@ -51,6 +52,8 @@ class BitmapFilterConfig {
     this.gridGapPx = 0,
     this.gridGapColor = 0x000000,
     this.outline = 0.0,
+    this.outlineMethod = 'brightness',
+    this.outlineInk = 'darkest',
     this.shadeBands = 0,
     this.despeckle = false,
     this.contrast = 1.0,
@@ -76,8 +79,14 @@ class BitmapFilterConfig {
   final int gridGapPx;
   final int gridGapColor;
 
-  /// Sprite-style ink outlines on strong edges: 0 = off, 1 = most edges.
+  /// Ink on edges found by [outlineMethod]: 0 = off, 1 = most edges.
   final double outline;
+
+  /// How edges are found for [outline]. See [kOutlineMethods].
+  final String outlineMethod;
+
+  /// How the ink color is picked for [outline]. See [kOutlineInks].
+  final String outlineInk;
 
   /// Toon shading: 0 = off, else 2..8 flat brightness bands.
   final int shadeBands;
@@ -125,6 +134,12 @@ class BitmapFilterConfig {
     if (outline < 0 || outline > 1) {
       throw ArgumentError('outline must be between 0 and 1, got $outline');
     }
+    if (!kOutlineMethods.contains(outlineMethod)) {
+      throw ArgumentError('invalid outlineMethod: "$outlineMethod"');
+    }
+    if (!kOutlineInks.contains(outlineInk)) {
+      throw ArgumentError('invalid outlineInk: "$outlineInk"');
+    }
     if (shadeBands != 0 && (shadeBands < kMinShadeBands || shadeBands > kMaxShadeBands)) {
       throw ArgumentError(
         'shadeBands must be 0 or $kMinShadeBands..$kMaxShadeBands, got $shadeBands',
@@ -166,6 +181,8 @@ class BitmapFilterConfig {
     int? gridGapPx,
     int? gridGapColor,
     double? outline,
+    String? outlineMethod,
+    String? outlineInk,
     int? shadeBands,
     bool? despeckle,
     double? contrast,
@@ -191,6 +208,8 @@ class BitmapFilterConfig {
       gridGapPx: gridGapPx ?? this.gridGapPx,
       gridGapColor: gridGapColor ?? this.gridGapColor,
       outline: outline ?? this.outline,
+      outlineMethod: outlineMethod ?? this.outlineMethod,
+      outlineInk: outlineInk ?? this.outlineInk,
       shadeBands: shadeBands ?? this.shadeBands,
       despeckle: despeckle ?? this.despeckle,
       contrast: contrast ?? this.contrast,
@@ -218,6 +237,8 @@ class BitmapFilterConfig {
     'gridGapPx': gridGapPx,
     'gridGapColor': gridGapColor,
     'outline': outline,
+    'outlineMethod': outlineMethod,
+    'outlineInk': outlineInk,
     'shadeBands': shadeBands,
     'despeckle': despeckle,
     'contrast': contrast,
@@ -253,6 +274,8 @@ class BitmapFilterConfig {
       gridGapPx: get<int>('gridGapPx') ?? d.gridGapPx,
       gridGapColor: get<int>('gridGapColor') ?? d.gridGapColor,
       outline: getDouble('outline') ?? d.outline,
+      outlineMethod: get<String>('outlineMethod') ?? d.outlineMethod,
+      outlineInk: get<String>('outlineInk') ?? d.outlineInk,
       shadeBands: get<int>('shadeBands') ?? d.shadeBands,
       despeckle: get<bool>('despeckle') ?? d.despeckle,
       contrast: getDouble('contrast') ?? d.contrast,
@@ -285,6 +308,8 @@ class BitmapFilterConfig {
         gridGapPx == other.gridGapPx &&
         gridGapColor == other.gridGapColor &&
         outline == other.outline &&
+        outlineMethod == other.outlineMethod &&
+        outlineInk == other.outlineInk &&
         shadeBands == other.shadeBands &&
         despeckle == other.despeckle &&
         contrast == other.contrast &&
@@ -312,6 +337,8 @@ class BitmapFilterConfig {
     gridGapPx,
     gridGapColor,
     outline,
+    outlineMethod,
+    outlineInk,
     shadeBands,
     despeckle,
     contrast,
