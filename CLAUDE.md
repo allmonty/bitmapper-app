@@ -2,7 +2,7 @@
 
 Bitmapper is a Flutter app (Android and iOS) that applies a retro pixel-art
 filter, with a Windows 98 UI. Flutter is pinned by asdf in `.tool-versions`
-(3.41.4).
+(3.47.5).
 
 ## Commands
 
@@ -78,6 +78,12 @@ filter, with a Windows 98 UI. Flutter is pinned by asdf in `.tool-versions`
     plugin through `BackgroundIsolateBinaryMessenger`. Cancel there is
     cooperative, so the partial MP4 gets deleted.
   - Tests use `FakeVideoIO` and `fakeVideoExporter` from `test/helpers.dart`.
+- **Native builds:**
+  - Android uses Gradle 9.3.1, AGP 9.1.0 and Kotlin 2.4.0 (the Flutter 3.47
+    template). `android.builtInKotlin=false` stays until every plugin
+    supports built-in Kotlin; `flutter_file_dialog` doesn't yet.
+  - iOS has a 15.0 minimum and uses Swift Package Manager only. There's no
+    Podfile, because every plugin is a Swift package.
 - **Side effects** (picker, saver, preset storage, filter runner, PNG
   encoder, clock) are injected through `AppServices`. Tests use the fakes in
   `test/helpers.dart`.
