@@ -425,4 +425,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cameraVideo => 'Video';
+
+  @override
+  String effectOutline(int percent) {
+    return 'Outline: $percent%';
+  }
 }

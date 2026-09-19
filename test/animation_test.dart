@@ -121,8 +121,12 @@ void main() {
         expect(jobs.last.palette, first.palette, reason: 'cached palette reused');
         expect(controller.result!.palette, first.palette);
 
-        render(4, config.copyWith(dither: 'atkinson', scanlines: 0.5));
-        expect(jobs.last.palette, first.palette, reason: 'dither/scanlines keep the palette');
+        render(4, config.copyWith(dither: 'atkinson', scanlines: 0.5, outline: 0.6));
+        expect(
+          jobs.last.palette,
+          first.palette,
+          reason: 'dither, scanlines and outline keep the palette',
+        );
 
         render(4, config.copyWith(bitDepth: 3));
         expect(jobs.last.paletteFrames, isNotNull, reason: 'bit depth changes the palette');

@@ -823,6 +823,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Video'**
   String get cameraVideo;
+
+  /// No description provided for @effectOutline.
+  ///
+  /// In en, this message translates to:
+  /// **'Outline: {percent}%'**
+  String effectOutline(int percent);
 }
 
 class _AppLocalizationsDelegate

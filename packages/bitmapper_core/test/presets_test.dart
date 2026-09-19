@@ -9,7 +9,8 @@ void main() {
       'amstrad_cpc', 'arcade_cabinet', 'classic_mac', 'comic_halftone', 'crt_terminal', //
       'dawnbringer', 'endesga_art', 'gameboy_camera', 'gameboy_pocket', 'macpaint',
       'master_system', 'newspaper', 'pico8_game', 'pixel_art', 'pixel_art_earthy',
-      'pixel_art_mono', 'pixel_art_rich', 'pixel_art_soft', 'sepia_photo', 'tic80',
+      'pixel_art_mono', 'pixel_art_rich', 'pixel_art_soft', 'pixel_art_sprite', 'sepia_photo',
+      'tic80',
       'vaporwave', 'vhs', 'virtual_boy', 'windows98',
     ]);
   });
@@ -57,6 +58,7 @@ void main() {
       'pixel_art_rich',
       'pixel_art_earthy',
       'pixel_art_mono',
+      'pixel_art_sprite',
     ];
 
     for (final name in pixelArt) {
@@ -83,6 +85,7 @@ void main() {
         'pixel_art_rich': 80,
         'pixel_art_earthy': 64,
         'pixel_art_mono': 48,
+        'pixel_art_sprite': 64,
       });
     });
 

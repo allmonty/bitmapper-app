@@ -9,6 +9,7 @@ export 'src/dither.dart';
 export 'src/effects.dart';
 export 'src/grid.dart';
 export 'src/image.dart';
+export 'src/outline.dart';
 export 'src/palette_gen.dart';
 export 'src/palettes.dart';
 export 'src/pipeline.dart';

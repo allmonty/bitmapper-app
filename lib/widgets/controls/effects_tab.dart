@@ -27,6 +27,15 @@ class EffectsTab extends StatelessWidget {
             divisions: 20,
             onChanged: editor.setScanlines,
           ),
+          kControlGap,
+          LabeledSlider(
+            label: l10n.effectOutline((editor.config.outline * 100).round()),
+            value: editor.config.outline,
+            min: 0,
+            max: 1,
+            divisions: 20,
+            onChanged: editor.setOutline,
+          ),
         ],
       ),
     );

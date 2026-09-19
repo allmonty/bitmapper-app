@@ -71,6 +71,16 @@ const Map<String, BitmapFilterConfig> kBuiltInPresets = {
     contrast: 1.1,
     saturation: 1.15,
   ),
+  // Pixel art with sprite-style ink outlines on strong edges.
+  'pixel_art_sprite': BitmapFilterConfig(
+    paletteMode: PaletteMode.fixed,
+    fixedPalette: 'pico8',
+    bitDepth: 4,
+    dither: 'none',
+    contrast: 1.15,
+    saturation: 1.25,
+    outline: 0.4,
+  ),
   'pixel_art_soft': BitmapFilterConfig(
     paletteMode: PaletteMode.fixed,
     fixedPalette: 'sweetie16',
@@ -184,6 +194,7 @@ const Map<String, int> kPresetColumns = {
   'pixel_art_rich': 80,
   'pixel_art_earthy': 64,
   'pixel_art_mono': 48,
+  'pixel_art_sprite': 64,
 };
 
 /// The grid width preset `name` is designed for, or null if it works at any

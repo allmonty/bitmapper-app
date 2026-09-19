@@ -316,5 +316,13 @@
   "cameraTitle": "Camera",
   "cameraPrompt": "Take a photo or record a video?",
   "cameraPhoto": "Photo",
-  "cameraVideo": "Video"
+  "cameraVideo": "Video",
+  "effectOutline": "Outline: {percent}%",
+  "@effectOutline": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  }
 }

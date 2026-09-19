@@ -120,5 +120,6 @@
   "cameraTitle": "Câmera",
   "cameraPrompt": "Tirar uma foto ou gravar um vídeo?",
   "cameraPhoto": "Foto",
-  "cameraVideo": "Vídeo"
+  "cameraVideo": "Vídeo",
+  "effectOutline": "Contorno: {percent}%"
 }

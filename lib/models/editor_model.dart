@@ -167,6 +167,7 @@ class EditorModel extends ChangeNotifier {
   void setSaturation(double v) => _set(_config.copyWith(saturation: v));
   void setGamma(double v) => _set(_config.copyWith(gamma: v));
   void setScanlines(double v) => _set(_config.copyWith(scanlines: v));
+  void setOutline(double v) => _set(_config.copyWith(outline: v));
 
   void setPaletteStrategy(PaletteStrategy strategy) =>
       _set(_config.copyWith(paletteStrategy: strategy));

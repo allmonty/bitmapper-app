@@ -6,6 +6,7 @@ import 'dither.dart';
 import 'effects.dart';
 import 'grid.dart';
 import 'image.dart';
+import 'outline.dart';
 import 'palette_gen.dart';
 import 'palettes.dart';
 
@@ -52,7 +53,7 @@ Uint8List? resolvePalette(RgbImage grid, BitmapFilterConfig config) {
 /// Run the full retro-bitmap pipeline.
 ///
 /// Stages: adjustments → downsample to the grid → palette → dither →
-/// upscale (+ gap) → scanlines. Unlike the Python reference there is no
+/// outline → upscale (+ gap) → scanlines. Unlike the Python reference there is no
 /// Lanczos resize to the output canvas first: the source is downsampled to
 /// the grid directly and `outputWidth x outputHeight` only governs the final
 /// upscale (migration doc §6.1). Defaults to the source size.
@@ -85,7 +86,7 @@ FilterResult applyBitmapFilter(
   checkCancelled();
 
   final resolvedPalette = palette ?? resolvePalette(gridColors, config);
-  final RgbImage quantized;
+  RgbImage quantized;
   final Uint8List resolved;
   if (resolvedPalette == null) {
     final unique = uniqueColors(gridColors.data);
@@ -98,6 +99,7 @@ FilterResult applyBitmapFilter(
         seed: seed ?? config.randomSeed,
         isCancelled: isCancelled);
   }
+  if (config.outline > 0) quantized = applyOutline(quantized, resolved, config.outline);
   checkCancelled();
 
   var output = upscale(

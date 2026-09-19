@@ -1,5 +1,6 @@
 import 'package:bitmapper/models/editor_model.dart';
 import 'package:bitmapper/screens/home_screen.dart';
+import 'package:bitmapper/services/filter_controller.dart';
 import 'package:bitmapper/services/image_loader.dart';
 import 'package:bitmapper/widgets/pixel_grid_view.dart';
 import 'package:bitmapper/widgets/rgb_image_view.dart';
@@ -190,6 +191,26 @@ void main() {
     await pumpApp(tester, TestApp());
     await openMenu(tester, 'Presets', 'Game Boy Camera');
     expect(editorOf(tester).config.fixedPalette, 'gameboy');
+  });
+
+  testWidgets('the Effects tab outline slider outlines the preview grid', (tester) async {
+    await pumpApp(tester, TestApp(image: photo()));
+    await openPhoto(tester);
+    final filter = Provider.of<FilterController>(
+      tester.element(find.byType(HomeScreen)),
+      listen: false,
+    );
+    final before = filter.result!.grid;
+    await tester.tap(find.text('Effects'));
+    await tester.pumpAndSettle();
+    final slider = find.byType(Win98Slider).at(1); // scanlines, then outline
+    final rect = tester.getRect(slider);
+    await tester.tapAt(Offset(rect.right - 7, rect.center.dy));
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pumpAndSettle();
+    expect(editorOf(tester).config.outline, 1.0);
+    expect(find.text('Outline: 100%'), findsOneWidget);
+    expect(filter.result!.grid.data, isNot(before.data), reason: 'edges got inked');
   });
 
   testWidgets('the Pixel Art preset switches to its chunky grid', (tester) async {

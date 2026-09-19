@@ -49,6 +49,7 @@ class BitmapFilterConfig {
     this.scanlines = 0.0,
     this.gridGapPx = 0,
     this.gridGapColor = 0x000000,
+    this.outline = 0.0,
     this.contrast = 1.0,
     this.saturation = 1.0,
     this.gamma = 1.0,
@@ -71,6 +72,9 @@ class BitmapFilterConfig {
   final double scanlines;
   final int gridGapPx;
   final int gridGapColor;
+
+  /// Sprite-style ink outlines on strong edges: 0 = off, 1 = most edges.
+  final double outline;
   final double contrast;
   final double saturation;
   final double gamma;
@@ -109,6 +113,9 @@ class BitmapFilterConfig {
     if (scanlines < 0 || scanlines > 1) {
       throw ArgumentError('scanlines must be between 0 and 1, got $scanlines');
     }
+    if (outline < 0 || outline > 1) {
+      throw ArgumentError('outline must be between 0 and 1, got $outline');
+    }
     if (gridGapPx < 0) {
       throw ArgumentError('gridGapPx must be >= 0, got $gridGapPx');
     }
@@ -145,6 +152,7 @@ class BitmapFilterConfig {
     double? scanlines,
     int? gridGapPx,
     int? gridGapColor,
+    double? outline,
     double? contrast,
     double? saturation,
     double? gamma,
@@ -167,6 +175,7 @@ class BitmapFilterConfig {
       scanlines: scanlines ?? this.scanlines,
       gridGapPx: gridGapPx ?? this.gridGapPx,
       gridGapColor: gridGapColor ?? this.gridGapColor,
+      outline: outline ?? this.outline,
       contrast: contrast ?? this.contrast,
       saturation: saturation ?? this.saturation,
       gamma: gamma ?? this.gamma,
@@ -191,6 +200,7 @@ class BitmapFilterConfig {
         'scanlines': scanlines,
         'gridGapPx': gridGapPx,
         'gridGapColor': gridGapColor,
+        'outline': outline,
         'contrast': contrast,
         'saturation': saturation,
         'gamma': gamma,
@@ -225,6 +235,7 @@ class BitmapFilterConfig {
       scanlines: getDouble('scanlines') ?? d.scanlines,
       gridGapPx: get<int>('gridGapPx') ?? d.gridGapPx,
       gridGapColor: get<int>('gridGapColor') ?? d.gridGapColor,
+      outline: getDouble('outline') ?? d.outline,
       contrast: getDouble('contrast') ?? d.contrast,
       saturation: getDouble('saturation') ?? d.saturation,
       gamma: getDouble('gamma') ?? d.gamma,
@@ -255,6 +266,7 @@ class BitmapFilterConfig {
         scanlines == other.scanlines &&
         gridGapPx == other.gridGapPx &&
         gridGapColor == other.gridGapColor &&
+        outline == other.outline &&
         contrast == other.contrast &&
         saturation == other.saturation &&
         gamma == other.gamma &&
@@ -279,6 +291,7 @@ class BitmapFilterConfig {
         scanlines,
         gridGapPx,
         gridGapColor,
+        outline,
         contrast,
         saturation,
         gamma,

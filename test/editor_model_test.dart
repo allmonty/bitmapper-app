@@ -64,6 +64,20 @@ void main() {
     expect(notifications, 10);
   });
 
+  test('outline setter and validation', () {
+    model.setOutline(0.4);
+    expect(model.config.outline, 0.4);
+    expect(() => model.setOutline(1.5), throwsArgumentError);
+    expect(model.config.outline, 0.4);
+  });
+
+  test('Pixel Art Sprite applies its outline and columns', () {
+    final sprite = PresetsModel.builtIns.firstWhere((p) => p.id == 'builtin:pixel_art_sprite');
+    model.applyPreset(sprite);
+    expect(model.config.outline, 0.4);
+    expect(model.columns, 64);
+  });
+
   test('setting the same value does not notify', () {
     model.setDither(model.config.dither);
     expect(notifications, 0);

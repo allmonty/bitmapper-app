@@ -1,0 +1,214 @@
+import 'dart:typed_data';
+
+import 'package:bitmapper_core/bitmapper_core.dart';
+import 'package:test/test.dart';
+
+import 'helpers.dart';
+
+const gray = [128, 128, 128], white = [255, 255, 255], black = [0, 0, 0];
+final palette = Uint8List.fromList([...white, ...gray, ...black]);
+
+/// 7x7 gray grid with a white 3x3 square in the middle.
+RgbImage square() => imageFromRows([
+  for (var y = 0; y < 7; y++)
+    [for (var x = 0; x < 7; x++) (x >= 2 && x < 5 && y >= 2 && y < 5) ? white : gray],
+]);
+
+void main() {
+  test('strength 0 is a no-op', () {
+    final grid = square();
+    expect(identical(applyOutline(grid, palette, 0), grid), isTrue);
+  });
+
+  test('inks the dark side of strong edges, one cell thick', () {
+    final out = applyOutline(square(), palette, 0.5);
+    for (var y = 0; y < 7; y++) {
+      for (var x = 0; x < 7; x++) {
+        final inSquare = x >= 2 && x < 5 && y >= 2 && y < 5;
+        final beside =
+            !inSquare &&
+            ((x >= 2 && x < 5 && (y == 1 || y == 5)) || (y >= 2 && y < 5 && (x == 1 || x == 5)));
+        expect(out.pixel(x, y), inSquare ? white : (beside ? black : gray), reason: '($x, $y)');
+      }
+    }
+  });
+
+  test('weak edges need more strength', () {
+    final grid = imageFromRows([
+      [gray, gray, gray],
+      [
+        gray,
+        [178, 178, 178],
+        gray,
+      ],
+      [gray, gray, gray],
+    ]);
+    expect(applyOutline(grid, palette, 0.5).data, grid.data); // threshold 72
+    final out = applyOutline(grid, palette, 1.0); // threshold 16
+    expect(out.pixel(1, 0), black);
+    expect(out.pixel(1, 1), [178, 178, 178]);
+  });
+
+  test('threshold range and darkest color (first on ties)', () {
+    expect(outlineThreshold(0), 128);
+    expect(outlineThreshold(1), 16);
+    final ties = Uint8List.fromList([...white, 10, 10, 10, 10, 10, 10, ...gray]);
+    expect(darkestColorIndex(ties), 1);
+  });
+
+  test('rejects out-of-range strength', () {
+    expect(() => applyOutline(square(), palette, 1.5), throwsArgumentError);
+    expect(const BitmapFilterConfig(outline: -0.1).validate, throwsArgumentError);
+    expect(const BitmapFilterConfig(outline: 1.1).validate, throwsArgumentError);
+  });
+
+  for (final (mode, config) in [
+    ('auto', const BitmapFilterConfig(gridCols: 10, gridRows: 10, bitDepth: 3, outline: 0.6)),
+    (
+      'fixed',
+      const BitmapFilterConfig(
+        gridCols: 10,
+        gridRows: 10,
+        paletteMode: PaletteMode.fixed,
+        fixedPalette: 'pico8',
+        bitDepth: 4,
+        outline: 0.6,
+      ),
+    ),
+    (
+      'true color',
+      const BitmapFilterConfig(gridCols: 10, gridRows: 10, bitDepth: 24, outline: 0.6),
+    ),
+  ]) {
+    test('pipeline output stays within the palette ($mode)', () {
+      final r = applyBitmapFilter(randomImage(40, 40), config);
+      expect(onlyUsesPalette(r.grid, r.palette), isTrue);
+    });
+  }
+
+  test('the pipeline applies it to the grid, before upscaling', () {
+    final src = square(); // 7x7 source, one pixel per cell
+    const config = BitmapFilterConfig(
+      gridCols: 7,
+      gridRows: 7,
+      paletteMode: PaletteMode.custom,
+      customPalette: [0xFFFFFF, 0x808080, 0x000000],
+      outline: 0.5,
+    );
+    final r = applyBitmapFilter(src, config, outputWidth: 14, outputHeight: 14);
+    expect(r.grid.data, applyOutline(src, palette, 0.5).data);
+    // Cell (1, 2) is inked; upscaled 2x it covers output pixels (2..3, 4..5).
+    expect(r.output.pixel(2, 4), black);
+    expect(r.output.pixel(3, 5), black);
+    expect(r.output.pixel(0, 0), gray);
+  });
+
+  test('true color inks with the darkest color already in the grid', () {
+    const config = BitmapFilterConfig(gridCols: 7, gridRows: 7, bitDepth: 24, outline: 0.5);
+    final r = applyBitmapFilter(square(), config);
+    expect(r.grid.data, square().data, reason: 'gray is the darkest color, so ink is invisible');
+  });
+
+  test('matches the Python reference byte for byte', () {
+    final grid = RgbImage(6, 5, Uint8List.fromList(List.generate(6 * 5 * 3, (i) => i * 37 % 256)));
+    final pal = Uint8List.fromList([200, 30, 30, 5, 60, 90, 240, 240, 240, 12, 40, 20]);
+    expect(applyOutline(grid, pal, 0.35).data, [
+      12,
+      40,
+      20,
+      111,
+      148,
+      185,
+      222,
+      3,
+      40,
+      77,
+      114,
+      151,
+      188,
+      225,
+      6,
+      12,
+      40,
+      20,
+      154,
+      191,
+      228,
+      12,
+      40,
+      20,
+      120,
+      157,
+      194,
+      231,
+      12,
+      49,
+      86,
+      123,
+      160,
+      197,
+      234,
+      15,
+      12,
+      40,
+      20,
+      163,
+      200,
+      237,
+      12,
+      40,
+      20,
+      129,
+      166,
+      203,
+      240,
+      21,
+      58,
+      95,
+      132,
+      169,
+      206,
+      243,
+      24,
+      12,
+      40,
+      20,
+      172,
+      209,
+      246,
+      12,
+      40,
+      20,
+      138,
+      175,
+      212,
+      249,
+      30,
+      67,
+      104,
+      141,
+      178,
+      215,
+      252,
+      33,
+      12,
+      40,
+      20,
+      181,
+      218,
+      255,
+      12,
+      40,
+      20,
+      147,
+      184,
+      221,
+    ]);
+  });
+
+  test('config JSON round-trips the outline', () {
+    const c = BitmapFilterConfig(outline: 0.4);
+    expect(BitmapFilterConfig.fromJson(c.toJson()).outline, 0.4);
+    expect(c, isNot(const BitmapFilterConfig()));
+  });
+}
