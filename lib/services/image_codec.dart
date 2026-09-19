@@ -12,13 +12,63 @@ const kMaxSourceDimension = 4096;
 /// Longest edge of the interactive preview.
 const kPreviewDimension = 1024;
 
-/// Decode PNG/JPEG/etc. bytes with the platform codec (which honours EXIF
-/// orientation), scaling down so neither edge exceeds `maxDimension`.
+/// Biggest image decoded in pure Dart (about 256 MB of pixels while
+/// decoding); larger ones use the platform decoder, which can downscale
+/// while decoding.
+const kMaxDartDecodePixels = 64 * 1000 * 1000;
+
+/// Decode JPEG/PNG/WebP/etc. bytes to an upright RGB image, scaled down so
+/// neither edge exceeds `maxDimension`.
+///
+/// Decoding runs in pure Dart on a background isolate (rotation from EXIF
+/// applied), so the result doesn't depend on the device's GPU image
+/// pipeline: on some Android devices, images decoded by the engine came
+/// back partly smeared toward the right and bottom. Formats the pure-Dart
+/// decoders don't know (e.g. HEIC) and very large photos fall back to the
+/// platform codec.
 Future<RgbImage> decodeToRgb(Uint8List bytes, {int maxDimension = kMaxSourceDimension}) async {
+  final decoded = await Isolate.run(() => decodeWithDart(bytes, maxDimension: maxDimension));
+  return decoded ?? decodeWithPlatform(bytes, maxDimension: maxDimension);
+}
+
+/// Pure-Dart decode (see [decodeToRgb]); null when the format isn't
+/// supported, the data is broken, or the image exceeds
+/// [kMaxDartDecodePixels].
+RgbImage? decodeWithDart(Uint8List bytes, {int maxDimension = kMaxSourceDimension}) {
+  final decoder = img.findDecoderForData(bytes);
+  if (decoder == null) return null;
+  final info = decoder.startDecode(bytes);
+  if (info == null || info.width * info.height > kMaxDartDecodePixels) return null;
+  final img.Image? decoded;
+  try {
+    decoded = decoder.decode(bytes, frame: 0);
+  } catch (_) {
+    return null;
+  }
+  if (decoded == null) return null;
+  final rgb = img
+      .bakeOrientation(decoded)
+      .convert(format: img.Format.uint8, numChannels: 3, withPalette: false);
+  final image = RgbImage(rgb.width, rgb.height, Uint8List.fromList(rgb.toUint8List()));
+  final (w, h) = fitWithin(image.width, image.height, maxDimension);
+  return w == image.width && h == image.height ? image : downsample(image, w, h);
+}
+
+/// Decode with the platform codec (which honours EXIF orientation), scaling
+/// down so neither edge exceeds `maxDimension`.
+Future<RgbImage> decodeWithPlatform(
+  Uint8List bytes, {
+  int maxDimension = kMaxSourceDimension,
+}) async {
   final buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
   final descriptor = await ui.ImageDescriptor.encoded(buffer);
   final (w, h) = fitWithin(descriptor.width, descriptor.height, maxDimension);
-  final codec = await descriptor.instantiateCodec(targetWidth: w, targetHeight: h);
+  // Only ask the codec to resize when needed.
+  final resize = w != descriptor.width || h != descriptor.height;
+  final codec = await descriptor.instantiateCodec(
+    targetWidth: resize ? w : null,
+    targetHeight: resize ? h : null,
+  );
   final frame = await codec.getNextFrame();
   final image = frame.image;
   try {

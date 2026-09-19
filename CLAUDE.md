@@ -89,6 +89,11 @@ filter, with a Windows 98 UI. Flutter is pinned by asdf in `.tool-versions`
   `test/helpers.dart`.
   - `syncRunner` replaces `Isolate.run`, which never completes under the
     widget tester's fake async.
+- **Photo decoding:** `decodeToRgb` decodes in pure Dart (package `image`)
+  on a background isolate, applying the EXIF rotation. On some Android
+  devices the engine's GPU decoder returned images smeared toward the right
+  and bottom. Unsupported formats such as HEIC, and images over 64 MP, fall
+  back to `decodeWithPlatform`.
 - **Preview display:** `RgbImageView` wraps the pixels in an uncompressed
   BMP for `Image.memory`, with `FilterQuality.none`.
 
