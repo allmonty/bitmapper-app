@@ -47,6 +47,47 @@ void main() {
       expect(applyShadeBands(solidImage(1, 1, [0, 0, 0]), 4).pixel(0, 0), [31, 31, 31]);
     });
 
+    test('hue is kept even when brightening would clip a channel', () {
+      // Old algorithm: factor ~1.376 pushes r=220 past 255, truncating it
+      // back to 255 while g/b keep scaling, distorting the ratio.
+      final out = applyShadeBands(
+        imageFromRows([
+          [
+            [220, 40, 30],
+          ],
+        ]),
+        3,
+      ).pixel(0, 0);
+      expect(out[0], lessThanOrEqualTo(255));
+      expect(out[0] / out[1], closeTo(220 / 40, 0.1));
+      expect(out[1] / out[2], closeTo(40 / 30, 0.15));
+    });
+
+    test('hue stays close for saturated colors at every band count', () {
+      // A regression guard for the whole class of the bug above: none of
+      // these ratios should move far from the source once brightening no
+      // longer silently clips a channel.
+      const saturated = [
+        [255, 60, 30],
+        [60, 255, 30],
+        [30, 60, 255],
+        [255, 200, 30],
+        [230, 90, 210],
+      ];
+      for (final bands in [2, 3, 4, 5, 6, 7, 8]) {
+        for (final color in saturated) {
+          final out = applyShadeBands(solidImage(1, 1, color), bands).pixel(0, 0);
+          for (var i = 0; i < 3; i++) {
+            for (var j = 0; j < 3; j++) {
+              if (color[j] == 0 || out[j] == 0) continue;
+              final expected = color[i] / color[j];
+              expect(out[i] / out[j], closeTo(expected, expected * 0.15 + 0.1));
+            }
+          }
+        }
+      }
+    });
+
     test('rejects invalid band counts', () {
       for (final bands in [1, 9, -1]) {
         expect(() => applyShadeBands(grayRamp(), bands), throwsArgumentError);
@@ -142,9 +183,9 @@ void main() {
         42,
         42,
         42,
-        195,
-        255,
-        11,
+        191,
+        254,
+        10,
         75,
         139,
         203,
@@ -164,8 +205,8 @@ void main() {
         136,
         188,
         255,
-        51,
-        111,
+        46,
+        100,
         116,
         157,
         0,
@@ -188,10 +229,10 @@ void main() {
         137,
         191,
         255,
-        45,
-        110,
-        163,
-        223,
+        39,
+        95,
+        146,
+        200,
         255,
         65,
         141,
@@ -205,17 +246,17 @@ void main() {
         8,
         50,
         91,
-        196,
+        194,
         255,
-        23,
+        22,
         80,
         138,
         196,
-        255,
-        38,
-        109,
-        160,
-        224,
+        254,
+        31,
+        90,
+        142,
+        198,
         255,
         19,
         47,
@@ -256,8 +297,8 @@ void main() {
         136,
         188,
         255,
-        51,
-        111,
+        46,
+        100,
         163,
         220,
         1,
@@ -280,8 +321,8 @@ void main() {
         137,
         191,
         255,
-        45,
-        110,
+        39,
+        95,
         137,
         187,
         238,
@@ -312,9 +353,9 @@ void main() {
         35,
         85,
         135,
-        214,
+        200,
         255,
-        51,
+        47,
         89,
         136,
         183,

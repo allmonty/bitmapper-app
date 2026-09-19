@@ -21,9 +21,11 @@ const kMaxShadeBands = 8;
 ///
 /// Per cell, in the Python reference's operation order:
 /// `band = min(bands - 1, floor(luma * bands / 256))`,
-/// `target = (band + 0.5) * 255 / bands`, then each channel is
-/// `channel * (target / luma)`, clamped and truncated. Black cells become
-/// gray at `target`.
+/// `target = (band + 0.5) * 255 / bands`, then `factor = target / luma`,
+/// capped so no channel would exceed 255 (`min(factor, 255 / maxChannel)`,
+/// which only ever reduces a brightening `factor`, never a darkening one),
+/// then each channel is `channel * factor`, clamped and truncated. Black
+/// cells become gray at `target`.
 RgbImage applyShadeBands(RgbImage grid, int bands) {
   if (bands == 0) return grid;
   if (bands < kMinShadeBands || bands > kMaxShadeBands) {
@@ -41,7 +43,8 @@ RgbImage applyShadeBands(RgbImage grid, int bands) {
     final band = math.min(bands - 1, (luma * bands / 256.0).floor());
     final target = (band + 0.5) * 255.0 / bands;
     if (luma > 0) {
-      final factor = target / luma;
+      final maxChannel = math.max(r, math.max(g, b)).toDouble();
+      final factor = math.min(target / luma, 255.0 / maxChannel);
       out[i] = clampToByte(r * factor);
       out[i + 1] = clampToByte(g * factor);
       out[i + 2] = clampToByte(b * factor);
