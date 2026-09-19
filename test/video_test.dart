@@ -424,7 +424,10 @@ void main() {
       final filter = read<FilterController>(tester);
       final shown = tester.widget<RgbImageView>(find.byKey(const Key('preview-image'))).image;
       expect(identical(shown, filter.result?.output), isTrue);
-      expect(filter.result!.output.data.length, media.preview!.data.length);
+      // Rendered to fit the canvas, with the frame's aspect ratio.
+      final out = filter.result!.output;
+      expect(out.width / out.height, closeTo(media.preview!.width / media.preview!.height, 0.01));
+      expect(out.width, lessThanOrEqualTo(filter.viewport!.width));
       expect(media.currentFrame, 20);
 
       gate.complete();

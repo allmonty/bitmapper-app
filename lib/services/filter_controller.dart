@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:isolate';
+import 'dart:ui' show Size;
 
 import 'package:bitmapper_core/bitmapper_core.dart';
 import 'package:flutter/foundation.dart';
@@ -114,6 +115,7 @@ class FilterController extends ChangeNotifier {
   /// animations, `animation` gives the frames (for the shared palette and
   /// the per-frame noise seed).
   void request(RgbImage source, BitmapFilterConfig config, {AnimationContext? animation}) {
+    _lastRequest = (source, config, animation);
     final document = animation?.document ?? animation?.frames ?? source;
     if (!identical(document, _document)) {
       _document = document;
@@ -136,11 +138,12 @@ class FilterController extends ChangeNotifier {
         }
       }
     }
+    final (outputWidth, outputHeight) = previewOutputSize(source.width, source.height, _viewport);
     _pending = FilterJob(
       source: source,
       config: config,
-      outputWidth: source.width,
-      outputHeight: source.height,
+      outputWidth: outputWidth,
+      outputHeight: outputHeight,
       palette: palette,
       paletteFrames: paletteFrames,
       seed: seed,
@@ -153,8 +156,29 @@ class FilterController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Size of the preview area in physical pixels, or null if unknown.
+  Size? _viewport;
+  Size? get viewport => _viewport;
+  (RgbImage, BitmapFilterConfig, AnimationContext?)? _lastRequest;
+
+  /// Tell the controller how big the preview area is on screen, in physical
+  /// pixels. Previews are rendered to fit it exactly, so the picture maps
+  /// 1:1 onto screen pixels: scaling a fixed-size render by a non-integer
+  /// factor with nearest-neighbour sampling makes cells uneven and warps
+  /// dither patterns, gaps and scanlines. Re-renders when it changes.
+  void setViewport(Size size) {
+    final old = _viewport;
+    if (old != null && (old.width - size.width).abs() < 1 && (old.height - size.height).abs() < 1) {
+      return;
+    }
+    _viewport = size;
+    final last = _lastRequest;
+    if (last != null && _document != null) request(last.$1, last.$2, animation: last.$3);
+  }
+
   /// Forget the current source and any pending work.
   void clear() {
+    _lastRequest = null;
     _timer?.cancel();
     _timer = null;
     _pending = null;
@@ -230,3 +254,21 @@ BitmapFilterConfig paletteKeyFor(BitmapFilterConfig config) => config.copyWith(
   randomSeed: 0,
   animateNoise: false,
 );
+
+/// Largest preview render (long edge), whatever the screen size.
+const kMaxPreviewOutput = 4096;
+
+/// Output size for a preview of a `width x height` source: the largest size
+/// with the source's aspect ratio that fits `viewport` (physical pixels),
+/// capped at [kMaxPreviewOutput]. Without a viewport, the source size.
+(int, int) previewOutputSize(int width, int height, Size? viewport) {
+  if (viewport == null || viewport.width < 1 || viewport.height < 1) return (width, height);
+  var scale = viewport.width / width < viewport.height / height
+      ? viewport.width / width
+      : viewport.height / height;
+  final longest = (width > height ? width : height) * scale;
+  if (longest > kMaxPreviewOutput) scale *= kMaxPreviewOutput / longest;
+  final w = (width * scale).floor();
+  final h = (height * scale).floor();
+  return (w < 1 ? 1 : w, h < 1 ? 1 : h);
+}

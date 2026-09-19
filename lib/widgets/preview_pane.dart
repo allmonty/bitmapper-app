@@ -23,6 +23,17 @@ class PreviewPane extends StatefulWidget {
 
 class _PreviewPaneState extends State<PreviewPane> {
   bool _showOriginal = false;
+  Size? _reportedViewport;
+
+  /// Tell the filter how big the canvas is in physical pixels (after this
+  /// frame, since it may start a render), so previews map 1:1 to the screen.
+  void _reportViewport(Size physical) {
+    if (!physical.isFinite || physical == _reportedViewport) return;
+    _reportedViewport = physical;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<FilterController>().setViewport(physical);
+    });
+  }
 
   void _setOriginal(bool value) {
     if (_showOriginal != value) setState(() => _showOriginal = value);
@@ -87,7 +98,14 @@ class _PreviewPaneState extends State<PreviewPane> {
     final canvas = Bevel(
       style: BevelStyle.field,
       color: theme.shadow,
-      child: ClipRect(child: content),
+      child: ClipRect(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            _reportViewport(constraints.biggest * MediaQuery.devicePixelRatioOf(context));
+            return content;
+          },
+        ),
+      ),
     );
     if (!image.isSequence) return canvas;
     return Column(
