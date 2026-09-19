@@ -33,13 +33,20 @@ int darkestColorIndex(Uint8List palette) {
 /// [kOutlineMethods] to find edges and one of [kOutlineInks] to color them.
 /// `strength` 0 is off; 1 outlines the faintest edges. The output stays
 /// within the palette.
+///
+/// Edges are detected on `edgeGrid` (defaulting to `grid` itself) but ink is
+/// always painted onto `grid`. The pipeline passes the grid quantized before
+/// dithering as `edgeGrid`, so a dither pattern's color noise in flat
+/// regions isn't mistaken for real edges, while the ink color/placement
+/// still reflects the actually rendered pixels.
 RgbImage applyOutline(
   RgbImage grid,
   Uint8List palette,
-  double strength, [
+  double strength, {
   String method = 'brightness',
   String ink = 'darkest',
-]) {
+  RgbImage? edgeGrid,
+}) {
   if (strength < 0 || strength > 1) {
     throw ArgumentError.value(strength, 'strength', 'outline must be between 0 and 1');
   }
@@ -50,13 +57,17 @@ RgbImage applyOutline(
     throw ArgumentError.value(ink, 'ink', 'invalid outline ink');
   }
   if (strength == 0 || grid.pixelCount == 0) return grid;
+  final edges = edgeGrid ?? grid;
+  if (edges.width != grid.width || edges.height != grid.height) {
+    throw ArgumentError.value(edgeGrid, 'edgeGrid', "must be the same size as 'grid'");
+  }
 
   final w = grid.width, h = grid.height, src = grid.data;
   final threshold = outlineThreshold(strength);
   final mask = switch (method) {
-    'color' => _colorMask(grid, threshold),
-    'sobel' => _sobelMask(grid, threshold),
-    _ => _brightnessMask(grid, threshold),
+    'color' => _colorMask(edges, threshold),
+    'sobel' => _sobelMask(edges, threshold),
+    _ => _brightnessMask(edges, threshold),
   };
 
   final out = Uint8List.fromList(src);

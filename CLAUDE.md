@@ -38,17 +38,22 @@ filter, with a Windows 98 UI. Flutter is pinned by asdf in `.tool-versions`
     the app: `packRgb`/`packedAt`/`unpackRgb` (0xRRGGBB packing),
     `packedColors`/`colorSet` (a buffer's colors, in order or deduplicated),
     `paletteFromPacked`, and `luminance` (Rec. 601 luma, same term order as
-    the Python `_luminance`). Don't re-implement color packing or luma
-    inline — every stage and the app's preview/GIF/palette-tab code import
-    this instead.
+    the Python `bitmapper.color.luminance`). Don't re-implement color
+    packing or luma inline — every stage and the app's preview/GIF/
+    palette-tab code import this instead.
   - Pipeline stage order: adjustments → downsample (evenly spread splits) →
     shade bands (`toon.dart`) → palette → dither → despeckle (`toon.dart`)
     → outline (`outline.dart`) → upscale (+ gap) → scanlines.
   - `outline.dart` mirrors `dither.dart`'s "many interchangeable methods"
-    shape: `applyOutline(grid, palette, strength, method, ink)` with
-    `method` in `kOutlineMethods` (`brightness`, `color`, `sobel` — sobel
-    finds diagonal/gradual edges the others miss and is the preset default)
-    and `ink` in `kOutlineInks` (`darkest`, `shaded`).
+    shape: `applyOutline(grid, palette, strength, {method, ink, edgeGrid})`
+    with `method` in `kOutlineMethods` (`brightness`, `color`, `sobel` —
+    sobel finds diagonal/gradual edges the others miss and is the preset
+    default) and `ink` in `kOutlineInks` (`darkest`, `shaded`). `edgeGrid`
+    is optional and only used by the pipeline: edges are detected on it
+    (defaulting to `grid` itself) but ink always paints onto `grid`, so the
+    pipeline can pass the grid quantized *before* dithering as `edgeGrid` —
+    otherwise a dither pattern's color noise in flat regions gets read as
+    real edges.
 - **`packages/win98_ui`** depends only on `flutter/widgets.dart` (no
   Material) so it can be reused elsewhere. Keep it free of app code. Every
   control is built on `Bevel`/`BevelPainter`.

@@ -63,9 +63,9 @@ void main() {
   });
 
   test('rejects an invalid method or ink', () {
-    expect(() => applyOutline(square(), palette, 0.5, 'nonsense'), throwsArgumentError);
+    expect(() => applyOutline(square(), palette, 0.5, method: 'nonsense'), throwsArgumentError);
     expect(
-      () => applyOutline(square(), palette, 0.5, 'brightness', 'nonsense'),
+      () => applyOutline(square(), palette, 0.5, method: 'brightness', ink: 'nonsense'),
       throwsArgumentError,
     );
     expect(const BitmapFilterConfig(outlineMethod: 'nonsense').validate, throwsArgumentError);
@@ -85,8 +85,8 @@ void main() {
       [red, green],
     ]);
     final pal = Uint8List.fromList([...red, ...green, ...black]);
-    expect(applyOutline(grid, pal, 0.9, 'brightness').data, grid.data);
-    expect(applyOutline(grid, pal, 0.9, 'color').data, isNot(grid.data));
+    expect(applyOutline(grid, pal, 0.9, method: 'brightness').data, grid.data);
+    expect(applyOutline(grid, pal, 0.9, method: 'color').data, isNot(grid.data));
   });
 
   test('sobel method also catches diagonal edges', () {
@@ -95,13 +95,13 @@ void main() {
       [gray, gray, gray],
       [gray, gray, gray],
     ]);
-    expect(applyOutline(grid, palette, 0.9, 'brightness').pixel(1, 1), gray);
-    expect(applyOutline(grid, palette, 0.9, 'sobel').pixel(1, 1), black);
+    expect(applyOutline(grid, palette, 0.9, method: 'brightness').pixel(1, 1), gray);
+    expect(applyOutline(grid, palette, 0.9, method: 'sobel').pixel(1, 1), black);
   });
 
   test('shaded ink uses a half-brightness palette match', () {
     final pal = Uint8List.fromList([...white, ...gray, 64, 64, 64, ...black]);
-    final out = applyOutline(square(), pal, 0.5, 'brightness', 'shaded');
+    final out = applyOutline(square(), pal, 0.5, method: 'brightness', ink: 'shaded');
     // Half of gray (128) is 64, which is in the palette, so shaded ink picks
     // it instead of falling back to the darkest color.
     expect(out.pixel(2, 1), [64, 64, 64]);
@@ -123,6 +123,17 @@ void main() {
     (
       'true color',
       const BitmapFilterConfig(gridCols: 10, gridRows: 10, bitDepth: 24, outline: 0.6),
+    ),
+    (
+      'dithered',
+      const BitmapFilterConfig(
+        gridCols: 10,
+        gridRows: 10,
+        bitDepth: 3,
+        dither: 'floyd_steinberg',
+        outline: 0.6,
+        outlineMethod: 'sobel',
+      ),
     ),
   ]) {
     test('pipeline output stays within the palette ($mode)', () {
@@ -152,6 +163,80 @@ void main() {
     const config = BitmapFilterConfig(gridCols: 7, gridRows: 7, bitDepth: 24, outline: 0.5);
     final r = applyBitmapFilter(square(), config);
     expect(r.grid.data, square().data, reason: 'gray is the darkest color, so ink is invisible');
+  });
+
+  group('edgeGrid (detect edges before dithering)', () {
+    test('omitting edgeGrid equals passing the same grid', () {
+      final grid = square();
+      expect(
+        applyOutline(grid, palette, 0.5, method: 'sobel', edgeGrid: grid).data,
+        applyOutline(grid, palette, 0.5, method: 'sobel').data,
+      );
+    });
+
+    test('a dither boundary invisible in edgeGrid is not inked', () {
+      // The middle cell's final color is darker than its neighbours (as
+      // dither noise would leave it in a flat white region), but its
+      // pre-dither mapping agrees with them: it should only be inked
+      // (darkened further, to the palette's darkest color) without
+      // edgeGrid.
+      final finalGrid = imageFromRows([
+        [white, gray, white],
+      ]);
+      final preDither = imageFromRows([
+        [white, white, white],
+      ]);
+      final pal = Uint8List.fromList([...white, ...gray, ...black]);
+      final withoutEdgeGrid = applyOutline(finalGrid, pal, 0.9, method: 'brightness');
+      final withEdgeGrid = applyOutline(
+        finalGrid,
+        pal,
+        0.9,
+        method: 'brightness',
+        edgeGrid: preDither,
+      );
+      expect(withoutEdgeGrid.pixel(1, 0), isNot(gray), reason: 'sees a real jump and inks it');
+      expect(withEdgeGrid.pixel(1, 0), gray, reason: 'pre-dither, all three cells agree');
+    });
+
+    test('rejects an edgeGrid of a different size', () {
+      expect(
+        () => applyOutline(square(), palette, 0.5, edgeGrid: solidImage(1, 1, black)),
+        throwsArgumentError,
+      );
+    });
+
+    test('detects fewer edges from dither noise than from the final grid', () {
+      // A smooth gradient dithered onto a small palette: Floyd-Steinberg
+      // scatters color noise across the whole gradient, which the final
+      // grid alone can't tell apart from a real edge. The pre-dither grid
+      // has far fewer real edges (only at the palette's band boundaries).
+      final gray4 = Uint8List.fromList([0, 0, 0, 85, 85, 85, 170, 170, 170, 255, 255, 255]);
+      final source = gradientImage();
+      final dithered = applyDither(source, gray4, 'floyd_steinberg');
+      final preDither = RgbImage(source.width, source.height, nearestColor(source.data, gray4));
+
+      int inkedCount(RgbImage out, RgbImage original) {
+        var n = 0;
+        for (var p = 0; p < out.data.length; p += 3) {
+          if (out.data[p] != original.data[p] ||
+              out.data[p + 1] != original.data[p + 1] ||
+              out.data[p + 2] != original.data[p + 2]) {
+            n++;
+          }
+        }
+        return n;
+      }
+
+      final withoutEdgeGrid = applyOutline(dithered, gray4, 1.0, method: 'sobel');
+      final withEdgeGrid = applyOutline(dithered, gray4, 1.0, method: 'sobel', edgeGrid: preDither);
+      final noisyCount = inkedCount(withoutEdgeGrid, dithered);
+      final cleanCount = inkedCount(withEdgeGrid, dithered);
+      expect(cleanCount, lessThan(noisyCount));
+      // Empirically ~35-40% fewer across several dither methods; leave
+      // headroom so the test isn't brittle to small algorithm tweaks.
+      expect(cleanCount, lessThan((noisyCount * 0.75).round()));
+    });
   });
 
   test('matches the Python reference byte for byte', () {
@@ -548,7 +633,7 @@ void main() {
         Uint8List.fromList(List.generate(6 * 5 * 3, (i) => i * 37 % 256)),
       );
       final pal = Uint8List.fromList([200, 30, 30, 5, 60, 90, 240, 240, 240, 12, 40, 20]);
-      expect(applyOutline(grid, pal, 0.35, method, ink).data, expected);
+      expect(applyOutline(grid, pal, 0.35, method: method, ink: ink).data, expected);
     });
   }
 

@@ -11,6 +11,7 @@ import 'outline.dart';
 import 'toon.dart';
 import 'palette_gen.dart';
 import 'palettes.dart';
+import 'quantize.dart' show nearestColor;
 
 class FilterResult {
   const FilterResult({required this.output, required this.grid, required this.palette});
@@ -86,12 +87,20 @@ FilterResult applyBitmapFilter(
   final resolvedPalette = palette ?? resolvePalette(gridColors, config);
   RgbImage quantized;
   final Uint8List resolved;
+  RgbImage? preDither;
   if (resolvedPalette == null) {
     final unique = uniqueColors(gridColors.data);
     resolved = paletteFromPacked(unique);
     quantized = gridColors;
   } else {
     resolved = resolvedPalette;
+    if (config.outline > 0) {
+      preDither = RgbImage(
+        gridColors.width,
+        gridColors.height,
+        nearestColor(gridColors.data, resolvedPalette),
+      );
+    }
     quantized = applyDither(
       gridColors,
       resolvedPalette,
@@ -107,8 +116,9 @@ FilterResult applyBitmapFilter(
       quantized,
       resolved,
       config.outline,
-      config.outlineMethod,
-      config.outlineInk,
+      method: config.outlineMethod,
+      ink: config.outlineInk,
+      edgeGrid: preDither,
     );
   }
   checkCancelled();
