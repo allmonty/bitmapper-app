@@ -1,7 +1,10 @@
 # GPU / overall performance research spike
 
-## Status: measured — see "Measured stage-by-stage results" below. No GPU
-work has started; the measurement points at a cheaper, non-GPU fix first.
+## Status: measured, and the one real hotspot found (`applyScanlines`) is
+fixed — see "Measured stage-by-stage results" below. Current conclusion:
+GPU work is not justified by anything measured so far (see
+"Recommendation"). No GPU code exists; re-open this only if a future
+device-specific report says otherwise.
 
 This doc exists so a future session (or another AI) can pick this up without
 re-deriving the background. It records what's true about the app's
@@ -153,6 +156,22 @@ non-GPU fix that should ship before any GPU work — it's likely a bigger win
 than a shader rewrite, for a fraction of the effort**, and it's exactly the
 kind of "one hot stage" step 2 was looking for.
 
+**Fixed** (same session, same commit series): `effects.dart` now
+precomputes a 256-entry lookup table once instead of calling `clampToByte`
+per byte. Re-measured after the fix: `applyScanlines` dropped from 48ms to
+**22ms** (54% less) — a real, verified win, but smaller than a naive
+"lookup table should make it near-free" guess would suggest. The remaining
+cost is the loop's per-byte array reads/writes themselves (`Uint8List`
+bounds-checked indexing, ~18M elements touched) plus the full-buffer
+`Uint8List.fromList` copy at the top of the function — neither eliminated
+by the fix, both inherent to "return a new image with roughly half its
+bytes changed." Squeezing further (e.g. skipping the copy for untouched
+rows, or SIMD-style batched writes) is possible but is genuinely
+diminishing returns for a one-shot-per-export cost; not pursued here.
+One side effect worth noting: `applyScanlines` (22ms) is **no longer**
+the top export-scenario stage — `downsample` (30ms, see below) is now
+the largest single cost.
+
 Other findings, matching the code-reading predictions:
 - `downsample`/`upscale` do scale with source/output resolution as
   expected (2ms→28ms and 0ms→8ms respectively, tracking the ~14x pixel
@@ -181,20 +200,32 @@ Other findings, matching the code-reading predictions:
 
 1. Ship the isolate-reuse and tab-label-cache fixes (already done — see
    git log) and get feedback from the user's friend on the actual device.
-2. Done — see "Measured stage-by-stage results" above. The clear next step
-   is **not** a GPU spike: fix `applyScanlines`'s per-byte lookup-table gap
-   first (see above), then re-run `benchmark_stages.dart` to confirm it
-   drops out of the picture, before deciding whether anything else is
-   still worth targeting.
-3. If a GPU spike is still justified after that fix (re-measure first —
-   don't assume), scope it to the stateless stages only (adjustments,
-   palette nearest-color, scanlines) as a self-contained first cut — those
-   compose into a single shader pass and give the biggest win for the
-   least risk. Leave dither/despeckle/outline on the CPU path; they're
-   comparatively cheap per-pixel anyway (bounded neighbourhood reads or
-   already-optimized loops) compared to the full-image passes, and the
-   measurement above confirms they're cheap in practice too.
-4. Any GPU path needs a CPU fallback — some Android devices/emulators have
+2. Done — see "Measured stage-by-stage results" above, including the
+   `applyScanlines` fix and its re-measured 48ms → 22ms result.
+3. **GPU work is not currently justified.** With the fix in, the whole
+   export scenario's stage costs sum to roughly 75ms on a dev Mac for a
+   12MP photo with gap + scanlines + sobel outline — a one-shot cost per
+   export, not something repeated per frame like preview (which sums to
+   ~11ms and is dominated by `median_cut`, not a resolution-scaled stage
+   at all). Nothing measured points at a stage expensive enough on its own
+   to justify a shader rewrite's real complexity (new build tooling,
+   platform testing, a CPU fallback path). This conclusion is about
+   *relative* stage cost on this dev machine, though — it does not
+   directly answer whether the reporting user's friend's phone is fast
+   enough; if a future report says export or preview still feels slow on
+   that device specifically, re-run `benchmark_stages.dart`'s scenarios
+   (or a phone-side equivalent) before assuming GPU is the answer, since
+   two rounds of measurement in this doc have now each found a cheaper,
+   non-GPU explanation than assumed going in.
+4. If a GPU spike does become justified later, scope it to the stateless
+   stages only (adjustments, palette nearest-color, scanlines) as a
+   self-contained first cut — those compose into a single shader pass and
+   give the biggest win for the least risk. Leave dither/despeckle/outline
+   on the CPU path; they're comparatively cheap per-pixel anyway (bounded
+   neighbourhood reads or already-optimized loops) compared to the
+   full-image passes, and the measurement above confirms they're cheap in
+   practice too.
+5. Any GPU path needs a CPU fallback — some Android devices/emulators have
    patchy `FragmentProgram` support, and `bitmapper_core` must stay
    Flutter-free per `CLAUDE.md` (it's pure Dart, testable without a
    `dart:ui` binding), so a GPU path would have to live in the app layer

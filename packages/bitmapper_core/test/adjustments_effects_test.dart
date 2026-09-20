@@ -93,5 +93,24 @@ void main() {
       expect(() => applyScanlines(solidImage(1, 1, [0, 0, 0]), 1.1), throwsArgumentError);
       expect(() => applyScanlines(solidImage(1, 1, [0, 0, 0]), -0.1), throwsArgumentError);
     });
+
+    test('every byte value darkens the same as a direct clampToByte call', () {
+      // A 256-wide odd row covering every possible input byte, so the
+      // internal lookup table (see effects.dart) can't diverge from a
+      // straightforward per-byte computation for any value.
+      final row = [for (var v = 0; v < 256; v++) [v, v, v]];
+      final img = imageFromRows([row, row, row]);
+      for (final strength in [0.001, 0.35, 0.5, 0.999, 1.0]) {
+        final out = applyScanlines(img, strength);
+        final factor = 1.0 - strength;
+        for (var v = 0; v < 256; v++) {
+          final expected = clampToByte(v * factor);
+          expect(out.pixel(v, 1), [expected, expected, expected], reason: 'v=$v strength=$strength');
+        }
+        // Even rows are untouched.
+        expect(out.pixel(0, 0), [0, 0, 0]);
+        expect(out.pixel(255, 2), [255, 255, 255]);
+      }
+    });
   });
 }
