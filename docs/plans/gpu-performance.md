@@ -1,6 +1,7 @@
 # GPU / overall performance research spike
 
-## Status: research only, not started
+## Status: measured — see "Measured stage-by-stage results" below. No GPU
+work has started; the measurement points at a cheaper, non-GPU fix first.
 
 This doc exists so a future session (or another AI) can pick this up without
 re-deriving the background. It records what's true about the app's
@@ -97,24 +98,102 @@ directly to a single shader pass:**
   *bounded* and could work as a small fixed number of ping-ponged passes,
   but it's still meaningfully more complex than the stateless stages).
 
+## Measured stage-by-stage results
+
+Step 2 above (profile before assuming) is now done. Added
+`packages/bitmapper_core/tool/benchmark_stages.dart`, a script that runs
+every pipeline stage in order, timing each one separately, on two
+scenarios mirroring the app's real requests exactly:
+- **Preview**: 1024×768 source (the `kPreviewDimension` cap) → 120×120
+  grid, output == grid size, gap/scanlines neutralized — matches
+  `FilterController.request`.
+- **Export**: 4000×3000 source (a realistic 12MP phone photo) → 120×120
+  grid, output == source size, with a non-trivial config (1px gap, 0.2
+  scanlines, sobel outline with thickness 2 + closeGaps) — matches
+  `FilterController.renderFull`.
+
+Run via `dart compile exe tool/benchmark_stages.dart -o /tmp/bench_stages
+&& /tmp/bench_stages` (AOT; a dev Mac, not the reporting user's actual
+phone — treat these as *relative* costs between stages, not an absolute
+"is it fast enough" verdict). Representative run:
+
+```
+-- Preview (source 1024x768 -> grid 120x120 -> output 120x120) --
+  applyAdjustments                     0 ms
+  downsample + applyShadeBands         2 ms
+  resolvePalette (median_cut)          8 ms
+  generatePalette (kmeans, for comparison)    17 ms
+  applyDither (floyd_steinberg)        1 ms
+  upscale (+gap 0px)                   0 ms
+
+-- Export (source 4000x3000 -> grid 120x120 -> output 4000x3000) --
+  applyAdjustments                     0 ms
+  downsample + applyShadeBands        28 ms
+  resolvePalette (median_cut)          1 ms
+  generatePalette (kmeans, for comparison)    13 ms
+  nearestColor (pre-dither edge reference)     1 ms
+  applyDither (floyd_steinberg)        1 ms
+  applyOutline (sobel, thickness 2, closeGaps) 1 ms
+  upscale (+gap 1px)                   8 ms
+  applyScanlines                      48 ms
+```
+
+**The standout finding: `applyScanlines` is the single most expensive
+stage in the export scenario — 48ms, more than `downsample` (28ms) and
+`upscale` (8ms) combined, on a stage that should be trivially cheap** (a
+per-pixel darken of every odd row, `packages/bitmapper_core/lib/src/effects.dart`).
+Reading the implementation explains why: it calls
+`clampToByte(out[i] * factor)` — a `double` multiply plus a function call —
+**per byte**, with no lookup table, across every byte of every odd row
+(~18M calls at 4000×3000). That's a plain algorithmic inefficiency, not
+something inherent to the effect: a precomputed 256-entry `Uint8List`
+lookup table (`lut[v] = clampToByte(v * factor)`, built once) turns the
+inner loop into pure integer array indexing. **This is a cheap, well-scoped,
+non-GPU fix that should ship before any GPU work — it's likely a bigger win
+than a shader rewrite, for a fraction of the effort**, and it's exactly the
+kind of "one hot stage" step 2 was looking for.
+
+Other findings, matching the code-reading predictions:
+- `downsample`/`upscale` do scale with source/output resolution as
+  expected (2ms→28ms and 0ms→8ms respectively, tracking the ~14x pixel
+  count jump from the preview to the export scenario reasonably linearly).
+- `kmeans` palette generation is consistently 2–13x pricier than
+  `median_cut` in both scenarios — confirms the earlier analysis; still
+  cheap in absolute terms at this grid size (120×120), but not a free
+  swap if `median_cut`'s quality is ever considered "good enough" as the
+  sole default.
+- `resolvePalette`/`median_cut`'s cost varies a lot between scenarios (8ms
+  preview vs. 1ms export) because it scales with the grid's **unique color
+  count** after downsampling, not grid cell count directly — box-averaging
+  many more source pixels per cell (833 in the export scenario vs. 55 in
+  preview) regresses colors toward the mean, sharply reducing unique
+  colors. Caveat: this benchmark's source images are uncorrelated random
+  noise (worst case for unique-color count); a real photo's spatially
+  correlated content would very likely downsample to fewer unique colors
+  than this benchmark shows, at both sizes — so 8ms for preview is
+  plausibly an overestimate, not a reliable worst case.
+- Every other stage (adjustments, shade bands, dither, despeckle, outline,
+  nearest-color) stayed at 0–1ms in both scenarios, confirming the
+  prediction that grid-scaled stages are cheap by construction at the
+  default 120×120 grid size.
+
 ## Recommendation
 
 1. Ship the isolate-reuse and tab-label-cache fixes (already done — see
    git log) and get feedback from the user's friend on the actual device.
-2. If still slow, profile which specific pipeline stage(s) dominate at
-   realistic grid sizes (add a `Stopwatch` per stage temporarily, or use
-   Flutter DevTools' CPU profiler on a real device) before assuming it's
-   "the whole pipeline" — there may be one hot stage (e.g. palette
-   generation via median-cut, which is O(n log n) over all sampled pixels)
-   that's worth optimizing in plain Dart first, which is far cheaper than a
-   GPU rewrite.
-3. If a GPU spike is still justified, scope it to the stateless stages only
-   (adjustments, palette nearest-color, scanlines) as a self-contained
-   first cut — those compose into a single shader pass and give the
-   biggest win for the least risk. Leave dither/despeckle/outline on the
-   CPU path; they're comparatively cheap per-pixel anyway (bounded
-   neighbourhood reads or already-optimized loops) compared to the
-   full-image passes.
+2. Done — see "Measured stage-by-stage results" above. The clear next step
+   is **not** a GPU spike: fix `applyScanlines`'s per-byte lookup-table gap
+   first (see above), then re-run `benchmark_stages.dart` to confirm it
+   drops out of the picture, before deciding whether anything else is
+   still worth targeting.
+3. If a GPU spike is still justified after that fix (re-measure first —
+   don't assume), scope it to the stateless stages only (adjustments,
+   palette nearest-color, scanlines) as a self-contained first cut — those
+   compose into a single shader pass and give the biggest win for the
+   least risk. Leave dither/despeckle/outline on the CPU path; they're
+   comparatively cheap per-pixel anyway (bounded neighbourhood reads or
+   already-optimized loops) compared to the full-image passes, and the
+   measurement above confirms they're cheap in practice too.
 4. Any GPU path needs a CPU fallback — some Android devices/emulators have
    patchy `FragmentProgram` support, and `bitmapper_core` must stay
    Flutter-free per `CLAUDE.md` (it's pure Dart, testable without a

@@ -111,3 +111,17 @@ both give exactly the same output as the straightforward versions:
 
 With these, a 12-bit (4096-color) auto palette on a 120-column grid takes
 about 130 ms, where it used to take 13 s.
+
+`tool/benchmark_stages.dart` times every pipeline stage separately instead
+of the whole pipeline as one call, on two scenarios mirroring the app's
+real preview and export requests:
+
+```sh
+dart compile exe tool/benchmark_stages.dart -o /tmp/bench_stages && /tmp/bench_stages
+```
+
+Use this before assuming "the pipeline" is slow — there's usually one hot
+stage, not a uniformly slow whole. See `docs/plans/gpu-performance.md` (repo
+root) for a worked example: it found `applyScanlines` was the single most
+expensive export stage, due to a per-byte `clampToByte` call with no lookup
+table, not anything resolution-inherent.
