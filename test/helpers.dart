@@ -4,6 +4,7 @@ import 'package:bitmapper/main.dart';
 import 'package:bitmapper/repositories/preset_repository.dart';
 import 'package:bitmapper/services/animation_exporter.dart';
 import 'package:bitmapper/services/app_services.dart';
+import 'package:bitmapper/services/export_notifier.dart';
 import 'package:bitmapper/services/filter_controller.dart';
 import 'package:bitmapper/services/image_codec.dart';
 import 'package:bitmapper/services/image_loader.dart';
@@ -86,6 +87,43 @@ Future<FilterResult> syncRunner(FilterJob job) async => applyBitmapFilter(
   outputHeight: job.outputHeight,
 );
 
+/// Records every call instead of touching a platform channel. `calls` is
+/// the event sequence (`'start'`, `'progress'`, `'succeed'`, `'fail'`,
+/// `'cancel'`), so tests can assert on both ordering and the final state.
+class FakeExportNotifier implements ExportNotifier {
+  final calls = <String>[];
+  String? lastTitle;
+  final progressCalls = <(int, int)>[];
+  String? lastMessage;
+
+  @override
+  Future<void> start(String title) async {
+    calls.add('start');
+    lastTitle = title;
+  }
+
+  @override
+  Future<void> progress(int done, int total) async {
+    calls.add('progress');
+    progressCalls.add((done, total));
+  }
+
+  @override
+  Future<void> succeed(String message) async {
+    calls.add('succeed');
+    lastMessage = message;
+  }
+
+  @override
+  Future<void> fail(String message) async {
+    calls.add('fail');
+    lastMessage = message;
+  }
+
+  @override
+  Future<void> cancel() async => calls.add('cancel');
+}
+
 class TestApp {
   TestApp({LoadedMedia? image})
     : loader = FakeImageLoader(result: image),
@@ -96,6 +134,7 @@ class TestApp {
   final FakeImageSaver saver;
   final InMemoryPresetRepository repository;
   final FakeVideoIO videoIO = FakeVideoIO();
+  final FakeExportNotifier notifier = FakeExportNotifier();
 
   AppServices get services => AppServices(
     imageLoader: loader,
@@ -107,6 +146,7 @@ class TestApp {
     videoIO: videoIO,
     videoExporter: (job, onProgress) => fakeVideoExporter(job, onProgress, videoIO),
     clock: () => DateTime.fromMillisecondsSinceEpoch(1234),
+    exportNotifier: notifier,
   );
 
   Widget build({Locale locale = const Locale('en')}) =>

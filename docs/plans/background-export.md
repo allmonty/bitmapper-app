@@ -1,8 +1,7 @@
 # Background export with a progress notification
 
-## Status: not started — this is the priority doc among the three large
-platform items (per the user), so it's the most detailed. Implement Phase 1
-first; it's self-contained and doesn't require the later phases.
+## Status: Phase 1 shipped. Phases 2/3 (real background survival) not
+started — see below, they're the bulk of the remaining work.
 
 ## Where this came from
 
@@ -41,40 +40,53 @@ achievable at all.
   service, or a WorkManager task. This is a net-new capability, not an
   extension of something that already exists.
 
-## Phase 1 — Android: a progress notification while foregrounded
+## Phase 1 — Android: a progress notification while foregrounded — DONE
 
-**Goal:** show a determinate progress notification wired to the existing
-export progress callback. This does **not** survive backgrounding on its
-own (Phase 2 does), but it's a real, self-contained, testable increment
-that directly matches "show the loading/processing state," and de-risks the
-notification plumbing before tackling the harder foreground-service work.
+Shipped: `flutter_local_notifications` (22.3.1) via `AppServices.exportNotifier`
+(`lib/services/export_notifier.dart`), wired into `export_actions.dart`'s
+`_runExport` at exactly the points the plan above called for (start,
+throttled progress, succeed, fail, cancel). Tested via `FakeExportNotifier`
+in `test/helpers.dart`.
 
-**Approach:**
-- Add `flutter_local_notifications` to `pubspec.yaml`.
-- In `export_actions.dart`'s `_runExport`, alongside the existing
-  `ValueNotifier`-driven dialog, also update a local notification's
-  progress (`AndroidNotificationDetails(..., showProgress: true, maxProgress: total, progress: done, ongoing: true)`)
-  on the same `onProgress` callback.
-- Dismiss/replace the notification with a "done" or "failed" state when the
-  export finishes (mirror the existing `saved`/`error` message-box logic).
-- Tapping the notification should bring the app to the foreground (default
-  `flutter_local_notifications` behavior when no custom payload routing is
-  set up — no deep-linking needed for a first cut).
-- iOS local notifications work too (via the same package), but iOS doesn't
-  support a persistent "progress bar" style notification the way Android
-  does — a plain updating text notification (e.g. "Exporting… 42%") is the
-  realistic iOS equivalent.
-
-**Tests:** this is UI-adjacent but the progress-update *logic* (what
-percentage to show, when to dismiss) can be unit-tested the same way
-`export_actions.dart`'s existing behavior is tested today — check
-`test/home_screen_test.dart`/`test/animation_test.dart`/`test/video_test.dart`
-for the existing pattern of injecting fakes via `AppServices`/`TestApp` and
-follow it; a notification service should be injected the same way (a new
-`AppServices` field with a fake in tests), not called as a bare static
-singleton, so it stays testable and consistent with every other side effect
-in this app (`CLAUDE.md`: "side effects... are injected through
-`AppServices`").
+Real-world things found while implementing, worth knowing if you touch this
+again:
+- **`flutter_local_notifications` requires core library desugaring.**
+  `android/app/build.gradle.kts` needed
+  `compileOptions.isCoreLibraryDesugaringEnabled = true` plus a
+  `dependencies { coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4") }`
+  block — the build fails with a clear `AAR metadata` error without it.
+  Confirmed by an actual `flutter build apk --debug` failing, then
+  succeeding after this fix.
+- **No manifest edits were needed.** `POST_NOTIFICATIONS`, a `<service>`
+  and a `<receiver>` all merge in automatically from the plugin's own
+  manifest — confirmed by inspecting the actual merged manifest at
+  `build/app/intermediates/merged_manifest/debug/processDebugMainManifest/AndroidManifest.xml`
+  after a build, not assumed.
+- **`android.newDsl=false`** (already set in `android/gradle.properties`
+  from the Flutter migrator, unrelated to this feature) turned out to be a
+  real prerequisite: stable 22.3.1 needs it under AGP 9's new DSL mode. If
+  a future `flutter_local_notifications` upgrade removes that requirement
+  (there's a fix on its `master` branch, unreleased as of this writing),
+  this note can go.
+- **Notification icon**: Android's small-icon guideline needs a flat
+  white-on-transparent silhouette; the app's `ic_launcher` mipmaps can't
+  be reused. `tool/gen_notification_icon.dart` generates one (a simple
+  pixel-grid glyph) at all five densities into
+  `android/app/src/main/res/drawable-*/ic_stat_export.png` — rerun it if
+  the design should change, don't hand-edit the PNGs.
+- **Progress notifications are throttled** (`nextNotifiedPercent` in
+  `export_notifier.dart`) to only push a new OS notification when the
+  displayed percentage actually changes, not on every one of a long
+  export's progress ticks.
+- **iOS**: `ios/Runner/AppDelegate.swift` now sets
+  `UNUserNotificationCenter.current().delegate = self`, and Swift Package
+  Manager resolved `flutter_local_notifications` successfully (confirmed
+  via `flutter build ios --simulator`'s package-resolution step). The
+  build itself could **not** be fully verified end-to-end in this
+  environment (no iOS simulator runtime installed) — that step still
+  needs checking on a machine with one, or a real device.
+- What Phase 1 explicitly does **not** do: survive the app being
+  backgrounded or closed. That's still Phase 2/3 below.
 
 ## Phase 2 — Android: survive backgrounding via a foreground service
 

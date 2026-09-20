@@ -5,6 +5,7 @@ import 'package:bitmapper_core/bitmapper_core.dart';
 import '../repositories/preset_repository.dart';
 import '../repositories/shared_prefs_preset_repository.dart';
 import 'animation_exporter.dart';
+import 'export_notifier.dart';
 import 'filter_controller.dart';
 import 'image_codec.dart';
 import 'image_loader.dart';
@@ -28,6 +29,7 @@ class AppServices {
     this.videoExporter = exportVideoInIsolate,
     this.previewDebounce = const Duration(milliseconds: 120),
     this.clock = DateTime.now,
+    this.exportNotifier = const NoopExportNotifier(),
   });
 
   factory AppServices.production() => AppServices(
@@ -39,6 +41,7 @@ class AppServices {
     // (debounced but continuous) than export's one-shot isolates, so the
     // spawn/teardown cost is worth avoiding here specifically.
     filterRunner: PreviewIsolate().run,
+    exportNotifier: LocalExportNotifier(),
   );
 
   final ImageLoader imageLoader;
@@ -53,4 +56,9 @@ class AppServices {
   final VideoExporter videoExporter;
   final Duration previewDebounce;
   final DateTime Function() clock;
+
+  /// Shows export progress as an OS notification. Defaults to a no-op so
+  /// tests never touch a platform channel that doesn't exist under
+  /// `flutter_test`; `.production()` overrides it with a real one.
+  final ExportNotifier exportNotifier;
 }

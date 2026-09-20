@@ -149,6 +149,10 @@ void main() {
     expect((back.width, back.height), (160, 120));
     expect(find.text('Saved bitmapper_1234.gif'), findsOneWidget);
     expect(find.text('Saving animation'), findsNothing);
+    expect(app.notifier.calls.first, 'start');
+    expect(app.notifier.calls.last, 'succeed');
+    expect(app.notifier.lastTitle, 'Saving animation');
+    expect(app.notifier.lastMessage, 'Saved bitmapper_1234.gif');
   });
 
   testWidgets('cancelling the export saves nothing', (tester) async {
@@ -162,5 +166,7 @@ void main() {
     expect(app.saver.saved, isEmpty);
     expect(find.text('Saving animation'), findsNothing);
     expect(find.text('Ready'), findsNothing); // still shows the shimmer tip
+    expect(app.notifier.calls.last, 'cancel');
+    expect(app.notifier.calls, isNot(contains('succeed')));
   });
 }

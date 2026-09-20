@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:win98_ui/win98_ui.dart';
@@ -182,11 +184,16 @@ class ExportActions {
     required Future<String?> Function(T result) save,
   }) async {
     final l10n = AppLocalizations.of(context);
+    final services = context.read<AppServices>();
     final navigator = Navigator.of(context);
     final progress = ValueNotifier<(int, int)?>(null);
 
     setSaving(true);
-    final task = start((done, total) => progress.value = (done, total));
+    unawaited(services.exportNotifier.start(title));
+    final task = start((done, total) {
+      progress.value = (done, total);
+      services.exportNotifier.progress(done, total);
+    });
 
     var dialogOpen = true;
     showWin98Dialog<void>(
@@ -223,12 +230,22 @@ class ExportActions {
       final result = await task.result;
       closeDialog();
       final message = await save(result);
-      if (context.mounted && message != null) setMessage(message);
+      if (message != null) {
+        await services.exportNotifier.succeed(message);
+        if (context.mounted) setMessage(message);
+      } else {
+        // save() returns null when the user cancelled the system file-save
+        // picker after the export itself finished; no visible confirmation
+        // in that case, so don't claim success in the notification either.
+        await services.exportNotifier.cancel();
+      }
     } on ExportCancelled {
       closeDialog();
+      await services.exportNotifier.cancel();
     } catch (e) {
       debugPrint('Export failed: $e');
       closeDialog();
+      await services.exportNotifier.fail(l10n.errorSave);
       if (context.mounted) {
         await showWin98MessageBox(
           context: context,

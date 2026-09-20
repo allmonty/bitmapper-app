@@ -135,9 +135,24 @@ filter, with a Windows 98 UI. Flutter is pinned by asdf in `.tool-versions`
     left to scan for) or we replace it.
   - iOS has a 15.0 minimum and uses Swift Package Manager only. There's no
     Podfile, because every plugin is a Swift package.
+  - `flutter_local_notifications` (used by `exportNotifier`) requires core
+    library desugaring: `android/app/build.gradle.kts` sets
+    `compileOptions.isCoreLibraryDesugaringEnabled = true` and adds a
+    `coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:...")`
+    dependency — the build fails with an AAR-metadata error otherwise. No
+    manifest edits were needed for it; `POST_NOTIFICATIONS` and its
+    service/receiver merge in from the plugin's own manifest.
 - **Side effects** (picker, saver, preset storage, filter runner, PNG
-  encoder, clock) are injected through `AppServices`. Tests use the fakes in
-  `test/helpers.dart`.
+  encoder, clock, export notifier) are injected through `AppServices`. Tests
+  use the fakes in `test/helpers.dart`.
+  - `exportNotifier` (`lib/services/export_notifier.dart`) shows export
+    progress as an OS notification while the app is foregrounded (not
+    background survival — see `docs/plans/background-export.md`).
+    `AppServices`'s own default is `NoopExportNotifier` (so tests never
+    touch a platform channel `flutter_test` doesn't have);
+    `AppServices.production()` overrides it with `LocalExportNotifier`,
+    which lazily initializes on first use, same shape as `PreviewIsolate`'s
+    `_ready`.
   - `syncRunner` replaces `Isolate.run`, which never completes under the
     widget tester's fake async.
 - **Photo decoding:** `decodeToRgb` decodes in pure Dart (package `image`)

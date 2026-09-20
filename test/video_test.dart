@@ -435,6 +435,9 @@ void main() {
       expect(name, 'bitmapper_1234.mp4');
       expect(mime, 'video/mp4');
       expect(find.text('Saved bitmapper_1234.mp4'), findsOneWidget);
+      expect(app.notifier.calls.first, 'start');
+      expect(app.notifier.calls.last, 'succeed');
+      expect(app.notifier.lastMessage, 'Saved bitmapper_1234.mp4');
     });
 
     testWidgets('Save as GIF when the GIF format is chosen', (tester) async {
