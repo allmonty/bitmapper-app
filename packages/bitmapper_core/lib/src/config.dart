@@ -31,7 +31,7 @@ const kMaxPaletteSamples = 32;
 
 /// `frameSkip` range, in source frames held per rendered frame.
 const kMinFrameSkip = 0;
-const kMaxFrameSkip = 8;
+const kMaxFrameSkip = 15;
 
 /// Every knob of the filter.
 /// - The output size is an argument of `applyBitmapFilter` instead of a

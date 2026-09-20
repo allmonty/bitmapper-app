@@ -165,7 +165,7 @@ void main() {
 
     test('rejects an out-of-range frame skip', () {
       expect(const BitmapFilterConfig(frameSkip: -1).validate, throwsArgumentError);
-      expect(const BitmapFilterConfig(frameSkip: 9).validate, throwsArgumentError);
+      expect(const BitmapFilterConfig(frameSkip: 16).validate, throwsArgumentError);
     });
   });
 }

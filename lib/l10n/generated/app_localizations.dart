@@ -639,11 +639,23 @@ abstract class AppLocalizations {
   /// **'Skip frames: {count}'**
   String frameSkip(int count);
 
+  /// No description provided for @frameSkipWithFps.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip frames: {count} (~{fps} fps)'**
+  String frameSkipWithFps(int count, String fps);
+
   /// No description provided for @frameSkipOff.
   ///
   /// In en, this message translates to:
   /// **'Skip frames: off'**
   String get frameSkipOff;
+
+  /// No description provided for @frameSkipOffWithFps.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip frames: off ({fps} fps)'**
+  String frameSkipOffWithFps(String fps);
 
   /// No description provided for @gifSize.
   ///

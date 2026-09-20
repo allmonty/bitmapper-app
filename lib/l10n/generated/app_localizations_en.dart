@@ -320,7 +320,17 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String frameSkipWithFps(int count, String fps) {
+    return 'Skip frames: $count (~$fps fps)';
+  }
+
+  @override
   String get frameSkipOff => 'Skip frames: off';
+
+  @override
+  String frameSkipOffWithFps(String fps) {
+    return 'Skip frames: off ($fps fps)';
+  }
 
   @override
   String get gifSize => 'GIF size';

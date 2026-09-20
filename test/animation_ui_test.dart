@@ -102,15 +102,18 @@ void main() {
     expect(read<EditorModel>(tester).gifSize, const GifSizeOriginal());
   });
 
-  testWidgets('Animation tab shows and updates the frame-skip label', (tester) async {
+  testWidgets('Animation tab shows and updates the frame-skip label with the effective fps', (
+    tester,
+  ) async {
     await openClip(tester);
     await tester.tap(find.text('Animation'));
     await tester.pumpAndSettle();
-    expect(find.text('Skip frames: off'), findsOneWidget);
+    // clip() durations are 50, 100, 150, 200 ms -> average 125 ms -> 8 fps.
+    expect(find.text('Skip frames: off (8 fps)'), findsOneWidget);
     read<EditorModel>(tester).setFrameSkip(3);
     await tester.pump();
-    expect(find.text('Skip frames: 3'), findsOneWidget);
-    expect(find.text('Skip frames: off'), findsNothing);
+    expect(find.text('Skip frames: 3 (~2 fps)'), findsOneWidget);
+    expect(find.text('Skip frames: off (8 fps)'), findsNothing);
   });
 
   testWidgets('Animation tab has a gap before the frame-skip slider', (tester) async {

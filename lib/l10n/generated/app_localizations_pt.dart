@@ -320,7 +320,17 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String frameSkipWithFps(int count, String fps) {
+    return 'Pular quadros: $count (~$fps qps)';
+  }
+
+  @override
   String get frameSkipOff => 'Pular quadros: desligado';
+
+  @override
+  String frameSkipOffWithFps(String fps) {
+    return 'Pular quadros: desligado ($fps qps)';
+  }
 
   @override
   String get gifSize => 'Tamanho do GIF';

@@ -233,7 +233,26 @@
       }
     }
   },
+  "frameSkipWithFps": "Skip frames: {count} (~{fps} fps)",
+  "@frameSkipWithFps": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "fps": {
+        "type": "String"
+      }
+    }
+  },
   "frameSkipOff": "Skip frames: off",
+  "frameSkipOffWithFps": "Skip frames: off ({fps} fps)",
+  "@frameSkipOffWithFps": {
+    "placeholders": {
+      "fps": {
+        "type": "String"
+      }
+    }
+  },
   "gifSize": "GIF size",
   "gifOriginal": "Original size ({width}×{height})",
   "@gifOriginal": {

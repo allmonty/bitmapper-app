@@ -11,6 +11,25 @@ import '../../services/image_codec.dart';
 import '../../services/video_exporter.dart';
 import 'labeled_slider.dart';
 
+/// The source frame rate frame-skip holds against: the video's own rate, or
+/// a GIF's average frame rate from its per-frame delays. Null if unknown
+/// (no media loaded, or a GIF with no frames).
+double? _sourceFps(MediaModel media) {
+  if (media.isVideo) return media.videoInfo?.frameRate;
+  final durations = media.animation?.durationsMs;
+  if (durations == null || durations.isEmpty) return null;
+  final avgMs = durations.reduce((a, b) => a + b) / durations.length;
+  return avgMs > 0 ? 1000 / avgMs : null;
+}
+
+/// `12` for a whole number, `7.5` for a fractional one.
+String _formatFps(double fps) {
+  final rounded = (fps * 10).round() / 10;
+  return rounded == rounded.roundToDouble()
+      ? rounded.toInt().toString()
+      : rounded.toStringAsFixed(1);
+}
+
 /// Settings that only matter for animations: how one palette is shared
 /// across frames, noise animation, frame skip, and the GIF export size.
 class AnimationTab extends StatelessWidget {
@@ -37,6 +56,14 @@ class AnimationTab extends StatelessWidget {
     final gifSize = editor.gifSize;
     final perCell = gifSize is GifSizePerCell ? gifSize.pixels : 4;
     final perCellIndex = kGifPixelsPerCell.indexOf(perCell).clamp(0, kGifPixelsPerCell.length - 1);
+
+    final sourceFps = _sourceFps(media);
+    final effectiveFps = sourceFps == null ? null : sourceFps / (config.frameSkip + 1);
+    final frameSkipLabel = effectiveFps == null
+        ? (config.frameSkip == 0 ? l10n.frameSkipOff : l10n.frameSkip(config.frameSkip))
+        : (config.frameSkip == 0
+              ? l10n.frameSkipOffWithFps(_formatFps(effectiveFps))
+              : l10n.frameSkipWithFps(config.frameSkip, _formatFps(effectiveFps)));
 
     return Win98ScrollView(
       child: Column(
@@ -79,7 +106,7 @@ class AnimationTab extends StatelessWidget {
             ),
           kControlGap,
           LabeledSlider(
-            label: config.frameSkip == 0 ? l10n.frameSkipOff : l10n.frameSkip(config.frameSkip),
+            label: frameSkipLabel,
             value: config.frameSkip.toDouble(),
             min: kMinFrameSkip.toDouble(),
             max: kMaxFrameSkip.toDouble(),
