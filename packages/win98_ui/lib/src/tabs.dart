@@ -10,6 +10,33 @@ class Win98Tab {
   final WidgetBuilder builder;
 }
 
+/// Caches label text-layout widths per `(label, style, scaler)`, so
+/// [Win98TabView] doesn't re-run text shaping for unchanged labels on every
+/// rebuild — previously the dominant per-rebuild cost of a tab strip with
+/// several labels, since it ran on every rebuild, not just when the tab
+/// selection or available width actually changed.
+class TabLabelWidthCache {
+  final _widths = <(String, TextStyle, TextScaler), double>{};
+
+  /// Number of distinct `(label, style, scaler)` keys cached so far (tests
+  /// only, to assert repeat lookups don't grow the cache).
+  int get widthsForTest => _widths.length;
+
+  double widthOf(String label, TextStyle style, TextScaler scaler) {
+    final key = (label, style, scaler);
+    final cached = _widths[key];
+    if (cached != null) return cached;
+    final painter = TextPainter(
+      text: TextSpan(text: label, style: style),
+      textDirection: TextDirection.ltr,
+      textScaler: scaler,
+    )..layout();
+    final width = painter.width;
+    painter.dispose();
+    return _widths[key] = width;
+  }
+}
+
 /// Property-sheet style tabs over a raised panel. The selected tab is raised
 /// and merges into the panel.
 ///
@@ -39,6 +66,8 @@ class _Win98TabViewState extends State<Win98TabView> {
 
   static const _labelPadding = 20.0;
 
+  final _widthCache = TabLabelWidthCache();
+
   void _select(int i) {
     if (i == _index) return;
     setState(() => _index = i);
@@ -50,13 +79,7 @@ class _Win98TabViewState extends State<Win98TabView> {
     final rows = <List<int>>[[]];
     var used = 0.0;
     for (var i = 0; i < widget.tabs.length; i++) {
-      final painter = TextPainter(
-        text: TextSpan(text: widget.tabs[i].label, style: theme.textStyle),
-        textDirection: TextDirection.ltr,
-        textScaler: scaler,
-      )..layout();
-      final w = painter.width + _labelPadding;
-      painter.dispose();
+      final w = _widthCache.widthOf(widget.tabs[i].label, theme.textStyle, scaler) + _labelPadding;
       if (rows.last.isNotEmpty && used + w > maxWidth) {
         rows.add([]);
         used = 0;

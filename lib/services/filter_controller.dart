@@ -65,7 +65,83 @@ typedef FilterRunner = Future<FilterResult> Function(FilterJob job);
 
 /// Runs the pipeline on a background isolate (the migration doc's
 /// recommendation): typed lists are copied over, the UI thread never blocks.
+/// Spawns a fresh isolate per call; [PreviewIsolate] reuses one instead,
+/// which is worth it for a debounced stream of preview requests.
 Future<FilterResult> runInIsolate(FilterJob job) => Isolate.run(() => runFilterJob(job));
+
+/// One worker isolate, spawned once and reused for every job — avoids
+/// paying `Isolate.spawn`'s startup cost (plus the typed-data copy it
+/// implies) on every debounced preview request, which is the more likely
+/// dominant cost on a weaker phone compared to the filter pipeline itself.
+/// Jobs are tagged with an id so concurrent calls to [run] (e.g. a live
+/// preview alongside `FilterController.renderFull`) are each answered
+/// correctly regardless of completion order.
+class PreviewIsolate {
+  PreviewIsolate() {
+    _isolateFuture = Isolate.spawn(_workerMain, _receivePort.sendPort);
+    _receivePort.listen(_onMessage);
+  }
+
+  final _receivePort = ReceivePort();
+  late final Future<Isolate> _isolateFuture;
+  final _ready = Completer<SendPort>();
+  final _pending = <int, Completer<FilterResult>>{};
+  int _nextId = 0;
+  bool _disposed = false;
+
+  void _onMessage(dynamic message) {
+    if (message is SendPort) {
+      _ready.complete(message);
+      return;
+    }
+    final reply = message as List<dynamic>;
+    final completer = _pending.remove(reply[0] as int);
+    if (completer == null) return;
+    if (reply[1] as bool) {
+      completer.completeError(StateError(reply[2] as String));
+    } else {
+      completer.complete(reply[2] as FilterResult);
+    }
+  }
+
+  Future<FilterResult> run(FilterJob job) async {
+    if (_disposed) throw StateError('PreviewIsolate was disposed');
+    final sendPort = await _ready.future;
+    final id = _nextId++;
+    final completer = Completer<FilterResult>();
+    _pending[id] = completer;
+    sendPort.send([id, job]);
+    return completer.future;
+  }
+
+  /// Kills the worker isolate. Jobs still in flight are failed; further
+  /// calls to [run] throw.
+  void dispose() {
+    if (_disposed) return;
+    _disposed = true;
+    _receivePort.close();
+    unawaited(_isolateFuture.then((isolate) => isolate.kill(priority: Isolate.immediate)));
+    for (final completer in _pending.values) {
+      completer.completeError(StateError('PreviewIsolate was disposed'));
+    }
+    _pending.clear();
+  }
+
+  static void _workerMain(SendPort mainSendPort) {
+    final workerPort = ReceivePort();
+    mainSendPort.send(workerPort.sendPort);
+    workerPort.listen((dynamic message) {
+      final request = message as List<dynamic>;
+      final id = request[0] as int;
+      final job = request[1] as FilterJob;
+      try {
+        mainSendPort.send([id, false, runFilterJob(job)]);
+      } catch (e) {
+        mainSendPort.send([id, true, e.toString()]);
+      }
+    });
+  }
+}
 
 /// Schedules preview renders.
 ///

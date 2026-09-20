@@ -417,6 +417,29 @@ void main() {
     });
   });
 
+  group('TabLabelWidthCache', () {
+    test('caches by (label, style, scaler), not recomputing on repeat lookups', () {
+      final cache = TabLabelWidthCache();
+      const style = TextStyle(fontSize: 12);
+      const style2 = TextStyle(fontSize: 20);
+      const scaler = TextScaler.noScaling;
+
+      final first = cache.widthOf('Palette', style, scaler);
+      expect(cache.widthOf('Palette', style, scaler), first, reason: 'same key, same result');
+      expect(cache.widthsForTest, 1, reason: 'one entry for one distinct key so far');
+
+      cache.widthOf('Palette', style, scaler);
+      expect(cache.widthsForTest, 1, reason: 'repeat lookup adds no new entry');
+
+      cache.widthOf('Dither', style, scaler);
+      expect(cache.widthsForTest, 2, reason: 'a new label is a new entry');
+
+      final wider = cache.widthOf('Palette', style2, scaler);
+      expect(wider, greaterThan(first), reason: 'a bigger font measures wider');
+      expect(cache.widthsForTest, 3, reason: 'a different style is a new entry too');
+    });
+  });
+
   group('Win98TabView', () {
     testWidgets('switches pages', (tester) async {
       final changes = <int>[];

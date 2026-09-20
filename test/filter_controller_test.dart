@@ -183,4 +183,82 @@ void main() {
     expect(result.output.width, 30);
     expect(result.paletteSize, 4);
   });
+
+  group('PreviewIsolate', () {
+    test('reuses its worker isolate across sequential jobs', () async {
+      final isolate = PreviewIsolate();
+      addTearDown(isolate.dispose);
+
+      final first = await isolate.run(
+        FilterJob(
+          source: gradient(20, 10),
+          config: const BitmapFilterConfig(gridCols: 5, gridRows: 3, bitDepth: 2),
+          outputWidth: 30,
+          outputHeight: 15,
+        ),
+      );
+      expect(first.output.width, 30);
+      expect(first.paletteSize, 4);
+
+      final second = await isolate.run(
+        FilterJob(
+          source: gradient(8, 6),
+          config: const BitmapFilterConfig(gridCols: 4, gridRows: 3, bitDepth: 1),
+          outputWidth: 8,
+          outputHeight: 6,
+        ),
+      );
+      expect(second.paletteSize, 2);
+    });
+
+    test('runs concurrent jobs independently, answered by id', () async {
+      final isolate = PreviewIsolate();
+      addTearDown(isolate.dispose);
+
+      final results = await Future.wait([
+        isolate.run(
+          FilterJob(
+            source: gradient(20, 10),
+            config: const BitmapFilterConfig(gridCols: 5, gridRows: 3, bitDepth: 2),
+            outputWidth: 20,
+            outputHeight: 10,
+          ),
+        ),
+        isolate.run(
+          FilterJob(
+            source: gradient(8, 6),
+            config: const BitmapFilterConfig(gridCols: 4, gridRows: 3, bitDepth: 1),
+            outputWidth: 8,
+            outputHeight: 6,
+          ),
+        ),
+      ]);
+      expect(results[0].paletteSize, 4);
+      expect(results[1].paletteSize, 2);
+    });
+
+    test('rejects further jobs once disposed', () async {
+      final isolate = PreviewIsolate();
+      await isolate.run(
+        FilterJob(
+          source: gradient(4, 4),
+          config: const BitmapFilterConfig(gridCols: 2, gridRows: 2),
+          outputWidth: 4,
+          outputHeight: 4,
+        ),
+      );
+      isolate.dispose();
+      expect(
+        () => isolate.run(
+          FilterJob(
+            source: gradient(4, 4),
+            config: const BitmapFilterConfig(gridCols: 2, gridRows: 2),
+            outputWidth: 4,
+            outputHeight: 4,
+          ),
+        ),
+        throwsStateError,
+      );
+    });
+  });
 }

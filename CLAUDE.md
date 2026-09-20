@@ -69,7 +69,10 @@ filter, with a Windows 98 UI. Flutter is pinned by asdf in `.tool-versions`
   - `PresetsModel` holds built-in and user presets.
   - `FilterController` debounces preview renders, keeps one run in flight
     with the latest request winning, and drops results for a replaced
-    source.
+    source. In production it runs jobs on `PreviewIsolate`, one worker
+    isolate reused for the app's lifetime (`AppServices.production()`
+    wires it in) rather than `runInIsolate`'s spawn-per-call, since preview
+    requests are far more frequent than export's one-shot isolates.
   - `HomeScreen` listens to the editor and media models and calls
     `FilterController.request`. For animations it also passes an
     `AnimationContext` (the frames plus the current frame index).

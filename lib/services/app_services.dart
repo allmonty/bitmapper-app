@@ -34,6 +34,11 @@ class AppServices {
     imageLoader: PickerImageLoader(),
     imageSaver: const FileDialogImageSaver(),
     presetRepository: SharedPrefsPresetRepository(),
+    // A reused worker isolate for live preview, instead of the default
+    // spawn-per-call runInIsolate: preview requests happen far more often
+    // (debounced but continuous) than export's one-shot isolates, so the
+    // spawn/teardown cost is worth avoiding here specifically.
+    filterRunner: PreviewIsolate().run,
   );
 
   final ImageLoader imageLoader;
