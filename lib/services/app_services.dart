@@ -10,6 +10,7 @@ import 'filter_controller.dart';
 import 'image_codec.dart';
 import 'image_loader.dart';
 import 'image_saver.dart';
+import 'share_intent_source.dart';
 import 'video_exporter.dart';
 import 'video_io.dart';
 
@@ -30,6 +31,7 @@ class AppServices {
     this.previewDebounce = const Duration(milliseconds: 120),
     this.clock = DateTime.now,
     this.exportNotifier = const NoopExportNotifier(),
+    this.shareIntentSource = const NoopShareIntentSource(),
   });
 
   factory AppServices.production() => AppServices(
@@ -42,6 +44,7 @@ class AppServices {
     // spawn/teardown cost is worth avoiding here specifically.
     filterRunner: PreviewIsolate().run,
     exportNotifier: LocalExportNotifier(),
+    shareIntentSource: ReceiveSharingIntentSource(),
   );
 
   final ImageLoader imageLoader;
@@ -61,4 +64,8 @@ class AppServices {
   /// tests never touch a platform channel that doesn't exist under
   /// `flutter_test`; `.production()` overrides it with a real one.
   final ExportNotifier exportNotifier;
+
+  /// Media shared into the app from another app (Android only so far).
+  /// Defaults to a no-op for the same reason as [exportNotifier].
+  final ShareIntentSource shareIntentSource;
 }

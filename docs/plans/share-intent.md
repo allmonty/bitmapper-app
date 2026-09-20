@@ -1,6 +1,7 @@
 # Receive shared media (share-to-app)
 
-## Status: not started
+## Status: Phase 1 (Android) shipped. Phase 2 (iOS Share Extension) not
+started — needs real Xcode work, see below.
 
 ## Where this came from
 
@@ -37,77 +38,64 @@ instead of having to open Bitmapper first and use its own picker.
   `MediaModel.openVideo(name, path)`), not bytes — same as how the existing
   picker flow handles video today; don't try to read video bytes directly.
 
-## Phase 1 — Android: receive the share intent
+## Phase 1 — Android: receive the share intent — DONE
 
-**Approach:**
-1. Add a share-receiving plugin — `receive_sharing_intent` is the common
-   choice (handles both "cold start via share" and "already-running, share
-   again" cases, and returns a stream of shared file paths/mime types).
-   Verify it's still maintained and compatible with this app's Flutter
-   version (`.tool-versions`: `flutter 3.47.5-stable`) before committing to
-   it; if it's stale, a hand-rolled `MethodChannel` reading the intent in
-   `MainActivity.kt`/`MainActivity` is the fallback (more code, no
-   third-party dependency risk).
-2. Add intent filters to the existing `<activity android:name=".MainActivity">`
-   block in `AndroidManifest.xml` (alongside the current launcher filter,
-   as a **second** `<intent-filter>` — don't merge them into one, since
-   `MAIN`/`LAUNCHER` and `SEND` are semantically different entry points):
-   ```xml
-   <intent-filter>
-       <action android:name="android.intent.action.SEND"/>
-       <category android:name="android.intent.category.DEFAULT"/>
-       <data android:mimeType="image/*"/>
-   </intent-filter>
-   <intent-filter>
-       <action android:name="android.intent.action.SEND"/>
-       <category android:name="android.intent.category.DEFAULT"/>
-       <data android:mimeType="video/*"/>
-   </intent-filter>
-   ```
-   (Separate filters per mime type, matching common Android convention —
-   a single filter with multiple `<data>` tags works too but is easier to
-   get subtly wrong with wildcard matching; verify against the chosen
-   plugin's own setup instructions, which may prescribe a specific shape.)
-   Add `ACTION_SEND_MULTIPLE` filters too only if multi-file sharing is
-   actually wanted (the user's ask was "select a photo or video" —
-   singular — so this may be unnecessary scope; confirm before adding it).
-3. Wire the received path into `MediaModel`. The cleanest integration point
-   is a **new `ImageLoader`-shaped path**, not a special case bolted onto
-   `MediaModel`: since `PickerImageLoader.load()` already does "given
-   bytes/path, figure out still vs. GIF vs. video and produce the right
-   `LoadedMedia`," a shared file should go through the same logic. Two
-   reasonable shapes:
-   - Add a method to `MediaModel` like `Future<void> loadShared(String path)`
-     that reads the file, calls `isVideoFile`/`decodeMedia` exactly as
-     `PickerImageLoader.load` does internally, and calls
-     `setImage`/`setAnimation`/`openVideo` accordingly — duplicates a little
-     of `PickerImageLoader`'s logic but keeps `ImageLoader`'s existing
-     `MediaRequest`-based contract untouched.
-   - Or extract `PickerImageLoader`'s "given bytes+name (or path), produce
-     `LoadedMedia`" logic into a standalone function reusable by both the
-     picker and a new share-intent path, then have `MediaModel` call that
-     function directly for a shared file. This is more refactoring but
-     avoids near-duplicate logic. Prefer this if the duplication in the
-     first option ends up more than a few lines.
-   Either way, this is app-state plumbing (`lib/models/`), not something
-   that belongs in `bitmapper_core` (which must stay Flutter-free) or
-   `win98_ui`.
-4. Handle both app states the chosen plugin needs to distinguish: **cold
-   start** (app wasn't running, launched fresh via the share action —
-   typically delivered through a plugin-specific "initial media" getter/
-   stream that needs to be checked once at app startup, e.g. in
-   `main.dart` or `HomeScreen`'s `initState`) and **already running**
-   (delivered via a stream/callback while the app is alive). Test both
-   manually on a device/emulator — this is OS-intent plumbing that
-   `flutter test`'s widget tests can't exercise.
+Shipped with `receive_sharing_intent` (1.9.0), via a new
+`ShareIntentSource` abstraction (`lib/services/share_intent_source.dart`)
+injected through `AppServices` — same interface/no-op-default/real-impl
+shape as `ExportNotifier` from the background-export work. `HomeScreen`
+checks `initialShare()` once at startup (cold start) and subscribes to
+`shares()` (already running), both routed through one `_loadShared`
+helper that reuses `_open`'s exact error-handling
+(`showWin98MessageBox`/`l10n.errorLoad`) and warning-reporting
+(truncated-GIF / unsupported-audio) logic — those were extracted out of
+`_open` into `_reportLoadWarnings`/`_reportLoadError` so both paths share
+them instead of duplicating. `MediaModel.load()`'s internal dispatch
+switch was extracted into a new public `MediaModel.loadMedia(LoadedMedia)`,
+used by both the picker flow and the share flow.
 
-**Tests:** the format-detection and `MediaModel` state-transition logic
-(whatever shape it takes, per step 3 above) is unit-testable the same way
-existing `MediaModel` tests work (see `test/animation_test.dart`'s
-`MediaModel with animations` group and `test/helpers.dart`'s
-`FakeImageLoader`) — a fake "shared media source" can be injected the same
-way. The actual OS-level intent delivery cannot be unit-tested and needs
-manual verification.
+Real-world things found while implementing, worth knowing if you touch
+this again:
+- **A real compatibility risk was found and worked around, not just
+  assumed.** Both candidate packages (`receive_sharing_intent` and
+  `share_handler`) have open, unresolved GitHub issues about Flutter's
+  built-in-Kotlin migration against this app's exact toolchain (AGP 9.1.0,
+  `android.builtInKotlin=true`). A real `flutter build apk --debug` spike
+  was run *before* any app-level wiring, specifically to catch this early.
+  The actual failure that showed up wasn't the specific GitHub issue
+  predicted (a `GeneratedPluginRegistrant` resolution failure) — it was
+  simpler: **`receive_sharing_intent` requires `compileSdk = 37`**, one
+  version past AGP 9.1.0's own officially-recommended maximum of 36.
+  Setting `compileSdk = 37` explicitly in `android/app/build.gradle.kts`
+  (instead of the default `flutter.compileSdkVersion`) fixed it, and the
+  build has stayed clean since (only the pre-existing, documented
+  `flutter_file_dialog` KGP warning shows). This is one version past
+  AGP's recommendation, not a hard incompatibility — revisit if a future
+  AGP upgrade changes that recommendation, or if this specific combination
+  ever causes a real (not just cosmetic) problem.
+- **No `SEND_MULTIPLE` filters** — only single-item `ACTION_SEND` for
+  `image/*` and `video/*`, matching the user's "a photo or video"
+  (singular) framing. `ReceiveSharingIntentSource` also only ever looks at
+  `files.first` for the same reason.
+- **Cold start vs. live-share both matter and both got tests** — not just
+  documented as "needs manual verification" and left there.
+  `test/share_intent_test.dart` covers: cold-start load, live-share load,
+  a share arriving mid-export being ignored (see the guard note below),
+  and a failing shared file showing the same error box `_open` shows.
+  `FakeShareIntentSource` (`test/helpers.dart`) makes this possible
+  without touching a platform channel.
+- **A share can arrive at any time, including mid-export** — unlike a
+  deliberate "Open" button tap, so `_loadShared` guards on `_saving` and
+  drops the share rather than interrupting an in-progress export. The
+  existing picker-triggered `_open` flow does **not** have this guard
+  (pre-existing gap, not touched — no bug report about it, out of scope
+  here).
+
+**Not done, still real OS-level verification needed:** the actual system
+share-sheet flow (sharing from the real Photos app, tapping Bitmapper in
+the share sheet) needs a device/emulator and can't be exercised by
+`flutter test` — the widget tests above cover the app's own reaction to a
+share once received, not the OS delivering one.
 
 ## Phase 2 — iOS: Share Extension (needs manual Xcode work)
 

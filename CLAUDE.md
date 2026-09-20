@@ -65,7 +65,10 @@ filter, with a Windows 98 UI. Flutter is pinned by asdf in `.tool-versions`
   - State uses Provider with `ChangeNotifier`.
   - `EditorModel` owns the `BitmapFilterConfig`.
   - `MediaModel` holds a still (the full source plus a preview copy of at
-    most 1024 px) or an animation.
+    most 1024 px) or an animation. `load(MediaRequest)` picks via
+    `AppServices.imageLoader`; `loadMedia(LoadedMedia)` is the same
+    dispatch (`setImage`/`setAnimation`/`openVideo`) for media that's
+    already been picked, e.g. by `ShareIntentSource` (see below).
   - `PresetsModel` holds built-in and user presets.
   - `FilterController` debounces preview renders, keeps one run in flight
     with the latest request winning, and drops results for a replaced
@@ -142,9 +145,15 @@ filter, with a Windows 98 UI. Flutter is pinned by asdf in `.tool-versions`
     dependency — the build fails with an AAR-metadata error otherwise. No
     manifest edits were needed for it; `POST_NOTIFICATIONS` and its
     service/receiver merge in from the plugin's own manifest.
+  - `receive_sharing_intent` (used by `shareIntentSource`) requires
+    `compileSdk = 37` — `android/app/build.gradle.kts` sets this
+    explicitly instead of using `flutter.compileSdkVersion`, which
+    currently resolves to 36. That's one version past AGP 9.1.0's own
+    officially-recommended maximum (36); the build has stayed clean since,
+    but revisit if a future AGP upgrade changes that recommendation.
 - **Side effects** (picker, saver, preset storage, filter runner, PNG
-  encoder, clock, export notifier) are injected through `AppServices`. Tests
-  use the fakes in `test/helpers.dart`.
+  encoder, clock, export notifier, share intent source) are injected
+  through `AppServices`. Tests use the fakes in `test/helpers.dart`.
   - `exportNotifier` (`lib/services/export_notifier.dart`) shows export
     progress as an OS notification while the app is foregrounded (not
     background survival — see `docs/plans/background-export.md`).
@@ -153,6 +162,13 @@ filter, with a Windows 98 UI. Flutter is pinned by asdf in `.tool-versions`
     `AppServices.production()` overrides it with `LocalExportNotifier`,
     which lazily initializes on first use, same shape as `PreviewIsolate`'s
     `_ready`.
+  - `shareIntentSource` (`lib/services/share_intent_source.dart`) delivers
+    media shared into the app from another app (Android only — see
+    `docs/plans/share-intent.md`). Same no-op-default/real-impl shape as
+    `exportNotifier`: `NoopShareIntentSource` vs. `AppServices.production()`'s
+    `ReceiveSharingIntentSource`. `HomeScreen` checks `initialShare()` once
+    at startup (cold start) and subscribes to `shares()` (already running),
+    both funneled through `MediaModel.loadMedia`.
   - `syncRunner` replaces `Isolate.run`, which never completes under the
     widget tester's fake async.
 - **Photo decoding:** `decodeToRgb` decodes in pure Dart (package `image`)

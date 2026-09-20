@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:bitmapper/main.dart';
@@ -9,6 +10,7 @@ import 'package:bitmapper/services/filter_controller.dart';
 import 'package:bitmapper/services/image_codec.dart';
 import 'package:bitmapper/services/image_loader.dart';
 import 'package:bitmapper/services/image_saver.dart';
+import 'package:bitmapper/services/share_intent_source.dart';
 import 'package:bitmapper/services/video_exporter.dart';
 import 'package:bitmapper/services/video_io.dart';
 import 'package:bitmapper_core/bitmapper_core.dart';
@@ -124,6 +126,22 @@ class FakeExportNotifier implements ExportNotifier {
   Future<void> cancel() async => calls.add('cancel');
 }
 
+/// A settable cold-start value and a stream tests can push into, instead of
+/// touching a platform channel.
+class FakeShareIntentSource implements ShareIntentSource {
+  LoadedMedia? initial;
+  final _controller = StreamController<LoadedMedia>.broadcast();
+
+  void share(LoadedMedia media) => _controller.add(media);
+  void shareError(Object error) => _controller.addError(error);
+
+  @override
+  Future<LoadedMedia?> initialShare() async => initial;
+
+  @override
+  Stream<LoadedMedia> shares() => _controller.stream;
+}
+
 class TestApp {
   TestApp({LoadedMedia? image})
     : loader = FakeImageLoader(result: image),
@@ -135,6 +153,7 @@ class TestApp {
   final InMemoryPresetRepository repository;
   final FakeVideoIO videoIO = FakeVideoIO();
   final FakeExportNotifier notifier = FakeExportNotifier();
+  final FakeShareIntentSource shareSource = FakeShareIntentSource();
 
   AppServices get services => AppServices(
     imageLoader: loader,
@@ -147,6 +166,7 @@ class TestApp {
     videoExporter: (job, onProgress) => fakeVideoExporter(job, onProgress, videoIO),
     clock: () => DateTime.fromMillisecondsSinceEpoch(1234),
     exportNotifier: notifier,
+    shareIntentSource: shareSource,
   );
 
   Widget build({Locale locale = const Locale('en')}) =>

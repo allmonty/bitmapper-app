@@ -90,18 +90,24 @@ class MediaModel extends ChangeNotifier {
     try {
       final loaded = await _loader.load(request);
       if (loaded == null) return false;
-      switch (loaded) {
-        case LoadedImage(:final name, :final image):
-          setImage(name, image);
-        case LoadedAnimation(:final name, :final bytes, :final animation):
-          setAnimation(name, bytes, animation);
-        case LoadedVideo(:final name, :final path):
-          await openVideo(name, path);
-      }
+      await loadMedia(loaded);
       return true;
     } finally {
       _loading = false;
       notifyListeners();
+    }
+  }
+
+  /// Show already-picked media (e.g. from a share-intent), dispatching to
+  /// [setImage]/[setAnimation]/[openVideo] the same way [load] does.
+  Future<void> loadMedia(LoadedMedia loaded) async {
+    switch (loaded) {
+      case LoadedImage(:final name, :final image):
+        setImage(name, image);
+      case LoadedAnimation(:final name, :final bytes, :final animation):
+        setAnimation(name, bytes, animation);
+      case LoadedVideo(:final name, :final path):
+        await openVideo(name, path);
     }
   }
 

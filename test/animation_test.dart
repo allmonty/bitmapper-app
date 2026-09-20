@@ -52,6 +52,18 @@ void main() {
       expect(model.currentFrame, 0);
       expect(model.frameCount, 1);
     });
+
+    test('loadMedia dispatches the same way load() does, for already-picked media', () async {
+      final model = MediaModel(FakeImageLoader());
+
+      await model.loadMedia(LoadedImage(name: 'a.png', image: gradient(10, 10)));
+      expect(model.kind, MediaKind.still);
+      expect(model.name, 'a.png');
+
+      await model.loadMedia(loadedGif(n: 3));
+      expect(model.kind, MediaKind.animation);
+      expect(model.frameCount, 3);
+    });
   });
 
   testWidgets('decodeMedia: animated GIFs become animations, 1-frame GIFs stills', (tester) async {

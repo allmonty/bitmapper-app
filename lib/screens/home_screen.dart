@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bitmapper_core/bitmapper_core.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +8,7 @@ import 'package:win98_ui/win98_ui.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../models/editor_model.dart';
 import '../models/media_model.dart';
+import '../services/app_services.dart';
 import '../services/export_actions.dart';
 import '../services/filter_controller.dart';
 import '../services/image_loader.dart';
@@ -35,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late final EditorModel _editor = context.read<EditorModel>();
   late final MediaModel _media = context.read<MediaModel>();
   late final FilterController _filter = context.read<FilterController>();
+  late final AppServices _services = context.read<AppServices>();
   late final ExportActions _export = ExportActions(
     isSaving: () => _saving,
     setSaving: (v) => setState(() => _saving = v),
@@ -45,18 +49,27 @@ class _HomeScreenState extends State<HomeScreen> {
   /// edit.
   String? _message;
   bool _saving = false;
+  StreamSubscription<LoadedMedia>? _shareSubscription;
 
   @override
   void initState() {
     super.initState();
     _editor.addListener(_rerender);
     _media.addListener(_rerender);
+    _services.shareIntentSource.initialShare().then((media) {
+      if (media != null && mounted) _loadShared(media);
+    });
+    _shareSubscription = _services.shareIntentSource.shares().listen(
+      _loadShared,
+      onError: (Object e) => _reportLoadError(e),
+    );
   }
 
   @override
   void dispose() {
     _editor.removeListener(_rerender);
     _media.removeListener(_rerender);
+    _shareSubscription?.cancel();
     super.dispose();
   }
 
@@ -94,39 +107,65 @@ class _HomeScreenState extends State<HomeScreen> {
   /// user should know about it (a truncated GIF, video sound that can't be
   /// kept).
   Future<void> _open(MediaRequest request) async {
-    final l10n = AppLocalizations.of(context);
     try {
       if (!await _media.load(request) || !mounted) return;
-      final animation = _media.animation;
-      final video = _media.videoInfo;
-      final String? warning;
-      if (animation != null && animation.truncated) {
-        warning = l10n.animationTruncated(animation.frameCount);
-      } else if (video != null && video.hasAudio && !video.audioCompatible) {
-        warning = l10n.audioUnsupported;
-      } else {
-        warning = null;
-      }
-      if (warning != null) {
-        await showWin98MessageBox(
-          context: context,
-          title: l10n.errorTitle,
-          message: warning,
-          icon: Win98MessageIconType.warning,
-          buttons: [l10n.ok],
-        );
-      }
+      await _reportLoadWarnings();
     } catch (e) {
-      debugPrint('Open failed: $e');
+      await _reportLoadError(e);
+    }
+  }
+
+  /// Show media shared into the app from another app (the share sheet),
+  /// either at cold start or while already running. Ignored while an
+  /// export is in progress, since a share can arrive unpredictably and
+  /// shouldn't interrupt one.
+  Future<void> _loadShared(LoadedMedia media) async {
+    if (_saving) return;
+    try {
+      await _media.loadMedia(media);
       if (!mounted) return;
+      await _reportLoadWarnings();
+    } catch (e) {
+      await _reportLoadError(e);
+    }
+  }
+
+  /// After a successful load, tell the user about anything they should
+  /// know (a truncated GIF, video sound that can't be kept).
+  Future<void> _reportLoadWarnings() async {
+    final l10n = AppLocalizations.of(context);
+    final animation = _media.animation;
+    final video = _media.videoInfo;
+    final String? warning;
+    if (animation != null && animation.truncated) {
+      warning = l10n.animationTruncated(animation.frameCount);
+    } else if (video != null && video.hasAudio && !video.audioCompatible) {
+      warning = l10n.audioUnsupported;
+    } else {
+      warning = null;
+    }
+    if (warning != null) {
       await showWin98MessageBox(
         context: context,
         title: l10n.errorTitle,
-        message: l10n.errorLoad,
-        icon: Win98MessageIconType.error,
+        message: warning,
+        icon: Win98MessageIconType.warning,
         buttons: [l10n.ok],
       );
     }
+  }
+
+  Future<void> _reportLoadError(Object e) async {
+    debugPrint('Open failed: $e');
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context);
+    await showWin98MessageBox(
+      context: context,
+      title: l10n.errorTitle,
+      message: l10n.errorLoad,
+      icon: Win98MessageIconType.error,
+      buttons: [l10n.ok],
+    );
   }
 
   /// Ask whether to take a photo or record a video, then open the camera.
