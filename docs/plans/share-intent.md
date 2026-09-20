@@ -150,6 +150,6 @@ Phase 2's Xcode work happens.
   already-running cases open the right media.
 - iOS: same, after the Share Extension exists — needs a real device or
   simulator with Xcode, and can't be verified via `flutter test`.
-- Update `CLAUDE.md`'s "Video in the app"/media-loading section once this
+- Update `AGENTS.md`'s "Video in the app"/media-loading section once this
   lands, describing the new entry point the same way `MediaModel.load` is
   documented today.

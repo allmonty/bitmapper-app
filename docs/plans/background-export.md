@@ -148,7 +148,7 @@ does the work" shape is the realistic one. Confirm this reasoning still
 holds before implementing — it depends on whether `bitmapper_core` might
 ever grow a native path (it doesn't have one today, see
 `packages/bitmapper_core`'s "no Flutter dependency" constraint in
-`CLAUDE.md`, which is a *stronger* constraint than "no native code," but
+`AGENTS.md`, which is a *stronger* constraint than "no native code," but
 worth double-checking there's no native filter path planned).
 
 ## Phase 3 — iOS: research spike, likely limited
@@ -185,10 +185,10 @@ documentation before ruling it out entirely.
 - Phases 2 and 3 fundamentally need **manual on-device verification**: start
   a long export, background/kill the app, confirm it completes (or, for
   iOS, confirm what actually happens and document it here). This can't be
-  confirmed by `flutter test`/`dart test` alone — matches how `CLAUDE.md`
+  confirmed by `flutter test`/`dart test` alone — matches how `AGENTS.md`
   already treats native-build verification (Android build warnings, Kotlin
   unit tests needing a specific JDK, etc.) as something to check for real,
   not assume.
-- Whatever ships, update `CLAUDE.md`'s "Native builds" section with the new
+- Whatever ships, update `AGENTS.md`'s "Native builds" section with the new
   manifest entries / service, the same way the Kotlin-built-in-Kotlin
   change was documented there, so this doesn't need re-discovering later.

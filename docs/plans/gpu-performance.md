@@ -227,7 +227,7 @@ Other findings, matching the code-reading predictions:
    practice too.
 5. Any GPU path needs a CPU fallback — some Android devices/emulators have
    patchy `FragmentProgram` support, and `bitmapper_core` must stay
-   Flutter-free per `CLAUDE.md` (it's pure Dart, testable without a
+   Flutter-free per `AGENTS.md` (it's pure Dart, testable without a
    `dart:ui` binding), so a GPU path would have to live in the app layer
    (`lib/`), not the engine package, with the CPU pipeline remaining the
    source of truth for byte-exact goldens.

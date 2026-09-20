@@ -3,6 +3,10 @@
 A retro pixel-art photo filter for Android and iOS, with a Windows 98 UI:
 opening images, presets, saving, hold-to-compare, and zoom.
 
+See [AGENTS.md](AGENTS.md) for architecture and engineering conventions —
+it's the shared guide for Claude Code, other AI coding tools, and human
+contributors alike.
+
 ## Layout
 
 | Path | What |
@@ -12,6 +16,8 @@ opening images, presets, saving, hold-to-compare, and zoom.
 | `packages/win98_ui/` | Reusable Windows 98 widget kit ([README](packages/win98_ui/README.md)) |
 | `packages/video_frames/` | Reusable plugin that decodes video to RGBA and encodes MP4s ([README](packages/video_frames/README.md)) |
 | `tool/gen_palettes.py` | Regenerates the palette table from `tool/palette_source.py` |
+| `tool/gen_notification_icon.dart` | Regenerates the Android export-notification icon |
+| `docs/plans/` | Design docs for larger, still-in-progress features (GPU performance, background export, share-to-app) |
 
 ## Features
 
@@ -34,7 +40,8 @@ opening images, presets, saving, hold-to-compare, and zoom.
     or Sobel — Sobel finds cleaner, less noisy edges on photos) and ink
     style (darkest color, or a softer half-brightness "shaded" ink).
 - **Presets:** 27 built-in looks, plus user presets saved to
-  `shared_preferences`.
+  `shared_preferences`, with Previous/Next buttons to quickly step through
+  and preview them.
 - **Save as** renders at full resolution, encodes PNG in an isolate, and
   opens the system save dialog (`flutter_file_dialog`). It needs no
   permissions.
@@ -49,17 +56,26 @@ opening images, presets, saving, hold-to-compare, and zoom.
   - **Animation-friendly settings** (sampled palette, ordered dither) are
     one button away and never applied automatically. The status bar warns
     when an error-diffusion dither may shimmer.
-  - Export runs on a worker isolate, with progress and a Cancel button.
-    Frames of up to 256 colors are written exactly; deeper palettes are
-    reduced by the GIF encoder.
+  - **Frame skip:** hold a rendered frame's pixels for up to 15 more source
+    frames, for a stepped, lower-frame-rate look without changing overall
+    duration or (for video) audio sync. The slider shows the resulting fps.
+  - Export runs on a worker isolate, with progress and a Cancel button, and
+    (Android) a system notification mirroring the same progress while the
+    app is open. Frames of up to 256 colors are written exactly; deeper
+    palettes are reduced by the GIF encoder.
 - **Videos:** open or record a video, scrub it, and save it as an
   MP4 (H.264, with the sound copied through) or an animated GIF.
-  - The palette strategies and noise options are the same as for GIFs.
+  - The palette strategies, noise options and frame skip are the same as
+    for GIFs.
   - MP4 resolution can be the original, 720p or 480p.
   - GIFs made from video have a frame-rate cap of 5–30 fps.
   - Decoding and encoding use the platform codecs through
     `packages/video_frames`. The whole export runs on a background isolate.
 - **Hold to compare** the original, and **pinch to zoom**.
+- **Share to Bitmapper (Android):** share a photo or video from another
+  app (e.g. the gallery) and pick Bitmapper — it opens already loaded, on
+  cold start or while already running. iOS needs a Share Extension, not
+  built yet (see `docs/plans/share-intent.md`).
 - **English and Portuguese**, following the device locale.
 
 ## Commands

@@ -57,15 +57,23 @@ outline:
 choosing edges and ink the way `dither.dart` chooses a dither method — via a
 string parameter checked against a `List` of registered names:
 
-- `applyOutline(grid, palette, strength, method, ink)`. `strength` (0-1)
-  sets `outlineThreshold`; `kOutlineMethods` are `brightness` (4-neighbour
-  luma comparison — the original, but noisy on photo texture), `color` (RGB
-  distance, also catches same-luma hue edges) and `sobel` (a 3x3 gradient
-  that also finds diagonal/gradual edges and closes gaps the others leave
-  broken — the best default for photos). `kOutlineInks` are `darkest` (the
-  palette's darkest entry) and `shaded` (the palette color nearest a
-  half-brightness copy of the outlined pixel, falling back to `darkest`
-  when that's the same color).
+- `applyOutline(grid, palette, strength, {method, ink, edgeGrid, thickness, closeGaps})`.
+  `strength` (0-1) sets `outlineThreshold`; `kOutlineMethods` are
+  `brightness` (4-neighbour luma comparison — the original, but noisy on
+  photo texture), `color` (RGB distance, also catches same-luma hue edges)
+  and `sobel` (a 3x3 gradient that also finds diagonal/gradual edges and
+  closes gaps the others leave broken — the best default for photos).
+  `kOutlineInks` are `darkest` (the palette's darkest entry) and `shaded`
+  (the palette color nearest a half-brightness copy of the outlined pixel,
+  falling back to `darkest` when that's the same color).
+- `edgeGrid` (optional) detects edges on a different grid than the one ink
+  gets painted onto — the pipeline passes the pre-dither quantized grid, so
+  a dither pattern's color noise in flat regions isn't read as an edge.
+  `thickness` (1-3, default 1) dilates the edge mask by one 4-neighbour
+  step per extra cell. `closeGaps` (default off) bridges 1-cell gaps with a
+  binary closing (8-neighbour dilate then erode), applied before
+  `thickness`. Both are opt-in: default output is unchanged from before
+  they existed.
 
 ## Shared color helpers
 

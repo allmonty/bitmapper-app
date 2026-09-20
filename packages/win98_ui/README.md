@@ -37,12 +37,12 @@ WidgetsApp(
 | `Bevel`, `BevelPainter` | The 2-px borders everything is built from: raised, window, pressed, field, status, etched, outline |
 | `Win98Button` | Pressed state, default-button outline, focus rectangle, etched disabled text, keyboard activation |
 | `Win98Window`, `Win98TitleBar`, `Win98Desktop` | Title bar with gradient and caption buttons, optional menu and status bars; `expand` pins the status bar to the bottom |
-| `Win98MenuBar`, `Win98Menu`, `Win98MenuItem`, `Win98MenuDivider`, `Win98MenuPanel` | Drop-down menus in an `OverlayPortal`, with shortcut hints, checkmarks and disabled items |
+| `Win98MenuBar`, `Win98Menu`, `Win98MenuItem`, `Win98MenuDivider`, `Win98MenuPanel` | Drop-down menus in an `OverlayPortal`, with shortcut hints, checkmarks and disabled items; `maxHeight` caps and scrolls a long menu instead of letting it overflow |
 | `Win98TabView`, `Win98Tab` | Property-sheet tabs; scrolls sideways when the tabs don't fit |
 | `Win98GroupBox` | Etched frame with a caption |
 | `Win98Checkbox`, `Win98Radio<T>` | With labels, focus and semantics |
 | `Win98Slider` | Trackbar with ticks; drag, tap-to-jump, arrow keys |
-| `Win98Dropdown<T>` | Combo box with a pop-up list |
+| `Win98Dropdown<T>` | Combo box with a pop-up list, plus Previous/Next buttons to step through options without opening it |
 | `Win98TextField` | `EditableText` in a sunken field |
 | `Win98ListBox<T>` | Selection highlight, double-tap to activate |
 | `Win98ScrollView`, `Win98Scrollbar` | Arrow buttons, dithered track, draggable thumb |
