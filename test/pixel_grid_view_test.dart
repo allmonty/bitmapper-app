@@ -53,6 +53,37 @@ void main() {
     expect(PixelGridView.cellSize(512, 384, 400, 400), 1, reason: 'never below 1');
   });
 
+  testWidgets('fills the same visual size for any grid size (no shrink after a column change)', (
+    tester,
+  ) async {
+    Future<Rect> renderedRectFor(int cols, int rows) async {
+      await tester.pumpWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: Center(
+            child: SizedBox(
+              width: 300,
+              height: 200,
+              child: PixelGridView(grid: distinctGrid(cols, rows)),
+            ),
+          ),
+        ),
+      );
+      return tester.getRect(find.byType(CustomPaint).last);
+    }
+
+    // Square grids of very different resolutions: their whole-pixel-per-cell
+    // "natural" size differs a lot (192px vs 180px vs 90px), but since the
+    // 300x200 container is wider than tall and the grid is square, the grid
+    // is always height-limited -- the rendered size should be the same
+    // (touching the full 200px height) regardless of column count, not
+    // shrink to the natural size and leave a growing/shrinking margin.
+    for (final n in [12, 60, 97]) {
+      final rect = await renderedRectFor(n, n);
+      expect(rect.height, closeTo(200, 0.5), reason: '$n x $n grid');
+    }
+  });
+
   for (final dpr in [1.0, 2.8125, 3.75]) {
     testWidgets('cells are painted exactly: same size and color, at dpr $dpr', (tester) async {
       const cols = 12, rows = 9, cell = 7;

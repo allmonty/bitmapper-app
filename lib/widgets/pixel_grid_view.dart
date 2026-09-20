@@ -70,13 +70,20 @@ class PixelGridView extends StatelessWidget {
         return Semantics(
           image: true,
           label: semanticLabel,
-          child: Center(
-            // Only when even one pixel per cell doesn't fit (huge grids on
-            // small screens) is the whole thing scaled down.
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: SizedBox.fromSize(size: size, child: content),
-            ),
+          // `size` is quantized to a whole number of pixels per cell, so it
+          // rarely matches the available space exactly, and the leftover
+          // remainder changes with the grid's column/row count. FittedBox
+          // (BoxFit.contain, scaling up as well as down, and centering the
+          // child itself -- no separate Center needed, and one would only
+          // give FittedBox loose constraints, defeating the scale-up) keeps
+          // the preview's visual size consistent as that count changes,
+          // instead of leaving it at its unscaled "natural" size with a
+          // margin that grows and shrinks. This still paints through
+          // CustomPaint, not a resized bitmap, so it doesn't reintroduce the
+          // smearing a raster image resize caused on some devices.
+          child: FittedBox(
+            fit: BoxFit.contain,
+            child: SizedBox.fromSize(size: size, child: content),
           ),
         );
       },
