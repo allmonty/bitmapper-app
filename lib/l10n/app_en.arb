@@ -116,6 +116,8 @@
       }
     }
   },
+  "presetsPrevious": "Previous preset",
+  "presetsNext": "Next preset",
   "presetsApply": "Apply",
   "presetsSave": "Save current...",
   "presetsRename": "Rename...",

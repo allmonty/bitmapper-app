@@ -19,12 +19,29 @@ class PresetsTab extends StatefulWidget {
 class _PresetsTabState extends State<PresetsTab> {
   String? _selectedId;
 
+  /// Index of the selected preset in [all], or -1 if none is selected.
+  int _indexIn(List<AppPreset> all) => all.indexWhere((p) => p.id == _selectedId);
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final theme = Win98Theme.of(context);
     final presets = context.watch<PresetsModel>();
+    final all = presets.all;
     final selected = _selectedId == null ? null : presets.byId(_selectedId!);
     final editable = selected != null && !selected.builtIn;
+    final index = _indexIn(all);
+    final canStepPrevious = index > 0;
+    final canStepNext = all.isNotEmpty && index < all.length - 1;
+
+    Widget stepButton(List<String> glyph, int delta, bool enabled, String label) => Win98Button(
+      onPressed: enabled ? () => _step(all, delta) : null,
+      minWidth: theme.scrollbarSize,
+      minHeight: theme.controlHeight,
+      padding: EdgeInsets.zero,
+      semanticLabel: label,
+      child: PixelGlyph(glyph, color: enabled ? theme.text : theme.disabledText, pixelSize: 1.5),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -33,7 +50,7 @@ class _PresetsTabState extends State<PresetsTab> {
           child: Win98ListBox<String>(
             height: null,
             items: [
-              for (final p in presets.all)
+              for (final p in all)
                 Win98ListItem(value: p.id, label: p.builtIn ? l10n.presetBuiltIn(p.name) : p.name),
             ],
             selected: _selectedId,
@@ -46,6 +63,8 @@ class _PresetsTabState extends State<PresetsTab> {
           spacing: 6,
           runSpacing: 6,
           children: [
+            stepButton(Win98Glyphs.arrowLeft, -1, canStepPrevious, l10n.presetsPrevious),
+            stepButton(Win98Glyphs.arrowRight, 1, canStepNext, l10n.presetsNext),
             Win98Button(
               isDefault: true,
               onPressed: selected == null ? null : () => _apply(selected),
@@ -64,6 +83,16 @@ class _PresetsTabState extends State<PresetsTab> {
         ),
       ],
     );
+  }
+
+  /// Moves the selection by [delta] (clamped to the list's bounds) and
+  /// applies it immediately, so stepping through presets live-previews them.
+  void _step(List<AppPreset> all, int delta) {
+    if (all.isEmpty) return;
+    final next = (_indexIn(all) + delta).clamp(0, all.length - 1);
+    final preset = all[next];
+    setState(() => _selectedId = preset.id);
+    _apply(preset);
   }
 
   void _apply(AppPreset? preset) {

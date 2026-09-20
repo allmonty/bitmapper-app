@@ -393,6 +393,18 @@ abstract class AppLocalizations {
   /// **'Scanlines: {percent}%'**
   String effectScanlines(int percent);
 
+  /// No description provided for @presetsPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous preset'**
+  String get presetsPrevious;
+
+  /// No description provided for @presetsNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next preset'**
+  String get presetsNext;
+
   /// No description provided for @presetsApply.
   ///
   /// In en, this message translates to:

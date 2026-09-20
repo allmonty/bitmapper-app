@@ -177,6 +177,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get presetsPrevious => 'Previous preset';
+
+  @override
+  String get presetsNext => 'Next preset';
+
+  @override
   String get presetsApply => 'Apply';
 
   @override

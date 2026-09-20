@@ -177,6 +177,12 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get presetsPrevious => 'Predefinição anterior';
+
+  @override
+  String get presetsNext => 'Próxima predefinição';
+
+  @override
   String get presetsApply => 'Aplicar';
 
   @override

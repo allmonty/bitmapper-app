@@ -1,4 +1,5 @@
 import 'package:bitmapper/models/editor_model.dart';
+import 'package:bitmapper/models/presets_model.dart';
 import 'package:bitmapper/screens/home_screen.dart';
 import 'package:bitmapper/services/filter_controller.dart';
 import 'package:bitmapper/services/image_loader.dart';
@@ -190,6 +191,53 @@ void main() {
     expect(config.bitDepth, 5);
     expect(config.scanlines, 0.25);
     expect(config.gridCols, kDefaultConfig.gridCols);
+  });
+
+  testWidgets('Presets tab Previous/Next step through presets and apply them live', (
+    tester,
+  ) async {
+    await pumpApp(tester, TestApp());
+    await tester.tap(find.text('Presets').last);
+    await tester.pump();
+
+    final builtIns = PresetsModel.builtIns;
+    expect(builtIns.length, greaterThan(2), reason: 'test assumes at least 3 built-ins');
+
+    void expectApplied(int i) {
+      final config = editorOf(tester).config;
+      expect(config.dither, builtIns[i].config.dither);
+      expect(config.bitDepth, builtIns[i].config.bitDepth);
+      expect(config.scanlines, builtIns[i].config.scanlines);
+      expect(config.fixedPalette, builtIns[i].config.fixedPalette);
+    }
+
+    final next = find.bySemanticsLabel('Next preset');
+    final previous = find.bySemanticsLabel('Previous preset');
+
+    // Nothing selected yet: Previous is disabled, Next starts browsing.
+    expect(
+      tester
+          .widget<Win98Button>(find.ancestor(of: previous, matching: find.byType(Win98Button)))
+          .enabled,
+      isFalse,
+    );
+    await tester.tap(next);
+    await tester.pump(const Duration(milliseconds: 400));
+    expectApplied(0);
+
+    await tester.tap(next);
+    await tester.pump(const Duration(milliseconds: 400));
+    expectApplied(1);
+
+    await tester.tap(previous);
+    await tester.pump(const Duration(milliseconds: 400));
+    expectApplied(0);
+    expect(
+      tester
+          .widget<Win98Button>(find.ancestor(of: previous, matching: find.byType(Win98Button)))
+          .enabled,
+      isFalse,
+    );
   });
 
   testWidgets('applying a preset from the Presets menu', (tester) async {

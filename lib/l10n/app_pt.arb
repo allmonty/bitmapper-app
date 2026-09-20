@@ -50,6 +50,8 @@
   "adjustGamma": "Gama: {value}",
   "reset": "Redefinir",
   "effectScanlines": "Linhas de varredura: {percent}%",
+  "presetsPrevious": "Predefinição anterior",
+  "presetsNext": "Próxima predefinição",
   "presetsApply": "Aplicar",
   "presetsSave": "Salvar atual...",
   "presetsRename": "Renomear...",
