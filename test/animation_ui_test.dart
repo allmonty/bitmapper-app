@@ -3,6 +3,8 @@ import 'package:bitmapper/models/media_model.dart';
 import 'package:bitmapper/screens/home_screen.dart';
 import 'package:bitmapper/services/gif_io.dart';
 import 'package:bitmapper/services/image_loader.dart';
+import 'package:bitmapper/widgets/controls/animation_tab.dart';
+import 'package:bitmapper/widgets/controls/labeled_slider.dart';
 import 'package:bitmapper_core/bitmapper_core.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -109,6 +111,19 @@ void main() {
     await tester.pump();
     expect(find.text('Skip frames: 3'), findsOneWidget);
     expect(find.text('Skip frames: off'), findsNothing);
+  });
+
+  testWidgets('Animation tab has a gap before the frame-skip slider', (tester) async {
+    await openClip(tester);
+    await tester.tap(find.text('Animation'));
+    await tester.pumpAndSettle();
+    final scrollView = tester.widget<Win98ScrollView>(
+      find.descendant(of: find.byType(AnimationTab), matching: find.byType(Win98ScrollView)),
+    );
+    final children = (scrollView.child as Column).children;
+    final frameSkipIndex = children.indexWhere((w) => w is LabeledSlider);
+    expect(frameSkipIndex, greaterThan(0));
+    expect(identical(children[frameSkipIndex - 1], kControlGap), isTrue);
   });
 
   testWidgets('Save as exports every frame to an animated GIF', (tester) async {

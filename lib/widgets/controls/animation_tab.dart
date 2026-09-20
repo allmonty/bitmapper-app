@@ -77,6 +77,7 @@ class AnimationTab extends StatelessWidget {
               label: l10n.animateNoise,
               onChanged: editor.setAnimateNoise,
             ),
+          kControlGap,
           LabeledSlider(
             label: config.frameSkip == 0 ? l10n.frameSkipOff : l10n.frameSkip(config.frameSkip),
             value: config.frameSkip.toDouble(),
